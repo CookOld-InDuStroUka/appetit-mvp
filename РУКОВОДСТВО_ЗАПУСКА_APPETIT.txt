@@ -1,0 +1,63 @@
+APPETIT MVP — Руководство по запуску (Windows/PowerShell)
+
+1) Требования
+   - Node.js LTS (18/20)
+   - pnpm:  npm i -g pnpm
+   - Docker Desktop (запущен)
+
+2) Распаковка
+   - Распакуйте архив в удобную папку, далее все команды из папки проекта (корень архива).
+
+3) Настройка .env
+   - Скопируйте .env.example в .env (UTF-8):
+     PowerShell:
+       Get-Content .env.example | Set-Content -Encoding UTF8 .env
+
+   - DATABASE_URL уже соответствует docker-compose:
+       postgresql://postgres:postgres@localhost:5432/appetit
+
+4) Поднять Postgres в Docker
+   docker compose up -d
+
+5) Установка зависимостей
+   pnpm i
+   pnpm api:generate
+
+6) Инициализация БД
+   pnpm api:db:push
+   pnpm api:db:seed
+
+7) Запуск приложений
+   pnpm dev
+   - Web: http://localhost:3000
+   - API: http://localhost:3001/api/v1/health
+
+8) Полезные эндпоинты
+   - GET /api/v1/health
+   - GET /api/v1/menu[?q=][&categorySlug=shawarma]
+   - GET /api/v1/zones
+   - GET /api/v1/cms/delivery-terms
+   - POST /api/v1/orders (см. apps/api/src/index.ts для формата)
+
+9) Архитектура
+   - Монорепо pnpm workspaces:
+       apps/api — backend (Express + Prisma + PostgreSQL)
+       apps/web — frontend (Next.js pages)
+       packages/shared — общие типы/утилиты (DTO)
+
+   - Независимая работа:
+       API и Web запускаются отдельными скриптами:
+         pnpm -C apps/api dev
+         pnpm -C apps/web dev
+
+10) Частые проблемы
+   - P1012 (нет DATABASE_URL): проверьте .env и apps/api/prisma/.env
+   - P1000 (неверные креды): docker-compose.yml задаёт postgres/postgres
+   - UTF-16 .env: переконвертируйте в UTF-8:
+       Get-Content .env | Set-Content -Encoding UTF8 .env
+
+11) Дальше по ТЗ
+   - Добавить CRUD админки (меню/заказы), промокоды/баннеры, аналитика.
+   - Подготовить API для мобилки (тот же REST).
+
+Удачи!

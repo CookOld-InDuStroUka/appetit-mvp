@@ -1,0 +1,168 @@
+import 'dotenv/config';
+import express from "express";
+import cors from "cors";
+import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
+import { z } from "zod";
+
+const app = express();
+const prisma = new PrismaClient();
+app.use(cors());
+app.use(express.json());
+
+const BASE = "/api/v1";
+
+app.get(`${BASE}/health`, (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+
+app.get(`${BASE}/cms/:slug`, async (req, res) => {
+  const page = await prisma.cmsPage.findUnique({ where: { slug: req.params.slug } });
+  if (!page || !page.isActive) return res.status(404).json({ error: "Not found" });
+  res.json(page);
+});
+
+app.get(`${BASE}/branches`, async (_req, res) => {
+  const branches = await prisma.branch.findMany({ include: { zones: true } });
+  res.json(branches);
+});
+
+app.get(`${BASE}/zones`, async (_req, res) => {
+  const zones = await prisma.zone.findMany({ orderBy: { name: "asc" } });
+  res.json(zones);
+});
+
+app.get(`${BASE}/menu`, async (req, res) => {
+  const q = (req.query.q as string)?.trim() || "";
+  const categorySlug = (req.query.categorySlug as string) || undefined;
+  let categoryId: string | undefined = undefined;
+  if (categorySlug) {
+    const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
+    categoryId = cat?.id;
+    if (!categoryId) return res.json({ categories: [], dishes: [] });
+  }
+
+  const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
+
+  const dishesRaw = await prisma.dish.findMany({
+    where: {
+      isActive: true,
+      ...(categoryId ? { categoryId } : {}),
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
+    },
+    include: { variants: true },
+    orderBy: { name: "asc" }
+  });
+
+  const dishes = dishesRaw.map((d) => {
+    const base = Number(d.basePrice);
+    const min = d.variants.length ? base + Math.min(...d.variants.map(v => Number(v.priceDelta))) : base;
+    return {
+      id: d.id,
+      categoryId: d.categoryId,
+      name: d.name,
+      description: d.description ?? undefined,
+      imageUrl: d.imageUrl ?? undefined,
+      basePrice: base,
+      minPrice: min
+    };
+  });
+
+  res.json({ categories, dishes });
+});
+
+const OrderSchema = z.object({
+  customer: z.object({
+    phone: z.string().min(5),
+    name: z.string().optional().nullable()
+  }),
+  type: z.enum(["delivery", "pickup"]),
+  zoneId: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  branchId: z.string().optional().nullable(),
+  items: z.array(z.object({
+    dishId: z.string(),
+    variantId: z.string().optional().nullable(),
+    qty: z.number().int().positive()
+  })).min(1),
+  paymentMethod: z.enum(["cash", "card"])
+});
+
+app.post(`${BASE}/orders`, async (req, res) => {
+  const parsed = OrderSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
+  const data = parsed.data;
+
+  // fetch all dishes/variants referenced
+  const dishes = await prisma.dish.findMany({
+    where: { id: { in: data.items.map(i => i.dishId) } },
+    include: { variants: true }
+  });
+
+  let subtotal = 0;
+  for (const item of data.items) {
+    const d = dishes.find(x => x.id === item.dishId);
+    if (!d) return res.status(400).json({ error: `dish not found: ${item.dishId}` });
+    const base = Number(d.basePrice);
+    const variantDelta = item.variantId ? Number(d.variants.find(v => v.id === item.variantId)?.priceDelta ?? 0) : 0;
+    const unit = base + variantDelta;
+    subtotal += unit * item.qty;
+  }
+
+  let deliveryFee = 0;
+  let zoneId: string | undefined;
+  let branchId: string | undefined;
+
+  if (data.type === "delivery") {
+    if (!data.zoneId || !data.address) return res.status(400).json({ error: "zoneId and address required for delivery" });
+    const zone = await prisma.zone.findUnique({ where: { id: data.zoneId } });
+    if (!zone) return res.status(400).json({ error: "zone not found" });
+    deliveryFee = Number(zone.deliveryFee);
+    zoneId = zone.id;
+  } else {
+    if (!data.branchId) return res.status(400).json({ error: "branchId required for pickup" });
+    const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
+    if (!branch) return res.status(400).json({ error: "branch not found" });
+    branchId = branch.id;
+  }
+
+  const total = subtotal + deliveryFee;
+
+  const order = await prisma.order.create({
+    data: {
+      type: data.type === "delivery" ? OrderType.delivery : OrderType.pickup,
+      status: OrderStatus.created,
+      customerName: data.customer.name ?? null,
+      customerPhone: data.customer.phone,
+      address: data.address ?? null,
+      zoneId: zoneId ?? null,
+      branchId: branchId ?? null,
+      subtotal,
+      deliveryFee,
+      total,
+      items: {
+        create: data.items.map(item => {
+          const d = dishes.find(x => x.id === item.dishId)!;
+          const base = Number(d.basePrice);
+          const variantDelta = item.variantId ? Number(d.variants.find(v => v.id === item.variantId)?.priceDelta ?? 0) : 0;
+          const unit = base + variantDelta;
+          return {
+            dishId: item.dishId,
+            variantId: item.variantId ?? null,
+            qty: item.qty,
+            unitPrice: unit,
+            total: unit * item.qty
+          };
+        })
+      }
+    }
+  });
+
+  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, total, createdAt: order.createdAt });
+});
+
+app.get(`${BASE}/orders/:id`, async (req, res) => {
+  const o = await prisma.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
+  if (!o) return res.status(404).json({ error: "Not found" });
+  res.json(o);
+});
+
+const port = Number(process.env.API_PORT || 3001);
+app.listen(port, () => console.log(`API on http://localhost:${port}${BASE}`));

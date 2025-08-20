@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String?  @unique
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  dishes     Dish[]
+}
+
+model Dish {
+  id          String        @id @default(cuid())
+  categoryId  String
+  name        String
+  slug        String?
+  description String?
+  basePrice   Decimal       @db.Decimal(10,2)
+  imageUrl    String?
+  isActive    Boolean       @default(true)
+  category    Category      @relation(fields: [categoryId], references: [id])
+  variants    DishVariant[]
+  availability DishAvailability[]
+}
+
+model DishVariant {
+  id         String   @id @default(cuid())
+  dishId     String
+  name       String
+  priceDelta Decimal  @db.Decimal(10,2)
+  sortOrder  Int      @default(0)
+  dish       Dish     @relation(fields: [dishId], references: [id])
+}
+
+model Branch {
+  id       String  @id @default(cuid())
+  name     String
+  address  String
+  phone    String?
+  zones    Zone[]
+}
+
+model Zone {
+  id          String  @id @default(cuid())
+  name        String
+  branchId    String
+  deliveryFee Decimal @db.Decimal(10,2)
+  minOrder    Decimal @db.Decimal(10,2)
+  branch      Branch  @relation(fields: [branchId], references: [id])
+  availability DishAvailability[]
+  orders      Order[]
+}
+
+model DishAvailability {
+  dishId String
+  zoneId String
+  dish   Dish   @relation(fields: [dishId], references: [id])
+  zone   Zone   @relation(fields: [zoneId], references: [id])
+
+  @@id([dishId, zoneId])
+}
+
+enum OrderStatus {
+  created
+  accepted
+  cooking
+  delivering
+  done
+  canceled
+}
+
+enum OrderType {
+  delivery
+  pickup
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  type         OrderType
+  status       OrderStatus @default(created)
+  customerName String?
+  customerPhone String
+  address      String?
+  zoneId       String?
+  zone         Zone?       @relation(fields: [zoneId], references: [id])
+  branchId     String?
+  branch       Branch?     @relation(fields: [branchId], references: [id])
+  subtotal     Decimal     @db.Decimal(10,2)
+  deliveryFee  Decimal     @db.Decimal(10,2) @default(0)
+  total        Decimal     @db.Decimal(10,2)
+  createdAt    DateTime    @default(now())
+  items        OrderItem[]
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  dishId     String
+  variantId  String?
+  qty        Int
+  unitPrice  Decimal @db.Decimal(10,2)
+  total      Decimal @db.Decimal(10,2)
+  order      Order   @relation(fields: [orderId], references: [id])
+  dish       Dish    @relation(fields: [dishId], references: [id])
+  variant    DishVariant? @relation(fields: [variantId], references: [id])
+}
+
+model CmsPage {
+  slug     String  @id
+  title    String
+  content  String
+  isActive Boolean @default(true)
+}

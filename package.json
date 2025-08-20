@@ -1,0 +1,11 @@
+{
+  "name": "appetit-mvp",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "api:generate": "pnpm -C apps/api prisma generate",
+    "api:db:push": "pnpm -C apps/api prisma db push",
+    "api:db:seed": "pnpm -C apps/api prisma db seed"
+  }
+}

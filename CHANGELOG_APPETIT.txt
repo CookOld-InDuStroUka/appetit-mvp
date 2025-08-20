@@ -1,0 +1,2 @@
+## YYYY-MM-DD
+- init: clean monorepo skeleton
