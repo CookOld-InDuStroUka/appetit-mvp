@@ -1,6 +1,12 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import type { DishDTO } from "@appetit/shared";
+type DishDTO = {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  minPrice?: number;
+  basePrice: number;
+};
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
 
