@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type Variant = { id: string; name: string; price: number };
 type Dish = {
@@ -24,7 +25,8 @@ export default function DishPage() {
     if (!id) return;
     fetch(`${API_BASE}/dishes/${id}`)
       .then((r) => r.json())
-      .then((data) => setDish(data));
+      .then((data) => setDish(data))
+      .catch(() => setDish(null));
   }, [id]);
 
   if (!dish) return null;

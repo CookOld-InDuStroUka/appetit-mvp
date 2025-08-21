@@ -8,7 +8,8 @@ type DishDTO = {
   basePrice: number;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -18,8 +19,9 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!slug) return;
     fetch(`${API_BASE}/menu?categorySlug=${slug}`)
-      .then(r => r.json())
-      .then(data => setDishes(data.dishes || []));
+      .then((r) => r.json())
+      .then((data) => setDishes(data.dishes || []))
+      .catch(() => setDishes([]));
   }, [slug]);
 
   return (

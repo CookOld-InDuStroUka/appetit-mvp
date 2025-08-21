@@ -5,7 +5,9 @@ import MainMenu, { CategoryLink } from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+// use local API if the env variable is missing so the menu still loads
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type DishDTO = {
   id: string;
@@ -26,6 +28,10 @@ export default function Home() {
       .then((data) => {
         setCategories(data.categories || []);
         setDishes(data.dishes || []);
+      })
+      .catch(() => {
+        setCategories([]);
+        setDishes([]);
       });
   }, []);
 

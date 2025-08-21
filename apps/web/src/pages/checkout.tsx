@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function Checkout() {
   const [zones, setZones] = useState<any[]>([]);
@@ -13,7 +14,10 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    fetch(`${API_BASE}/zones`).then(r => r.json()).then(setZones);
+    fetch(`${API_BASE}/zones`)
+      .then((r) => r.json())
+      .then(setZones)
+      .catch(() => setZones([]));
   }, []);
 
   const submit = async () => {
@@ -26,13 +30,17 @@ export default function Checkout() {
       items: form.items.length ? form.items : [{ dishId: form.dishId, variantId: null, qty: 1 }],
       paymentMethod: "cash"
     };
-    const r = await fetch(`${API_BASE}/orders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await r.json();
-    alert(r.ok ? `Заказ создан #${data.id}` : JSON.stringify(data));
+    try {
+      const r = await fetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      alert(r.ok ? `Заказ создан #${data.id}` : JSON.stringify(data));
+    } catch (e) {
+      alert("Ошибка при создании заказа");
+    }
   };
 
   return (
