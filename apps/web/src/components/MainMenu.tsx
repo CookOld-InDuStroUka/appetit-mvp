@@ -24,7 +24,7 @@ export default function MainMenu() {
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
           {items.map((item) => (
             <li key={item.title}>
-              <a href={item.href} style={{ textDecoration: "none", color: "#333" }}>
+              <a href={item.href} className="sidebar-link">
                 {item.title}
               </a>
             </li>

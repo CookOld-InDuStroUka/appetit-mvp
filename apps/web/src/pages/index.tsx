@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "../components/Header";
 import MainMenu from "../components/MainMenu";
+import Footer from "../components/Footer";
 
 const categories = [
   {
@@ -24,9 +25,9 @@ const categories = [
 
 export default function Home() {
   return (
-    <div style={{ fontFamily: "Arial, sans-serif" }}>
+    <>
       <Header />
-      <div style={{ display: "flex" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex" }}>
         <MainMenu />
         <main style={{ flex: 1, padding: "20px" }}>
           {categories.map((cat) => (
@@ -70,6 +71,7 @@ export default function Home() {
           ))}
         </main>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
