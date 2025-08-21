@@ -29,6 +29,39 @@ app.get(`${BASE}/zones`, async (_req, res) => {
   res.json(zones);
 });
 
+app.get(`${BASE}/search`, async (req, res) => {
+  const q = (req.query.q as string)?.trim() || "";
+  if (!q) return res.json({ dishes: [], categories: [], combos: [] });
+
+  const [dishesRaw, categories] = await Promise.all([
+    prisma.dish.findMany({
+      where: { isActive: true, name: { contains: q, mode: "insensitive" } },
+      include: { variants: true },
+      orderBy: { name: "asc" }
+    }),
+    prisma.category.findMany({
+      where: { isActive: true, name: { contains: q, mode: "insensitive" } },
+      orderBy: { sortOrder: "asc" }
+    })
+  ]);
+
+  const dishes = dishesRaw.map((d) => {
+    const base = Number(d.basePrice);
+    const min = d.variants.length ? base + Math.min(...d.variants.map(v => Number(v.priceDelta))) : base;
+    return {
+      id: d.id,
+      categoryId: d.categoryId,
+      name: d.name,
+      description: d.description ?? undefined,
+      imageUrl: d.imageUrl ?? undefined,
+      basePrice: base,
+      minPrice: min
+    };
+  });
+
+  res.json({ dishes, categories, combos: [] });
+});
+
 app.get(`${BASE}/menu`, async (req, res) => {
   const q = (req.query.q as string)?.trim() || "";
   const categorySlug = (req.query.categorySlug as string) || undefined;
