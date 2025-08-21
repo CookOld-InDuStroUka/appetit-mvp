@@ -24,8 +24,12 @@ export default function Footer() {
         </div>
         <div style={{ marginTop: 32, fontSize: 12, color: "#94a3b8", display: "flex", flexWrap: "wrap", gap: 16 }}>
           <span>ИП Таубекова Б.К.</span>
-          <Link href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>Политика конфиденциальности</Link>
-          <Link href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>Публичная оферта</Link>
+          <Link href="/privacy-policy" style={{ color: "#94a3b8", textDecoration: "none" }}>
+            Политика конфиденциальности
+          </Link>
+          <Link href="/public-offer" style={{ color: "#94a3b8", textDecoration: "none" }}>
+            Публичная оферта
+          </Link>
         </div>
       </div>
     </footer>
