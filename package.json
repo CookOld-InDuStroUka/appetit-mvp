@@ -1,11 +1,17 @@
 {
   "name": "appetit-mvp",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "api:generate": "pnpm -C apps/api prisma generate",
-    "api:db:push": "pnpm -C apps/api prisma db push",
-    "api:db:seed": "pnpm -C apps/api prisma db seed"
+    "dev": "pnpm -C apps/api dev",
+    "build": "pnpm -C apps/api build"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "@types/node": "^20.12.12"
   }
 }
