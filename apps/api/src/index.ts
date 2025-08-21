@@ -11,6 +11,10 @@ app.use(express.json());
 
 const BASE = "/api/v1";
 
+app.get(BASE, (_: Request, res: Response) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
 app.get(`${BASE}/health`, (_: Request, res: Response) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
