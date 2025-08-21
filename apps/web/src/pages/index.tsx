@@ -1,42 +1,63 @@
-import { useEffect, useState } from "react";
-import type { DishDTO } from "@appetit/shared";
+import React from "react";
+import Header from "../components/Header";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+const categories = [
+  {
+    name: "Комбо",
+    items: [
+      { title: "Комбо для ОДНОГО", price: "2490 ₸", img: "/images/combo1.png" },
+      { title: "Комбо для ДВОИХ", price: "4490 ₸", img: "/images/combo2.png" },
+      { title: "Комбо для КОМПАНИИ", price: "от 8900 ₸", img: "/images/combo3.png" },
+    ],
+  },
+  {
+    name: "Блюда",
+    items: [
+      { title: "Фирменная Средняя шаурма", price: "1990 ₸", img: "/images/sh1.png" },
+      { title: "Фирменная Большая шаурма", price: "2990 ₸", img: "/images/sh2.png" },
+      { title: "Классическая Средняя шаурма", price: "1690 ₸", img: "/images/sh3.png" },
+      { title: "Классическая Большая шаурма", price: "2490 ₸", img: "/images/sh4.png" },
+    ],
+  },
+];
 
 export default function Home() {
-  const [q, setQ] = useState("");
-  const [dishes, setDishes] = useState<DishDTO[]>([]);
-
-  useEffect(() => {
-    fetch(`${API_BASE}/menu`)
-      .then(r => r.json())
-      .then(data => setDishes(data.dishes || []))
-      .catch(() => setDishes([]));
-  }, []);
-
-  const search = async () => {
-    const r = await fetch(`${API_BASE}/menu?q=${encodeURIComponent(q)}`);
-    const data = await r.json();
-    setDishes(data.dishes || []);
-  };
-
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui" }}>
-      <h1>APPETIT</h1>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Поиск по блюдам" />
-        <button onClick={search}>Искать</button>
-      </div>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
-        {dishes.map(d => (
-          <article key={d.id} style={{ border: "1px solid #eee", borderRadius: 12, padding: 12, boxShadow: "0 2px 6px rgba(0,0,0,.06)" }}>
-            <img src={d.imageUrl || "https://placehold.co/320x180"} alt={d.name} style={{ width: "100%", borderRadius: 8 }} />
-            <h3>{d.name}</h3>
-            {d.description && <p style={{ color: "#555" }}>{d.description}</p>}
-            <strong>{d.minPrice ? `от ${d.minPrice} ₸` : `${d.basePrice} ₸`}</strong>
-          </article>
+    <div style={{ display: "flex", fontFamily: "Arial, sans-serif" }}>
+      {/* Сайдбар */}
+      <aside style={{ width: "220px", padding: "20px", borderRight: "1px solid #eee" }}>
+        <h3>Категории</h3>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {categories.map((cat) => (
+            <li key={cat.name} style={{ margin: "10px 0" }}>
+              <a href={`#${cat.name}`} style={{ textDecoration: "none", color: "#333" }}>
+                {cat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      {/* Контент */}
+      <main style={{ flex: 1, padding: "20px" }}>
+        {categories.map((cat) => (
+          <section key={cat.name} id={cat.name} style={{ marginBottom: "40px" }}>
+            <h2 style={{ marginBottom: "20px" }}>{cat.name}</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "20px" }}>
+              {cat.items.map((item) => (
+                <div key={item.title} style={{ border: "1px solid #eee", borderRadius: "8px", padding: "15px" }}>
+                  <img src={item.img} alt={item.title} style={{ width: "100%", borderRadius: "8px" }} />
+                  <h4 style={{ margin: "10px 0" }}>{item.title}</h4>
+                  <p style={{ color: "#666", fontSize: "14px" }}>{item.price}</p>
+                  <button style={{ background: "#e31b23", color: "#fff", border: "none", padding: "10px", borderRadius: "5px", cursor: "pointer" }}>
+                    Добавить
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         ))}
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }

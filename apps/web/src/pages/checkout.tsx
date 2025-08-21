@@ -42,10 +42,10 @@ export default function Checkout() {
         <label>Телефон <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label>
         <label>Имя <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>
         <div>
-          <label><input type="radio" name="type" checked={form.type==="delivery"} onChange={()=>setForm({...form, type:"delivery"})}/> Доставка</label>{" "}
-          <label><input type="radio" name="type" checked={form.type==="pickup"} onChange={()=>setForm({...form, type:"pickup"})}/> Самовывоз</label>
+          <label><input type="radio" name="type" checked={form.type === "delivery"} onChange={() => setForm({ ...form, type: "delivery" })} /> Доставка</label>{" "}
+          <label><input type="radio" name="type" checked={form.type === "pickup"} onChange={() => setForm({ ...form, type: "pickup" })} /> Самовывоз</label>
         </div>
-        {form.type==="delivery" && <>
+        {form.type === "delivery" && <>
           <label>Адрес <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></label>
           <label>Зона доставки
             <select value={form.zoneId} onChange={e => setForm({ ...form, zoneId: e.target.value })}>
