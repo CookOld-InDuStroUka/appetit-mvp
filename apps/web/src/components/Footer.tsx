@@ -6,12 +6,13 @@ export default function Footer() {
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Адреса и зоны доставки</Link></li>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Отзывы</Link></li>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Акции</Link></li>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Доставка и оплата</Link></li>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Бонусная программа</Link></li>
-            <li><Link href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>Вакансии</Link></li>
+            <li><Link href="/addresses" style={{ color: "#cbd5e1", textDecoration: "none" }}>Адреса и зоны доставки</Link></li>
+            <li><Link href="/reviews" style={{ color: "#cbd5e1", textDecoration: "none" }}>Отзывы</Link></li>
+            <li><Link href="/promotions" style={{ color: "#cbd5e1", textDecoration: "none" }}>Акции</Link></li>
+            <li><Link href="/delivery" style={{ color: "#cbd5e1", textDecoration: "none" }}>Доставка и оплата</Link></li>
+            <li><Link href="/bonus" style={{ color: "#cbd5e1", textDecoration: "none" }}>Бонусная программа</Link></li>
+            <li><Link href="/vacancies" style={{ color: "#cbd5e1", textDecoration: "none" }}>Вакансии</Link></li>
+            <li><Link href="/contacts" style={{ color: "#cbd5e1", textDecoration: "none" }}>Контакты</Link></li>
           </ul>
           <div style={{ textAlign: "right" }}>
             <p style={{ margin: 0, marginBottom: 8 }}>Акции, которые нельзя есть, — в наших приложениях!</p>

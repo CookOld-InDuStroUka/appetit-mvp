@@ -50,7 +50,6 @@ export default function Header() {
                 {/* Правый блок */}
                 <nav style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <a href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>RU ▾</a>
-                    <Link href="/contacts" style={{ color: "#cbd5e1", textDecoration: "none" }}>Контакты</Link>
                     <Link href="/login" style={{ color: "#cbd5e1", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
                         <span>Войти</span>
                     </Link>
