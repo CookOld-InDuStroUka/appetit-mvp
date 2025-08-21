@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "../components/Header";
-import MainMenu, { CategoryLink } from "../components/MainMenu";
+import MainMenu from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 
 // use local API if the env variable is missing so the menu still loads
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
+type CategoryDTO = {
+  id: string;
+  name: string;
+};
 
 type DishDTO = {
   id: string;
@@ -19,7 +24,7 @@ type DishDTO = {
 };
 
 export default function Home() {
-  const [categories, setCategories] = useState<CategoryLink[]>([]);
+  const [categories, setCategories] = useState<CategoryDTO[]>([]);
   const [dishes, setDishes] = useState<DishDTO[]>([]);
 
   useEffect(() => {
@@ -35,25 +40,29 @@ export default function Home() {
       });
   }, []);
 
-  const grouped = categories.map((c) => ({
-    ...c,
-    dishes: dishes.filter((d) => d.categoryId === c.id),
-  }));
+  const grouped = useMemo(
+    () =>
+      categories.map((c) => ({
+        ...c,
+        dishes: dishes.filter((d) => d.categoryId === c.id),
+      })),
+    [categories, dishes]
+  );
 
   return (
     <>
       <Header />
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex" }}>
-        <MainMenu categories={categories} />
+      <div style={{ display: "flex", width: "100%" }}>
+        <MainMenu />
         <main style={{ flex: 1, padding: "20px" }}>
           <PromoSlider />
           {grouped.map((cat) => (
-            <section key={cat.id} id={cat.slug ?? cat.id} style={{ marginBottom: "40px" }}>
+            <section key={cat.id} id={cat.name} style={{ marginBottom: "40px" }}>
               <h2 style={{ marginBottom: "20px" }}>{cat.name}</h2>
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
                   gap: "20px",
                 }}
               >
