@@ -2,6 +2,7 @@ import React from "react";
 import Header from "../components/Header";
 import MainMenu from "../components/MainMenu";
 import Footer from "../components/Footer";
+import PromoSlider from "../components/PromoSlider";
 
 const categories = [
   {
@@ -30,6 +31,7 @@ export default function Home() {
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex" }}>
         <MainMenu />
         <main style={{ flex: 1, padding: "20px" }}>
+          <PromoSlider />
           {categories.map((cat) => (
             <section key={cat.name} id={cat.name} style={{ marginBottom: "40px" }}>
               <h2 style={{ marginBottom: "20px" }}>{cat.name}</h2>
