@@ -1,14 +1,16 @@
 import React from "react";
 
-const items = [
-  { title: "Комбо", href: "#Комбо" },
-  { title: "Блюда", href: "#Блюда" },
-  { title: "Закуски", href: "#Закуски" },
-  { title: "Соусы", href: "#Соусы" },
-  { title: "Напитки", href: "#Напитки" },
-];
+export type CategoryLink = {
+  id: string;
+  name: string;
+  slug: string | null;
+};
 
-export default function MainMenu() {
+interface Props {
+  categories: CategoryLink[];
+}
+
+export default function MainMenu({ categories }: Props) {
   return (
     <aside
       style={{
@@ -21,11 +23,20 @@ export default function MainMenu() {
       }}
     >
       <nav>
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-          {items.map((item) => (
-            <li key={item.title}>
-              <a href={item.href} className="sidebar-link">
-                {item.title}
+        <ul
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          {categories.map((c) => (
+            <li key={c.id}>
+              <a href={`#${c.slug ?? c.id}`} className="sidebar-link">
+                {c.name}
               </a>
             </li>
           ))}
