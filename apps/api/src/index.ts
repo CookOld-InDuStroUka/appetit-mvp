@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
@@ -11,25 +11,27 @@ app.use(express.json());
 
 const BASE = "/api/v1";
 
-app.get(`${BASE}/health`, (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+app.get(`${BASE}/health`, (_req: Request, res: Response) =>
+  res.json({ ok: true, ts: new Date().toISOString() })
+);
 
-app.get(`${BASE}/cms/:slug`, async (req, res) => {
+app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
   const page = await prisma.cmsPage.findUnique({ where: { slug: req.params.slug } });
   if (!page || !page.isActive) return res.status(404).json({ error: "Not found" });
   res.json(page);
 });
 
-app.get(`${BASE}/branches`, async (_req, res) => {
+app.get(`${BASE}/branches`, async (_req: Request, res: Response) => {
   const branches = await prisma.branch.findMany({ include: { zones: true } });
   res.json(branches);
 });
 
-app.get(`${BASE}/zones`, async (_req, res) => {
+app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
   const zones = await prisma.zone.findMany({ orderBy: { name: "asc" } });
   res.json(zones);
 });
 
-app.get(`${BASE}/menu`, async (req, res) => {
+app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
   const q = (req.query.q as string)?.trim() || "";
   const categorySlug = (req.query.categorySlug as string) || undefined;
   let categoryId: string | undefined = undefined;
@@ -85,7 +87,7 @@ const OrderSchema = z.object({
   paymentMethod: z.enum(["cash", "card"])
 });
 
-app.post(`${BASE}/orders`, async (req, res) => {
+app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   const parsed = OrderSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
   const data = parsed.data;
@@ -158,7 +160,7 @@ app.post(`${BASE}/orders`, async (req, res) => {
   res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, total, createdAt: order.createdAt });
 });
 
-app.get(`${BASE}/orders/:id`, async (req, res) => {
+app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
   const o = await prisma.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
   if (!o) return res.status(404).json({ error: "Not found" });
   res.json(o);
