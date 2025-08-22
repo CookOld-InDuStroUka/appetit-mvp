@@ -29,6 +29,7 @@
 - feat: track user bonus points per account and accrue 10% of order subtotal
 - feat: show Yandex delivery map of Ust-Kamenogorsk with address field overlay in cart modal
 - feat: list pickup branches as radio options in cart modal
+- feat: open delivery/pickup settings from header modal and remove toggle from cart
 
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

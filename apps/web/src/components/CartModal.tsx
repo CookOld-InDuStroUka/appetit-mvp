@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import DeliveryMap from "./DeliveryMap";
-import PickupMap, { Branch } from "./PickupMap";
-import DeliveryToggle from "./DeliveryToggle";
+import { useDelivery } from "./DeliveryContext";
 
 export type CartItem = {
   id: string;
@@ -19,23 +17,9 @@ type Props = {
   removeItem: (id: string) => void;
 };
 
-const BRANCHES: Branch[] = [
-  { id: "kazakhstan", name: "КАЗАХСТАН, 70А", coords: [49.963, 82.605] },
-  { id: "satpaeva", name: "САТПАЕВА, 8А", coords: [49.967, 82.640] },
-  { id: "novatorov", name: "НОВАТОРОВ, 18/2", coords: [49.955, 82.620] },
-  { id: "zhybek", name: "ЖИБЕК ЖОЛЫ, 1к8", coords: [49.943, 82.630] },
-  { id: "samarskoe", name: "САМАРСКОЕ ШОССЕ, 5/1", coords: [49.935, 82.605] },
-  { id: "kabanbay", name: "КАБАНБАЙ БАТЫРА,148", coords: [49.955, 82.650] },
-  { id: "nazarbaeva", name: "НАЗАРБАЕВА, 28А", coords: [49.978, 82.650] },
-];
-
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const [promo, setPromo] = useState("");
-  const [type, setType] = useState<"delivery" | "pickup">("delivery");
-  const [address, setAddress] = useState("");
-  const [apt, setApt] = useState("");
-  const [comment, setComment] = useState("");
-  const [branch, setBranch] = useState(BRANCHES[0].id);
+  const { mode, address, branch, branches, open: openDelivery } = useDelivery();
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const bonuses = Math.floor(total * 0.1);
@@ -90,62 +74,23 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         ) : (
           <>
             <div style={{ marginBottom: 16 }}>
-              <DeliveryToggle value={type} onChange={setType} />
+              <button
+                onClick={openDelivery}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--card-bg)",
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+              >
+                {mode === "delivery"
+                  ? `Доставка: ${address || "указать адрес"}`
+                  : `Самовывоз: ${branches.find((b) => b.id === branch)?.name || "выбрать филиал"}`}
+              </button>
             </div>
-
-            {type === "delivery" && (
-              <div style={{ marginBottom: 16 }}>
-                <DeliveryMap address={address} setAddress={setAddress} height={300} />
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  <input
-                    value={apt}
-                    onChange={(e) => setApt(e.target.value)}
-                    placeholder="Квартира/офис"
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border)",
-                      background: "var(--card-bg)",
-                    }}
-                  />
-                  <input
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Комментарий"
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border)",
-                      background: "var(--card-bg)",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {type === "pickup" && (
-              <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                <div style={{ flex: 1 }}>
-                  {BRANCHES.map((b) => (
-                    <label key={b.id} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
-                      <input
-                        type="radio"
-                        name="branch"
-                        value={b.id}
-                        checked={branch === b.id}
-                        onChange={() => setBranch(b.id)}
-                        style={{ marginRight: 8 }}
-                      />
-                      {b.name}
-                    </label>
-                  ))}
-                  <p style={{ fontSize: 14, color: "var(--muted-text)" }}>Ассортимент филиалов может отличаться.</p>
-                </div>
-                <PickupMap branches={BRANCHES} selected={branch} onSelect={setBranch} height={300} />
-              </div>
-            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
               {items.map((it) => (

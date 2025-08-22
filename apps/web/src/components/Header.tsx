@@ -4,6 +4,7 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useTheme } from "./ThemeContext";
+import { useDelivery } from "./DeliveryContext";
 
 export default function Header() {
     const [q, setQ] = useState("");
@@ -11,6 +12,7 @@ export default function Header() {
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
     const { user, open: openAuth } = useAuth();
+    const { mode, open: openDelivery } = useDelivery();
 
     const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
 
@@ -61,6 +63,12 @@ export default function Header() {
 
                 {/* Правый блок */}
                 <nav style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+                    <button
+                        onClick={openDelivery}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
+                    >
+                        {mode === "delivery" ? "Доставка" : "Самовывоз"}
+                    </button>
                     <button
                         onClick={toggleTheme}
                         style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
