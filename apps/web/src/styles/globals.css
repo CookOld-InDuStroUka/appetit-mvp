@@ -1,26 +1,28 @@
+@import url("https://fonts.cdnfonts.com/css/tt-hoves");
+
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --bg: #fff;
-  --text: #111827;
-  --header-bg: #0f172a;
-  --header-text: #fff;
-  --header-border: #0b1226;
-  --input-bg: #0b1226;
-  --input-border: #334155;
-  --nav-link: #cbd5e1;
-  --accent: #ef4444;
-  --card-bg: #fff;
-  --card-border: #eee;
-  --card-text: #000;
-  --muted-text: #666;
-  --hover-bg: #f3f4f6;
-  --footer-bg: #0f172a;
-  --footer-text: #fff;
-  --modal-bg: #fff;
-  --border: #e5e7eb;
+  --bg: #F7F7F7;
+  --text: #303030;
+  --header-bg: #303030;
+  --header-text: #F7F7F7;
+  --header-border: #303030;
+  --input-bg: #FFFFFF;
+  --input-border: #61A35B;
+  --nav-link: #61A35B;
+  --accent: #61A35B;
+  --card-bg: #FFFFFF;
+  --card-border: #EEEEEE;
+  --card-text: #303030;
+  --muted-text: #666666;
+  --hover-bg: #FFB700;
+  --footer-bg: #303030;
+  --footer-text: #F7F7F7;
+  --modal-bg: #FFFFFF;
+  --border: #E5E7EB;
 }
 
 body.theme-dark {
@@ -31,13 +33,13 @@ body.theme-dark {
   --header-border: #111827;
   --input-bg: #374151;
   --input-border: #4b5563;
-  --nav-link: #d1d5db;
-  --accent: #ef4444;
+  --nav-link: #61A35B;
+  --accent: #61A35B;
   --card-bg: #1f2937;
   --card-border: #374151;
   --card-text: #f3f4f6;
   --muted-text: #9ca3af;
-  --hover-bg: #374151;
+  --hover-bg: #FFB700;
   --footer-bg: #1f2937;
   --footer-text: #f3f4f6;
   --modal-bg: #1f2937;
@@ -61,7 +63,7 @@ main {
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "TTHoves", sans-serif;
   background: var(--bg);
   color: var(--text);
 }
