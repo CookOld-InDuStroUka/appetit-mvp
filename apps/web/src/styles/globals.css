@@ -196,6 +196,14 @@ body {
   /* styles defined inline in component */
 }
 
+/* Hide Yandex Maps branding */
+.ymaps-2-1-79-logo,
+.ymaps-2-1-79-copyrights-pane,
+.ymaps-2-1-79-map-copyrights,
+.ymaps-2-1-79-copyrights_logo-link {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .main-sidebar {
     display: none;

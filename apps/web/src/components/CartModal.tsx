@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import DeliveryModal, { DeliveryInfo } from "./DeliveryModal";
+import DeliveryMap from "./DeliveryMap";
+import PickupMap, { Branch } from "./PickupMap";
+import DeliveryToggle from "./DeliveryToggle";
 
 export type CartItem = {
   id: string;
@@ -17,14 +19,23 @@ type Props = {
   removeItem: (id: string) => void;
 };
 
+const BRANCHES: Branch[] = [
+  { id: "kazakhstan", name: "КАЗАХСТАН, 70А", coords: [49.963, 82.605] },
+  { id: "satpaeva", name: "САТПАЕВА, 8А", coords: [49.967, 82.640] },
+  { id: "novatorov", name: "НОВАТОРОВ, 18/2", coords: [49.955, 82.620] },
+  { id: "zhybek", name: "ЖИБЕК ЖОЛЫ, 1к8", coords: [49.943, 82.630] },
+  { id: "samarskoe", name: "САМАРСКОЕ ШОССЕ, 5/1", coords: [49.935, 82.605] },
+  { id: "kabanbay", name: "КАБАНБАЙ БАТЫРА,148", coords: [49.955, 82.650] },
+  { id: "nazarbaeva", name: "НАЗАРБАЕВА, 28А", coords: [49.978, 82.650] },
+];
+
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const [promo, setPromo] = useState("");
-  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
-    type: "delivery",
-    address: "",
-    branch: "САМАРСКОЕ ШОССЕ, 5/1",
-  });
-  const [showDelivery, setShowDelivery] = useState(false);
+  const [type, setType] = useState<"delivery" | "pickup">("delivery");
+  const [address, setAddress] = useState("");
+  const [apt, setApt] = useState("");
+  const [comment, setComment] = useState("");
+  const [branch, setBranch] = useState(BRANCHES[0].id);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const bonuses = Math.floor(total * 0.1);
@@ -79,22 +90,62 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         ) : (
           <>
             <div style={{ marginBottom: 16 }}>
-              <button
-                onClick={() => setShowDelivery(true)}
-                style={{
-                  width: "100%",
-                  padding: "8px 0",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "var(--card-bg)",
-                  cursor: "pointer",
-                }}
-              >
-                {deliveryInfo.type === "delivery"
-                  ? deliveryInfo.address || "Указать адрес доставки"
-                  : `Самовывоз: ${deliveryInfo.branch}`}
-              </button>
+              <DeliveryToggle value={type} onChange={setType} />
             </div>
+
+            {type === "delivery" && (
+              <div style={{ marginBottom: 16 }}>
+                <DeliveryMap address={address} setAddress={setAddress} height={300} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <input
+                    value={apt}
+                    onChange={(e) => setApt(e.target.value)}
+                    placeholder="Квартира/офис"
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "var(--card-bg)",
+                    }}
+                  />
+                  <input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Комментарий"
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border)",
+                      background: "var(--card-bg)",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {type === "pickup" && (
+              <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  {BRANCHES.map((b) => (
+                    <label key={b.id} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
+                      <input
+                        type="radio"
+                        name="branch"
+                        value={b.id}
+                        checked={branch === b.id}
+                        onChange={() => setBranch(b.id)}
+                        style={{ marginRight: 8 }}
+                      />
+                      {b.name}
+                    </label>
+                  ))}
+                  <p style={{ fontSize: 14, color: "var(--muted-text)" }}>Ассортимент филиалов может отличаться.</p>
+                </div>
+                <PickupMap branches={BRANCHES} selected={branch} onSelect={setBranch} height={300} />
+              </div>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
               {items.map((it) => (
@@ -156,62 +207,64 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               ))}
             </div>
 
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               <input
                 value={promo}
                 onChange={(e) => setPromo(e.target.value)}
                 placeholder="Промокод"
                 style={{
-                  width: "100%",
-                  padding: "8px",
+                  flex: 1,
+                  padding: "8px 12px",
                   borderRadius: 8,
                   border: "1px solid var(--border)",
                   background: "var(--card-bg)",
-                  color: "var(--text)",
                 }}
               />
+              <button
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--card-bg)",
+                  cursor: "pointer",
+                }}
+              >
+                Применить
+              </button>
             </div>
 
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span>Товары в заказе {items.length} шт.</span>
-                <span>{total} ₸</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                <span>Бонусы к начислению</span>
-                <span style={{ color: "#16a34a" }}>+{bonuses} ₸</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span>Итого</span>
                 <span>{total} ₸</span>
               </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14 }}>
+                <span>Бонусы</span>
+                <span>{bonuses} ₸</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
+                <span>К оплате</span>
+                <span>{total - bonuses} ₸</span>
+              </div>
             </div>
 
-            <a
-              href="/checkout"
+            <button
               style={{
-                display: "block",
-                textAlign: "center",
-                background: "var(--accent)",
-                color: "#fff",
+                width: "100%",
                 padding: "12px 0",
                 borderRadius: 8,
-                textDecoration: "none",
+                border: "none",
+                background: "var(--accent)",
+                color: "#fff",
+                cursor: "pointer",
                 fontWeight: 600,
               }}
             >
-              Продолжить оформление
-            </a>
+              Оформить заказ
+            </button>
           </>
         )}
       </div>
-      {showDelivery && (
-        <DeliveryModal
-          info={deliveryInfo}
-          onClose={() => setShowDelivery(false)}
-          onSave={setDeliveryInfo}
-        />
-      )}
     </div>
   );
 }

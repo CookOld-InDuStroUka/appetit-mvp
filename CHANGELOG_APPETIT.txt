@@ -1,4 +1,6 @@
 ## 2025-08-22
+- feat: show delivery/pickup toggle with address or branch map inside cart and hide Yandex branding
+- fix: align header actions to the right after the search field
 - feat: allow configuring delivery or pickup from header with address entry
 - feat: support email registration and persist users in database
 - feat: enable admin login/registration from footer with redirect to admin panel
