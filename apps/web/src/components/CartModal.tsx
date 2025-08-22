@@ -20,6 +20,7 @@ type Props = {
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const [type, setType] = useState<"delivery" | "pickup">("delivery");
   const [branch, setBranch] = useState("САМАРСКОЕ ШОССЕ, 5/1");
+  const [address, setAddress] = useState("");
   const [promo, setPromo] = useState("");
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -106,25 +107,24 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
             </div>
             {type === "delivery" && (
               <div style={{ marginBottom: 16 }}>
-                <DeliveryMap />
+                <DeliveryMap address={address} setAddress={setAddress} />
               </div>
             )}
             {type === "pickup" && (
               <div style={{ marginBottom: 16 }}>
-                <select
-                  value={branch}
-                  onChange={(e) => setBranch(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border)",
-                    background: "var(--card-bg)",
-                    color: "var(--text)",
-                  }}
-                >
-                  <option value="САМАРСКОЕ ШОССЕ, 5/1">САМАРСКОЕ ШОССЕ, 5/1</option>
-                </select>
+                {["КАЗАХСТАН, 70А", "САТПАЕВА, 8А", "НОВАТОРОВ, 18/2", "ЖИБЕК ЖОЛЫ, 1к8", "САМАРСКОЕ ШОССЕ, 5/1", "КАБАНБАЙ БАТЫРА, 148", "НАЗАРБАЕВА, 28А"].map((b) => (
+                  <label key={b} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
+                    <input
+                      type="radio"
+                      name="branch"
+                      value={b}
+                      checked={branch === b}
+                      onChange={() => setBranch(b)}
+                      style={{ marginRight: 8 }}
+                    />
+                    {b}
+                  </label>
+                ))}
               </div>
             )}
 
@@ -193,7 +193,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 value={promo}
                 onChange={(e) => setPromo(e.target.value)}
                 placeholder="Промокод"
-                style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text)" }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "var(--card-bg)",
+                  color: "var(--text)",
+                }}
               />
             </div>
 

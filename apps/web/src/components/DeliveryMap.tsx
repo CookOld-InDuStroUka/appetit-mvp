@@ -1,54 +1,75 @@
 import { useEffect, useRef } from "react";
 
-export default function DeliveryMap() {
+type Props = {
+  address: string;
+  setAddress: (addr: string) => void;
+};
+
+export default function DeliveryMap({ address, setAddress }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const center: [number, number] = [49.9483, 82.6275];
-    const zone: [number, number][] = [
-      [49.995, 82.55],
-      [49.9, 82.55],
-      [49.9, 82.7],
-      [49.995, 82.7]
-    ];
-
     if (!mapRef.current) return;
 
-    const loadLeaflet = async () => {
-      if (!(window as any).L) {
-        await Promise.all([
-          new Promise<void>((resolve) => {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-            document.head.appendChild(link);
-            link.onload = () => resolve();
-          }),
-          new Promise<void>((resolve) => {
-            const script = document.createElement("script");
-            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-            script.onload = () => resolve();
-            document.body.appendChild(script);
-          })
-        ]);
+    const initMap = async () => {
+      if (!(window as any).ymaps) {
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.src = "https://api-maps.yandex.ru/2.1/?lang=ru_RU";
+          script.onload = () => resolve();
+          document.head.appendChild(script);
+        });
       }
 
-      const L = (window as any).L;
-      const map = L.map(mapRef.current!).setView(center, 12);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-      L.polygon(zone, { color: "#ff5500", fillOpacity: 0.15 }).addTo(map);
+      (window as any).ymaps.ready(() => {
+        const ymaps = (window as any).ymaps;
+        const center: [number, number] = [49.9483, 82.6275];
+        const zone = [
+          [49.995, 82.55],
+          [49.9, 82.55],
+          [49.9, 82.7],
+          [49.995, 82.7],
+        ];
+        const map = new ymaps.Map(mapRef.current, {
+          center,
+          zoom: 12,
+          controls: [],
+        });
+        const polygon = new ymaps.Polygon([zone], {}, {
+          fillColor: "rgba(255,85,0,0.15)",
+          strokeColor: "#ff5500",
+          strokeWidth: 2,
+        });
+        map.geoObjects.add(polygon);
+      });
     };
 
-    loadLeaflet();
+    initMap();
   }, []);
 
   return (
-    <div
-      ref={mapRef}
-      style={{ height: 300, borderRadius: 8, background: "#e5e5e5" }}
-    />
+    <div style={{ position: "relative", height: 300 }}>
+      <div
+        ref={mapRef}
+        style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}
+      />
+      <input
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Адрес доставки"
+        style={{
+          position: "absolute",
+          top: 8,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "80%",
+          padding: "8px 12px",
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "#fff",
+        }}
+      />
+    </div>
   );
 }
+
