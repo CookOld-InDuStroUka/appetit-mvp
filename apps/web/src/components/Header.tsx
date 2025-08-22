@@ -47,7 +47,7 @@ export default function Header() {
                 </Link>
 
                 {/* Поиск */}
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, marginLeft: 12, minWidth: 200 }}>
+                <div style={{ flex: "0 1 280px", display: "flex", alignItems: "center", gap: 8, marginLeft: 12, minWidth: 160 }}>
                     <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}

@@ -1,11 +1,22 @@
 import React, { useState } from "react";
 import DeliveryMap from "./DeliveryMap";
+import PickupMap, { Branch } from "./PickupMap";
 
 export type DeliveryInfo = {
   type: "delivery" | "pickup";
   address: string;
   branch: string;
 };
+
+const BRANCHES: Branch[] = [
+  { id: "kazakhstan", name: "КАЗАХСТАН, 70А", coords: [49.963, 82.605] },
+  { id: "satpaeva", name: "САТПАЕВА, 8А", coords: [49.967, 82.640] },
+  { id: "novatorov", name: "НОВАТОРОВ, 18/2", coords: [49.955, 82.620] },
+  { id: "zhybek", name: "ЖИБЕК ЖОЛЫ, 1к8", coords: [49.943, 82.630] },
+  { id: "samarskoe", name: "САМАРСКОЕ ШОССЕ, 5/1", coords: [49.935, 82.605] },
+  { id: "kabanbay", name: "КАБАНБАЙ БАТЫРА,148", coords: [49.955, 82.650] },
+  { id: "nazarbaeva", name: "НАЗАРБАЕВА, 28А", coords: [49.978, 82.650] },
+];
 
 type Props = {
   info: DeliveryInfo;
@@ -16,13 +27,17 @@ type Props = {
 export default function DeliveryModal({ info, onClose, onSave }: Props) {
   const [type, setType] = useState<"delivery" | "pickup">(info.type);
   const [address, setAddress] = useState(info.address);
-  const [branch, setBranch] = useState(info.branch);
+  const [branch, setBranch] = useState(() => {
+    const found = BRANCHES.find((b) => b.name === info.branch);
+    return found ? found.id : BRANCHES[0].id;
+  });
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
   const handleSave = () => {
-    onSave({ type, address, branch });
+    const sel = BRANCHES.find((b) => b.id === branch)?.name || "";
+    onSave({ type, address, branch: sel });
     onClose();
   };
 
@@ -82,21 +97,24 @@ export default function DeliveryModal({ info, onClose, onSave }: Props) {
         )}
 
         {type === "pickup" && (
-          <div style={{ marginBottom: 16 }}>
-            {["КАЗАХСТАН, 70А", "САТПАЕВА, 8А", "НОВАТОРОВ, 18/2", "ЖИБЕК ЖОЛЫ, 1к8", "САМАРСКОЕ ШОССЕ, 5/1", "КАБАНБАЙ БАТЫРА, 148", "НАЗАРБАЕВА, 28А"].map((b) => (
-              <label key={b} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="branch"
-                  value={b}
-                  checked={branch === b}
-                  onChange={() => setBranch(b)}
-                  style={{ marginRight: 8 }}
-                />
-                {b}
-              </label>
-            ))}
-            <p style={{ fontSize: 14, color: "var(--muted-text)" }}>Ассортимент филиалов может отличаться.</p>
+          <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              {BRANCHES.map((b) => (
+                <label key={b.id} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="branch"
+                    value={b.id}
+                    checked={branch === b.id}
+                    onChange={() => setBranch(b.id)}
+                    style={{ marginRight: 8 }}
+                  />
+                  {b.name}
+                </label>
+              ))}
+              <p style={{ fontSize: 14, color: "var(--muted-text)" }}>Ассортимент филиалов может отличаться.</p>
+            </div>
+            <PickupMap branches={BRANCHES} selected={branch} onSelect={setBranch} height={400} />
           </div>
         )}
 
