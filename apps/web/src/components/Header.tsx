@@ -51,14 +51,14 @@ export default function Header() {
                         placeholder="Найти блюдо…"
                         style={{
                             width: "100%", padding: "8px 12px", borderRadius: 8,
-                            border: "1px solid var(--input-border)", background: "var(--input-bg)", color: "var(--header-text)"
+                            border: "1px solid var(--input-border)", background: "var(--input-bg)", color: "var(--text)"
                         }}
                     />
                     <button
                         onClick={() => { if (q.trim()) location.href = `/?q=${encodeURIComponent(q.trim())}`; }}
                         style={{
-                            padding: "8px 12px", borderRadius: 8, border: "1px solid var(--input-border)",
-                            background: "var(--input-bg)", color: "var(--header-text)", cursor: "pointer"
+                            padding: "8px 12px", borderRadius: 8, border: "1px solid var(--search-btn-border)",
+                            background: "var(--search-btn-bg)", color: "var(--search-btn-color)", cursor: "pointer"
                         }}
                     >Искать</button>
                 </div>

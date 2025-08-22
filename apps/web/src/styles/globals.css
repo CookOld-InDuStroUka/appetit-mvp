@@ -23,27 +23,33 @@
   --footer-text: #F7F7F7;
   --modal-bg: #FFFFFF;
   --border: #E5E7EB;
+  --search-btn-bg: var(--input-bg);
+  --search-btn-color: #303030;
+  --search-btn-border: var(--input-border);
 }
 
 body.theme-dark {
-  --bg: #111827;
+  --bg: #181818;
   --text: #f3f4f6;
-  --header-bg: #1f2937;
+  --header-bg: #202020;
   --header-text: #f3f4f6;
-  --header-border: #111827;
-  --input-bg: #374151;
-  --input-border: #4b5563;
+  --header-border: #303030;
+  --input-bg: #2a2a2a;
+  --input-border: #3a3a3a;
   --nav-link: #61A35B;
   --accent: #61A35B;
-  --card-bg: #1f2937;
-  --card-border: #374151;
+  --card-bg: #262626;
+  --card-border: #333333;
   --card-text: #f3f4f6;
   --muted-text: #9ca3af;
   --hover-bg: #FFB700;
-  --footer-bg: #1f2937;
+  --footer-bg: #202020;
   --footer-text: #f3f4f6;
-  --modal-bg: #1f2937;
-  --border: #4b5563;
+  --modal-bg: #262626;
+  --border: #333333;
+  --search-btn-bg: #61A35B;
+  --search-btn-color: #fff;
+  --search-btn-border: #61A35B;
 }
 
 html,
