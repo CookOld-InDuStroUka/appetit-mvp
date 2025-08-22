@@ -1,2 +1,5 @@
+## 2025-08-22
+- feat: add dish search endpoint for menu navigation
+
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

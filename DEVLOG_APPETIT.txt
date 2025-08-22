@@ -1,1 +1,1 @@
-[{ts}] @Имя — кратко что сделали; файлы; проверки; TODO
+[2025-08-22T06:00:17+00:00] @ChatGPT — added dish search endpoint with suggestions; apps/api/src/index.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm test (missing script); TODO

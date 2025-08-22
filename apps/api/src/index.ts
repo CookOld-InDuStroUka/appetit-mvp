@@ -72,6 +72,23 @@ app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
   res.json({ categories, dishes });
 });
 
+app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
+  const q = (req.query.q as string)?.trim() || "";
+  if (!q) return res.json([]);
+
+  const dishes = await prisma.dish.findMany({
+    where: {
+      isActive: true,
+      name: { contains: q, mode: "insensitive" }
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+    take: 10
+  });
+
+  res.json(dishes);
+});
+
 app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
   const d = await prisma.dish.findUnique({
     where: { id: req.params.id },
