@@ -1,2 +1,11 @@
+## 2025-08-22
+- feat: enable adding dishes to cart from cards and detail modal with sauce options
+- feat: allow removing items from cart and add hover shadow for dish cards
+- feat: add dish search endpoint for menu navigation
+- fix: resolve express/cors type declarations and accept multiple query params in search
+- fix: install express and cors type definitions in workspace root
+- fix: provide ambient declarations for express/cors when types are unavailable
+- feat: introduce cart modal with delivery/pickup toggle and order summary
+
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

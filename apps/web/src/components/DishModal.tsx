@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useCart } from "./CartContext";
 
 type Props = {
   dish: {
@@ -12,15 +13,24 @@ type Props = {
 };
 
 const DEFAULT_INGREDIENTS = ["Лук", "Помидоры", "Сыр"];
+const DEFAULT_SAUCES = ["Сырный", "Чесночный", "Томатный"];
 
 export default function DishModal({ dish, onClose }: Props) {
   const [excluded, setExcluded] = useState<string[]>([]);
+  const [sauces, setSauces] = useState<string[]>([]);
+  const { addItem } = useCart();
 
   if (!dish) return null;
 
   const toggle = (ing: string) => {
     setExcluded((prev) =>
       prev.includes(ing) ? prev.filter((i) => i !== ing) : [...prev, ing]
+    );
+  };
+
+  const toggleSauce = (s: string) => {
+    setSauces((prev) =>
+      prev.includes(s) ? prev.filter((i) => i !== s) : [...prev, s]
     );
   };
 
@@ -52,9 +62,39 @@ export default function DishModal({ dish, onClose }: Props) {
             </li>
           ))}
         </ul>
+        <h4 style={{ marginTop: 20 }}>Соусы</h4>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {DEFAULT_SAUCES.map((s) => (
+            <li key={s} style={{ marginBottom: 8 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={sauces.includes(s)}
+                  onChange={() => toggleSauce(s)}
+                />{" "}
+                {s}
+              </label>
+            </li>
+          ))}
+        </ul>
         <p style={{ fontWeight: 600 }}>
           Цена: {dish.basePrice} ₸
         </p>
+        <button
+          onClick={() => addItem({ id: dish.id, name: dish.name, price: dish.basePrice, imageUrl: dish.imageUrl, qty: 1 })}
+          style={{
+            marginTop: 12,
+            padding: "10px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: "#ef4444",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Добавить
+        </button>
       </div>
     </div>
   );
