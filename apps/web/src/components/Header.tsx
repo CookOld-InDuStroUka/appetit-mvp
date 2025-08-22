@@ -1,21 +1,26 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 
 export default function Header() {
     const [q, setQ] = useState("");
     const [isCartOpen, setCartOpen] = useState(false);
+    const [theme, setTheme] = useState<"light" | "dark">("light");
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
 
     const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+    useEffect(() => {
+        document.body.classList.toggle("theme-dark", theme === "dark");
+    }, [theme]);
 
     return (
         <>
         <header style={{
             position: "sticky", top: 0, zIndex: 50,
-            background: "#0f172a",
-            color: "#fff", borderBottom: "1px solid #0b1226",
+            background: "var(--header-bg)",
+            color: "var(--header-text)", borderBottom: "1px solid var(--header-border)",
             width: "100%"
         }}>
             <div style={{
@@ -26,10 +31,10 @@ export default function Header() {
                 {/* Лого */}
                 <Link href="/" style={{
                     display: "inline-flex", alignItems: "center",
-                    fontWeight: 800, letterSpacing: .3, textDecoration: "none", color: "#fff"
+                    fontWeight: 800, letterSpacing: .3, textDecoration: "none", color: "var(--header-text)"
                 }}>
                     <span style={{
-                        background: "#ef4444", color: "#fff", padding: "6px 10px",
+                        background: "var(--accent)", color: "#fff", padding: "6px 10px",
                         borderRadius: 8, marginRight: 8
                     }}>APPETIT</span>
                     <span style={{ opacity: .8 }}>вкусная шаурма</span>
@@ -43,26 +48,33 @@ export default function Header() {
                         placeholder="Найти блюдо…"
                         style={{
                             width: "100%", padding: "8px 12px", borderRadius: 8,
-                            border: "1px solid #334155", background: "#0b1226", color: "#fff"
+                            border: "1px solid var(--input-border)", background: "var(--input-bg)", color: "var(--header-text)"
                         }}
                     />
                     <button
                         onClick={() => { if (q.trim()) location.href = `/?q=${encodeURIComponent(q.trim())}`; }}
                         style={{
-                            padding: "8px 12px", borderRadius: 8, border: "1px solid #334155",
-                            background: "#1e293b", color: "#fff", cursor: "pointer"
+                            padding: "8px 12px", borderRadius: 8, border: "1px solid var(--input-border)",
+                            background: "var(--input-bg)", color: "var(--header-text)", cursor: "pointer"
                         }}
                     >Искать</button>
                 </div>
 
                 {/* Правый блок */}
                 <nav style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <a href="#" style={{ color: "#cbd5e1", textDecoration: "none" }}>RU ▾</a>
-                    <Link href="/login" style={{ color: "#cbd5e1", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+                    <button
+                        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
+                        aria-label="Переключить тему"
+                    >
+                        {theme === "light" ? "🌙" : "☀️"}
+                    </button>
+                    <a href="#" style={{ color: "var(--nav-link)", textDecoration: "none" }}>RU ▾</a>
+                    <Link href="/login" style={{ color: "var(--nav-link)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
                         <span>Войти</span>
                     </Link>
                     <button onClick={() => setCartOpen(true)} style={{
-                        background: "#ef4444", color: "#fff", textDecoration: "none",
+                        background: "var(--accent)", color: "#fff", textDecoration: "none",
                         padding: "8px 12px", borderRadius: 10, fontWeight: 700,
                         display: "inline-flex", alignItems: "center", gap: 8,
                         border: "none", cursor: "pointer"

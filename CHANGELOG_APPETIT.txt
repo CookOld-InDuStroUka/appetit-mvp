@@ -1,4 +1,7 @@
 ## 2025-08-22
+- fix: eliminate layout overflow so header/footer span full width and cart modal centers
+- feat: hide sidebar on phones and show horizontal category bar
+- feat: add light/dark theme toggle via CSS variables
 - feat: replace text "Добавить" with "+" and change button color on hover
 - feat: make sidebar width and dish cards responsive for smaller screens
 - feat: enable adding dishes to cart from cards and detail modal with sauce options

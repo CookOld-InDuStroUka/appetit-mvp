@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import MainMenu from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
+import MobileMenu from "../components/MobileMenu";
 
 // use local API if the env variable is missing so the menu still loads
 const API_BASE =
@@ -51,8 +52,9 @@ export default function Home() {
       <Header />
       <div style={{ display: "flex", width: "100%" }}>
         <MainMenu />
-        <main style={{ flex: 1, padding: "20px" }}>
+        <main style={{ flex: 1, padding: "20px", boxSizing: "border-box" }}>
           <PromoSlider />
+          <MobileMenu />
           {sections.map((sec) => (
             <section key={sec.name} id={sec.name} style={{ marginBottom: "40px" }}>
               <h2 style={{ marginBottom: "20px" }}>{sec.name}</h2>

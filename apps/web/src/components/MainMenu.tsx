@@ -1,6 +1,6 @@
 import React from "react";
 
-const items = [
+export const MENU_ITEMS = [
   { title: "Комбо", href: "#Комбо" },
   { title: "Блюда", href: "#Блюда" },
   { title: "Закуски", href: "#Закуски" },
@@ -11,10 +11,11 @@ const items = [
 export default function MainMenu() {
   return (
     <aside
+      className="main-sidebar"
       style={{
         width: "clamp(140px, 18vw, 220px)",
         padding: 20,
-        borderRight: "1px solid #eee",
+        borderRight: "1px solid var(--card-border)",
         position: "sticky",
         top: 70,
         alignSelf: "flex-start",
@@ -31,7 +32,7 @@ export default function MainMenu() {
             gap: 12,
           }}
         >
-          {items.map((item) => (
+          {MENU_ITEMS.map((item) => (
             <li key={item.title}>
               <a href={item.href} className="sidebar-link">
                 {item.title}

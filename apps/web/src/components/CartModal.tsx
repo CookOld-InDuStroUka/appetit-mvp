@@ -36,7 +36,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
             {items.length > 0 && (
               <button
                 onClick={onClear}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6b7280" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--muted-text)" }}
                 aria-label="Очистить корзину"
               >
                 🗑️
@@ -44,7 +44,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
             )}
             <button
               onClick={onClose}
-              style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6b7280" }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--muted-text)" }}
               aria-label="Закрыть"
             >
               ×
@@ -63,8 +63,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 display: "inline-block",
                 padding: "12px 24px",
                 borderRadius: 8,
-                background: "#1e293b",
-                color: "#fff",
+                background: "var(--input-bg)",
+                color: "var(--header-text)",
                 textDecoration: "none",
               }}
             >
@@ -80,9 +80,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   flex: 1,
                   padding: "8px 0",
                   borderRadius: 8,
-                  border: "1px solid #e5e7eb",
-                  background: type === "delivery" ? "#ef4444" : "#fff",
-                  color: type === "delivery" ? "#fff" : "#111827",
+                  border: "1px solid var(--border)",
+                  background: type === "delivery" ? "var(--accent)" : "var(--card-bg)",
+                  color: type === "delivery" ? "#fff" : "var(--text)",
                   cursor: "pointer",
                 }}
               >
@@ -94,9 +94,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   flex: 1,
                   padding: "8px 0",
                   borderRadius: 8,
-                  border: "1px solid #e5e7eb",
-                  background: type === "pickup" ? "#ef4444" : "#fff",
-                  color: type === "pickup" ? "#fff" : "#111827",
+                  border: "1px solid var(--border)",
+                  background: type === "pickup" ? "var(--accent)" : "var(--card-bg)",
+                  color: type === "pickup" ? "#fff" : "var(--text)",
                   cursor: "pointer",
                 }}
               >
@@ -108,7 +108,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 <select
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid #e5e7eb" }}
+                  style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text)" }}
                 >
                   <option value="САМАРСКОЕ ШОССЕ, 5/1">САМАРСКОЕ ШОССЕ, 5/1</option>
                 </select>
@@ -125,7 +125,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600 }}>{it.name}</div>
-                    <div style={{ color: "#6b7280", fontSize: 14 }}>{it.price} ₸</div>
+                    <div style={{ color: "var(--muted-text)", fontSize: 14 }}>{it.price} ₸</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <button
@@ -134,8 +134,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                         width: 24,
                         height: 24,
                         borderRadius: 6,
-                        border: "1px solid #e5e7eb",
-                        background: "#fff",
+                        border: "1px solid var(--border)",
+                        background: "var(--card-bg)",
                         cursor: "pointer",
                       }}
                       aria-label="Уменьшить"
@@ -149,8 +149,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                         width: 24,
                         height: 24,
                         borderRadius: 6,
-                        border: "1px solid #e5e7eb",
-                        background: "#fff",
+                        border: "1px solid var(--border)",
+                        background: "var(--card-bg)",
                         cursor: "pointer",
                       }}
                       aria-label="Увеличить"
@@ -163,7 +163,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                         background: "transparent",
                         border: "none",
                         cursor: "pointer",
-                        color: "#9ca3af",
+                        color: "var(--muted-text)",
                         fontSize: 16,
                       }}
                       aria-label="Удалить"
@@ -180,11 +180,11 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 value={promo}
                 onChange={(e) => setPromo(e.target.value)}
                 placeholder="Промокод"
-                style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid #e5e7eb" }}
+                style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text)" }}
               />
             </div>
 
-            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 12, marginBottom: 16 }}>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <span>Товары в заказе {items.length} шт.</span>
                 <span>{total} ₸</span>
@@ -204,7 +204,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               style={{
                 display: "block",
                 textAlign: "center",
-                background: "#ef4444",
+                background: "var(--accent)",
                 color: "#fff",
                 padding: "12px 0",
                 borderRadius: 8,
