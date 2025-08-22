@@ -8,6 +8,7 @@
 - fix: install express and cors type definitions in workspace root
 - fix: provide ambient declarations for express/cors when types are unavailable
 - feat: introduce cart modal with delivery/pickup toggle and order summary
+- fix: stretch header and footer and scale spacing for mobile screens
 
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

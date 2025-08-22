@@ -15,11 +15,13 @@ export default function Header() {
         <header style={{
             position: "sticky", top: 0, zIndex: 50,
             background: "#0f172a",
-            color: "#fff", borderBottom: "1px solid #0b1226"
+            color: "#fff", borderBottom: "1px solid #0b1226",
+            width: "100%"
         }}>
             <div style={{
-                maxWidth: 1200, margin: "0 auto",
-                display: "flex", alignItems: "center", gap: 16, padding: "10px 16px"
+                width: "100%",
+                display: "flex", alignItems: "center", gap: "clamp(8px,2vw,16px)", padding: "10px clamp(8px,4vw,24px)",
+                flexWrap: "wrap"
             }}>
                 {/* Лого */}
                 <Link href="/" style={{
@@ -34,7 +36,7 @@ export default function Header() {
                 </Link>
 
                 {/* Поиск */}
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, marginLeft: 12 }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, marginLeft: 12, minWidth: 200 }}>
                     <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
