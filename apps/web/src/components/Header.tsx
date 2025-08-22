@@ -1,11 +1,22 @@
 import Link from "next/link";
 import { useState } from "react";
+import CartModal, { CartItem } from "./CartModal";
 
 export default function Header() {
     const [q, setQ] = useState("");
-    const cartAmount = 0;
+    const [isCartOpen, setCartOpen] = useState(false);
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+    const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
+
+    const updateQty = (id: string, qty: number) => {
+        setCartItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i));
+    };
+
+    const clearCart = () => setCartItems([]);
 
     return (
+        <>
         <header style={{
             position: "sticky", top: 0, zIndex: 50,
             background: "#0f172a",
@@ -53,10 +64,11 @@ export default function Header() {
                     <Link href="/login" style={{ color: "#cbd5e1", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
                         <span>Войти</span>
                     </Link>
-                    <Link href="/checkout" style={{
+                    <button onClick={() => setCartOpen(true)} style={{
                         background: "#ef4444", color: "#fff", textDecoration: "none",
                         padding: "8px 12px", borderRadius: 10, fontWeight: 700,
-                        display: "inline-flex", alignItems: "center", gap: 8
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        border: "none", cursor: "pointer"
                     }}>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -74,9 +86,18 @@ export default function Header() {
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                         </svg>
                         {cartAmount > 0 && <span>{cartAmount} ₸</span>}
-                    </Link>
+                    </button>
                 </nav>
             </div>
         </header>
+        {isCartOpen && (
+            <CartModal
+                items={cartItems}
+                onClose={() => setCartOpen(false)}
+                onClear={clearCart}
+                updateQty={updateQty}
+            />
+        )}
+        </>
     );
 }
