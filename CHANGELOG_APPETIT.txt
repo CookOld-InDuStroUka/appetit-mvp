@@ -12,6 +12,8 @@
 - fix: provide ambient declarations for express/cors when types are unavailable
 - feat: introduce cart modal with delivery/pickup toggle and order summary
 - fix: stretch header and footer and scale spacing for mobile screens
+- feat: implement phone-based auth endpoints and modal with SMS code flow
+- feat: track user bonus points per account and accrue 10% of order subtotal
 
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

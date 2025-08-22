@@ -11,6 +11,47 @@ app.use(express.json());
 
 const BASE = "/api/v1";
 
+// simple auth via SMS codes
+const AuthRequestSchema = z.object({ phone: z.string().min(5) });
+const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
+
+app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
+  const parsed = AuthRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await prisma.authCode.upsert({
+    where: { phone: parsed.data.phone },
+    update: { code, expiresAt, createdAt: new Date() },
+    create: { phone: parsed.data.phone, code, expiresAt }
+  });
+
+  console.log(`Auth code for ${parsed.data.phone}: ${code}`);
+  res.json({ ok: true });
+});
+
+app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
+  const parsed = AuthVerifySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const record = await prisma.authCode.findUnique({ where: { phone: parsed.data.phone } });
+  if (!record || record.code !== parsed.data.code || record.expiresAt < new Date()) {
+    return res.status(400).json({ error: "Invalid code" });
+  }
+
+  let user = await prisma.user.upsert({
+    where: { phone: parsed.data.phone },
+    update: {},
+    create: { phone: parsed.data.phone }
+  });
+
+  await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
+
+  res.json({ user: { id: user.id, phone: user.phone, bonus: user.bonus } });
+});
+
 app.get(BASE, (_: Request, res: Response) => {
   res.json({ ok: true, ts: new Date().toISOString() });
 });
@@ -174,6 +215,14 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
 
   const total = subtotal + deliveryFee;
 
+  const bonusEarned = Math.floor(subtotal * 0.1);
+
+  const user = await prisma.user.upsert({
+    where: { phone: data.customer.phone },
+    create: { phone: data.customer.phone, bonus: bonusEarned },
+    update: { bonus: { increment: bonusEarned } }
+  });
+
   const order = await prisma.order.create({
     data: {
       type: data.type === "delivery" ? OrderType.delivery : OrderType.pickup,
@@ -186,6 +235,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       subtotal,
       deliveryFee,
       total,
+      bonusEarned,
+      userId: user.id,
       items: {
         create: data.items.map(item => {
           const d = dishes.find(x => x.id === item.dishId)!;
@@ -204,7 +255,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     }
   });
 
-  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, total, createdAt: order.createdAt });
+  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, total, bonusEarned, createdAt: order.createdAt });
 });
 
 app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {

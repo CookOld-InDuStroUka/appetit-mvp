@@ -2,12 +2,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
+import { useAuth } from "./AuthContext";
 
 export default function Header() {
     const [q, setQ] = useState("");
     const [isCartOpen, setCartOpen] = useState(false);
     const [theme, setTheme] = useState<"light" | "dark">("light");
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
+    const { user, open: openAuth } = useAuth();
 
     const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
 
@@ -70,9 +72,13 @@ export default function Header() {
                         {theme === "light" ? "🌙" : "☀️"}
                     </button>
                     <a href="#" style={{ color: "var(--nav-link)", textDecoration: "none" }}>RU ▾</a>
-                    <Link href="/login" style={{ color: "var(--nav-link)", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-                        <span>Войти</span>
-                    </Link>
+                    {user ? (
+                        <span style={{ color: "var(--nav-link)", display: "flex", alignItems: "center", gap: 6 }}>
+                            {user.phone} · {user.bonus}₸
+                        </span>
+                    ) : (
+                        <button onClick={openAuth} style={{ background: "transparent", border: "none", color: "var(--nav-link)", cursor: "pointer" }}>Войти</button>
+                    )}
                     <button onClick={() => setCartOpen(true)} style={{
                         background: "var(--accent)", color: "#fff", textDecoration: "none",
                         padding: "8px 12px", borderRadius: 10, fontWeight: 700,
