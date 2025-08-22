@@ -96,9 +96,9 @@ app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
     orderBy: { name: "asc" }
   });
 
-  const dishes = dishesRaw.map((d) => {
+  const dishes = dishesRaw.map((d: any) => {
     const base = Number(d.basePrice);
-    const min = d.variants.length ? base + Math.min(...d.variants.map(v => Number(v.priceDelta))) : base;
+    const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
     return {
       id: d.id,
       categoryId: d.categoryId,
@@ -140,8 +140,8 @@ app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
 
   const base = Number(d.basePrice);
   const variants = d.variants
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map(v => ({
+    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
+    .map((v: any) => ({
       id: v.id,
       name: v.name,
       price: base + Number(v.priceDelta),
@@ -188,10 +188,10 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
 
   let subtotal = 0;
   for (const item of data.items) {
-    const d = dishes.find(x => x.id === item.dishId);
+    const d = dishes.find((x: any) => x.id === item.dishId);
     if (!d) return res.status(400).json({ error: `dish not found: ${item.dishId}` });
     const base = Number(d.basePrice);
-    const variantDelta = item.variantId ? Number(d.variants.find(v => v.id === item.variantId)?.priceDelta ?? 0) : 0;
+    const variantDelta = item.variantId ? Number(d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0) : 0;
     const unit = base + variantDelta;
     subtotal += unit * item.qty;
   }
@@ -239,9 +239,9 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       userId: user.id,
       items: {
         create: data.items.map(item => {
-          const d = dishes.find(x => x.id === item.dishId)!;
+          const d = dishes.find((x: any) => x.id === item.dishId)!;
           const base = Number(d.basePrice);
-          const variantDelta = item.variantId ? Number(d.variants.find(v => v.id === item.variantId)?.priceDelta ?? 0) : 0;
+          const variantDelta = item.variantId ? Number(d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0) : 0;
           const unit = base + variantDelta;
           return {
             dishId: item.dishId,

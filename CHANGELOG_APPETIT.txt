@@ -1,4 +1,6 @@
 ## 2025-08-22
+- fix: include react-leaflet in workspace to avoid build-time module errors
+- fix: stub Prisma client types so API builds without installed dependency
 - fix: persist theme selection across pages with global theme provider
 - fix: eliminate layout overflow so header/footer span full width and cart modal centers
 - feat: hide sidebar on phones and show horizontal category bar
