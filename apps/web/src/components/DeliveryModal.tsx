@@ -72,10 +72,13 @@ export default function DeliveryModal() {
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 16 }}>
-            <div style={{ flex: 1 }}>
+          <div>
+            <div style={{ marginBottom: 8 }}>
               {branches.map((b) => (
-                <label key={b.id} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
+                <label
+                  key={b.id}
+                  style={{ display: "block", marginBottom: 8, cursor: "pointer" }}
+                >
                   <input
                     type="radio"
                     name="branch"
@@ -87,9 +90,16 @@ export default function DeliveryModal() {
                   {b.name}
                 </label>
               ))}
-              <p style={{ fontSize: 14, color: "var(--muted-text)" }}>Ассортимент филиалов может отличаться.</p>
+              <p style={{ fontSize: 14, color: "var(--muted-text)" }}>
+                Ассортимент филиалов может отличаться.
+              </p>
             </div>
-            <PickupMap branches={branches} selected={branch} onSelect={setBranch} height={300} />
+            <PickupMap
+              branches={branches}
+              selected={branch}
+              onSelect={setBranch}
+              height={300}
+            />
           </div>
         )}
       </div>
