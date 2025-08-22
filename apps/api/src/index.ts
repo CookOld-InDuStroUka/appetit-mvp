@@ -14,6 +14,8 @@ const BASE = "/api/v1";
 // simple auth via SMS codes
 const AuthRequestSchema = z.object({ phone: z.string().min(5) });
 const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
+const AuthEmailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+const AdminAuthSchema = AuthEmailSchema;
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
@@ -50,6 +52,44 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
 
   res.json({ user: { id: user.id, phone: user.phone, bonus: user.bonus } });
+});
+
+app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
+  const parsed = AuthEmailSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const user = await prisma.user.upsert({
+    where: { email: parsed.data.email },
+    update: { password: parsed.data.password },
+    create: { email: parsed.data.email, password: parsed.data.password }
+  });
+
+  res.json({ user: { id: user.id, email: user.email, bonus: user.bonus } });
+});
+
+app.post(`${BASE}/admin/register`, async (req: Request, res: Response) => {
+  const parsed = AdminAuthSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const admin = await prisma.admin.upsert({
+    where: { email: parsed.data.email },
+    update: { password: parsed.data.password },
+    create: { email: parsed.data.email, password: parsed.data.password }
+  });
+
+  res.json({ ok: true, id: admin.id });
+});
+
+app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
+  const parsed = AdminAuthSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const admin = await prisma.admin.findUnique({ where: { email: parsed.data.email } });
+  if (!admin || admin.password !== parsed.data.password) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
+
+  res.json({ ok: true, id: admin.id });
 });
 
 app.get(BASE, (_: Request, res: Response) => {

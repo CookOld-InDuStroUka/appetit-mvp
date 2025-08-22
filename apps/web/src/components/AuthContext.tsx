@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import AuthModal from "./AuthModal";
 
-export type User = { id: string; phone: string; bonus: number };
+export type User = { id: string; phone?: string; email?: string; bonus: number };
 
 type AuthCtx = {
   user: User | null;
@@ -10,6 +10,7 @@ type AuthCtx = {
   close: () => void;
   requestCode: (phone: string) => Promise<void>;
   verifyCode: (phone: string, code: string) => Promise<void>;
+  registerEmail: (email: string, password: string) => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx | undefined>(undefined);
@@ -42,8 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const registerEmail = async (email: string, password: string) => {
+    const res = await fetch("/api/v1/auth/register-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setUser(data.user);
+      close();
+    }
+  };
+
   return (
-    <Ctx.Provider value={{ user, isOpen, open, close, requestCode, verifyCode }}>
+    <Ctx.Provider value={{ user, isOpen, open, close, requestCode, verifyCode, registerEmail }}>
       {children}
       {isOpen && <AuthModal />}
     </Ctx.Provider>

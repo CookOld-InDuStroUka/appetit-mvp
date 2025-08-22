@@ -4,6 +4,7 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useTheme } from "./ThemeContext";
+import DeliveryModal, { DeliveryInfo } from "./DeliveryModal";
 
 export default function Header() {
     const [q, setQ] = useState("");
@@ -11,6 +12,12 @@ export default function Header() {
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
     const { user, open: openAuth } = useAuth();
+    const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
+        type: "delivery",
+        address: "",
+        branch: "САМАРСКОЕ ШОССЕ, 5/1"
+    });
+    const [showDelivery, setShowDelivery] = useState(false);
 
     const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
 
@@ -62,6 +69,12 @@ export default function Header() {
                 {/* Правый блок */}
                 <nav style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <button
+                        onClick={() => setShowDelivery(true)}
+                        style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
+                    >
+                        {deliveryInfo.type === "delivery" ? (deliveryInfo.address || "Доставка") : "Самовывоз"}
+                    </button>
+                    <button
                         onClick={toggleTheme}
                         style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
                         aria-label="Переключить тему"
@@ -71,7 +84,7 @@ export default function Header() {
                     <a href="#" style={{ color: "var(--nav-link)", textDecoration: "none" }}>RU ▾</a>
                     {user ? (
                         <span style={{ color: "var(--nav-link)", display: "flex", alignItems: "center", gap: 6 }}>
-                            {user.phone} · {user.bonus}₸
+                            {(user.phone || user.email)} · {user.bonus}₸
                         </span>
                     ) : (
                         <button onClick={openAuth} style={{ background: "transparent", border: "none", color: "var(--nav-link)", cursor: "pointer" }}>Войти</button>
@@ -109,6 +122,13 @@ export default function Header() {
                 onClear={clear}
                 updateQty={updateQty}
                 removeItem={removeItem}
+            />
+        )}
+        {showDelivery && (
+            <DeliveryModal
+                info={deliveryInfo}
+                onClose={() => setShowDelivery(false)}
+                onSave={setDeliveryInfo}
             />
         )}
         </>

@@ -4,6 +4,7 @@ export default function AdminHome() {
   return (
     <div style={{ padding: 24 }}>
       <h1>Админпанель APPETIT</h1>
+      <p><Link href="/">На главную</Link></p>
       <ul>
         <li><Link href="/admin/branches">Филиалы</Link></li>
         <li><Link href="/admin/menu">Меню</Link></li>

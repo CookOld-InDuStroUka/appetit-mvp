@@ -1,4 +1,9 @@
 ## 2025-08-22
+- feat: allow configuring delivery or pickup from header with address entry
+- feat: support email registration and persist users in database
+- feat: enable admin login/registration from footer with redirect to admin panel
+- feat: extend Prisma schema with Admin model and optional user email/password
+- fix: link admin dashboard back to main site
 - feat: move delivery/pickup settings into dedicated modal with larger map and branch disclaimer
 - feat: scaffold admin panel pages for branches, menu, orders, marketing, and analytics
 - fix: load Leaflet from CDN to avoid missing react-leaflet dependency

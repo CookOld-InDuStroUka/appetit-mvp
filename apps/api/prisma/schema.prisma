@@ -127,9 +127,18 @@ model CmsPage {
 
 model User {
   id        String   @id @default(cuid())
-  phone     String   @unique
+  phone     String?  @unique
+  email     String?  @unique
+  password  String?
   bonus     Int      @default(0)
   orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
   createdAt DateTime @default(now())
 }
 

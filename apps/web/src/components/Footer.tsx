@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { useState } from "react";
+import AdminModal from "./AdminModal";
 
 export default function Footer() {
+  const [adminOpen, setAdminOpen] = useState(false);
   return (
     <footer style={{ background: "var(--footer-bg)", color: "var(--footer-text)", marginTop: 40, width: "100%" }}>
       <div style={{ width: "100%", padding: "40px clamp(16px,5vw,48px)" }}>
@@ -22,7 +25,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: 32, fontSize: 12, color: "var(--nav-link)", display: "flex", flexWrap: "wrap", gap: 16 }}>
+        <div style={{ marginTop: 32, fontSize: 12, color: "var(--nav-link)", display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
           <span>ИП Таубекова Б.К.</span>
           <Link href="/privacy-policy" style={{ color: "var(--nav-link)", textDecoration: "none" }}>
             Политика конфиденциальности
@@ -30,8 +33,10 @@ export default function Footer() {
           <Link href="/public-offer" style={{ color: "var(--nav-link)", textDecoration: "none" }}>
             Публичная оферта
           </Link>
+          <button onClick={() => setAdminOpen(true)} style={{ background: "transparent", border: "1px solid var(--nav-link)", color: "var(--nav-link)", padding: "4px 8px", borderRadius: 6, cursor: "pointer" }}>Админ</button>
         </div>
       </div>
+      {adminOpen && <AdminModal onClose={() => setAdminOpen(false)} />}
     </footer>
   );
 }
