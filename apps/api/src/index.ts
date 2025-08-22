@@ -73,7 +73,8 @@ app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
-  const q = (req.query.q as string)?.trim() || "";
+  const raw = (req.query.q ?? req.query.query ?? req.query.term) as string | undefined;
+  const q = raw?.trim() ?? "";
   if (!q) return res.json([]);
 
   const dishes = await prisma.dish.findMany({

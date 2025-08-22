@@ -1,1 +1,2 @@
 [2025-08-22T06:00:17+00:00] @ChatGPT — added dish search endpoint with suggestions; apps/api/src/index.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm test (missing script); TODO
+[2025-08-22T06:06:37+00:00] @ChatGPT — fix missing express/cors types and broaden dish search query params; apps/api/tsconfig.json, apps/api/src/index.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm -F @appetit/api exec tsc --noEmit
