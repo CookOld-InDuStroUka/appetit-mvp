@@ -3,9 +3,10 @@ import { useEffect, useRef } from "react";
 type Props = {
   address: string;
   setAddress: (addr: string) => void;
+  height?: number;
 };
 
-export default function DeliveryMap({ address, setAddress }: Props) {
+export default function DeliveryMap({ address, setAddress, height = 300 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function DeliveryMap({ address, setAddress }: Props) {
   }, []);
 
   return (
-    <div style={{ position: "relative", height: 300 }}>
+    <div style={{ position: "relative", height }}>
       <div
         ref={mapRef}
         style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}

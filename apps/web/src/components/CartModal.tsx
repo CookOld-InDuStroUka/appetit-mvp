@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import DeliveryMap from "./DeliveryMap";
+import DeliveryModal, { DeliveryInfo } from "./DeliveryModal";
 
 export type CartItem = {
   id: string;
@@ -18,10 +18,13 @@ type Props = {
 };
 
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
-  const [type, setType] = useState<"delivery" | "pickup">("delivery");
-  const [branch, setBranch] = useState("САМАРСКОЕ ШОССЕ, 5/1");
-  const [address, setAddress] = useState("");
   const [promo, setPromo] = useState("");
+  const [deliveryInfo, setDeliveryInfo] = useState<DeliveryInfo>({
+    type: "delivery",
+    address: "",
+    branch: "САМАРСКОЕ ШОССЕ, 5/1",
+  });
+  const [showDelivery, setShowDelivery] = useState(false);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const bonuses = Math.floor(total * 0.1);
@@ -75,58 +78,23 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <div style={{ marginBottom: 16 }}>
               <button
-                onClick={() => setType("delivery")}
+                onClick={() => setShowDelivery(true)}
                 style={{
-                  flex: 1,
+                  width: "100%",
                   padding: "8px 0",
                   borderRadius: 8,
                   border: "1px solid var(--border)",
-                  background: type === "delivery" ? "var(--accent)" : "var(--card-bg)",
-                  color: type === "delivery" ? "#fff" : "var(--text)",
+                  background: "var(--card-bg)",
                   cursor: "pointer",
                 }}
               >
-                Доставка
-              </button>
-              <button
-                onClick={() => setType("pickup")}
-                style={{
-                  flex: 1,
-                  padding: "8px 0",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: type === "pickup" ? "var(--accent)" : "var(--card-bg)",
-                  color: type === "pickup" ? "#fff" : "var(--text)",
-                  cursor: "pointer",
-                }}
-              >
-                Самовывоз
+                {deliveryInfo.type === "delivery"
+                  ? deliveryInfo.address || "Указать адрес доставки"
+                  : `Самовывоз: ${deliveryInfo.branch}`}
               </button>
             </div>
-            {type === "delivery" && (
-              <div style={{ marginBottom: 16 }}>
-                <DeliveryMap address={address} setAddress={setAddress} />
-              </div>
-            )}
-            {type === "pickup" && (
-              <div style={{ marginBottom: 16 }}>
-                {["КАЗАХСТАН, 70А", "САТПАЕВА, 8А", "НОВАТОРОВ, 18/2", "ЖИБЕК ЖОЛЫ, 1к8", "САМАРСКОЕ ШОССЕ, 5/1", "КАБАНБАЙ БАТЫРА, 148", "НАЗАРБАЕВА, 28А"].map((b) => (
-                  <label key={b} style={{ display: "block", marginBottom: 8, cursor: "pointer" }}>
-                    <input
-                      type="radio"
-                      name="branch"
-                      value={b}
-                      checked={branch === b}
-                      onChange={() => setBranch(b)}
-                      style={{ marginRight: 8 }}
-                    />
-                    {b}
-                  </label>
-                ))}
-              </div>
-            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
               {items.map((it) => (
@@ -237,6 +205,13 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
           </>
         )}
       </div>
+      {showDelivery && (
+        <DeliveryModal
+          info={deliveryInfo}
+          onClose={() => setShowDelivery(false)}
+          onSave={setDeliveryInfo}
+        />
+      )}
     </div>
   );
 }

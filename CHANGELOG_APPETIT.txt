@@ -1,4 +1,6 @@
 ## 2025-08-22
+- feat: move delivery/pickup settings into dedicated modal with larger map and branch disclaimer
+- feat: scaffold admin panel pages for branches, menu, orders, marketing, and analytics
 - fix: load Leaflet from CDN to avoid missing react-leaflet dependency
 - fix: include react-leaflet in workspace to avoid build-time module errors
 - fix: stub Prisma client types so API builds without installed dependency
