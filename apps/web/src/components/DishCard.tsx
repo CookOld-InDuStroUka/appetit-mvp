@@ -1,4 +1,5 @@
 import React from "react";
+import { useCart } from "./CartContext";
 
 type Props = {
   dish: {
@@ -13,6 +14,11 @@ type Props = {
 };
 
 export default function DishCard({ dish, onClick }: Props) {
+  const { addItem } = useCart();
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem({ id: dish.id, name: dish.name, price: dish.basePrice, imageUrl: dish.imageUrl, qty: 1 });
+  };
   return (
     <div className="dish-card" onClick={onClick} role="button" tabIndex={0}>
       <img
@@ -27,6 +33,14 @@ export default function DishCard({ dish, onClick }: Props) {
       <p className="dish-card-price">
         {dish.minPrice ? `от ${dish.minPrice} ₸` : `${dish.basePrice} ₸`}
       </p>
+      <button
+        onClick={handleAdd}
+        className="add-btn"
+        style={{ marginTop: 8 }}
+        aria-label="Добавить"
+      >
+        +
+      </button>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export default function MainMenu() {
   return (
     <aside
       style={{
-        width: 220,
+        width: "clamp(140px, 18vw, 220px)",
         padding: 20,
         borderRight: "1px solid #eee",
         position: "sticky",
