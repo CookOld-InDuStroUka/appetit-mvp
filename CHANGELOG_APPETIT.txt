@@ -1,4 +1,5 @@
 ## 2025-08-22
+- fix: load Leaflet from CDN to avoid missing react-leaflet dependency
 - fix: include react-leaflet in workspace to avoid build-time module errors
 - fix: stub Prisma client types so API builds without installed dependency
 - fix: persist theme selection across pages with global theme provider
