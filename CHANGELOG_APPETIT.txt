@@ -31,6 +31,7 @@
 - feat: show Yandex delivery map of Ust-Kamenogorsk with address field overlay in cart modal
 - feat: list pickup branches as radio options in cart modal
 - feat: open delivery/pickup settings from header modal and remove toggle from cart
+- fix: center site layout within a max-width container on wide screens
 
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

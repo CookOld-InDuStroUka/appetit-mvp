@@ -6,7 +6,7 @@ export default function Footer() {
   const [adminOpen, setAdminOpen] = useState(false);
   return (
     <footer style={{ background: "var(--footer-bg)", color: "var(--footer-text)", marginTop: 40, width: "100%" }}>
-      <div style={{ width: "100%", padding: "40px clamp(16px,5vw,48px)" }}>
+      <div style={{ width: "100%", maxWidth: "1280px", margin: "0 auto", padding: "40px clamp(16px,5vw,48px)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: "1 1 200px" }}>
             <li><Link href="/addresses" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Адреса и зоны доставки</Link></li>
