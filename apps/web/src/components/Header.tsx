@@ -32,15 +32,15 @@ export default function Header() {
                 flexWrap: "wrap"
             }}>
                 {/* Лого */}
-                <Link href="/" style={{
-                    display: "inline-flex", alignItems: "center",
-                    fontWeight: 800, letterSpacing: .3, textDecoration: "none", color: "var(--header-text)"
-                }}>
-                    <span style={{
-                        background: "var(--accent)", color: "#fff", padding: "6px 10px",
-                        borderRadius: 8, marginRight: 8
-                    }}>APPETIT</span>
-                    <span style={{ opacity: .8 }}>вкусная шаурма</span>
+                <Link href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+                    <span
+                        style={{
+                            fontFamily: 'TTHoves, sans-serif',
+                            fontWeight: 700,
+                            fontSize: 24,
+                            color: "var(--header-text)"
+                        }}
+                    >APPETIT</span>
                 </Link>
 
                 {/* Поиск */}
