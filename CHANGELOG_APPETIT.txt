@@ -15,6 +15,7 @@
 - fix: stretch header and footer and scale spacing for mobile screens
 - feat: implement phone-based auth endpoints and modal with SMS code flow
 - feat: track user bonus points per account and accrue 10% of order subtotal
+- feat: embed delivery map for Ust-Kamenogorsk with address overlay in cart modal
 
 ## YYYY-MM-DD
 - init: clean monorepo skeleton

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import DeliveryMap from "./DeliveryMap";
 
 export type CartItem = {
   id: string;
@@ -103,12 +104,24 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 Самовывоз
               </button>
             </div>
+            {type === "delivery" && (
+              <div style={{ marginBottom: 16 }}>
+                <DeliveryMap />
+              </div>
+            )}
             {type === "pickup" && (
               <div style={{ marginBottom: 16 }}>
                 <select
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text)" }}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border)",
+                    background: "var(--card-bg)",
+                    color: "var(--text)",
+                  }}
                 >
                   <option value="САМАРСКОЕ ШОССЕ, 5/1">САМАРСКОЕ ШОССЕ, 5/1</option>
                 </select>
