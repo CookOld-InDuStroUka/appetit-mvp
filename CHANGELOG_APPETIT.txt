@@ -1,4 +1,5 @@
 ## 2025-08-22
+- fix: persist theme selection across pages with global theme provider
 - fix: eliminate layout overflow so header/footer span full width and cart modal centers
 - feat: hide sidebar on phones and show horizontal category bar
 - feat: add light/dark theme toggle via CSS variables

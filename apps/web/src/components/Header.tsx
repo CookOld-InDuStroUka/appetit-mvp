@@ -1,21 +1,18 @@
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
+import { useTheme } from "./ThemeContext";
 
 export default function Header() {
     const [q, setQ] = useState("");
     const [isCartOpen, setCartOpen] = useState(false);
-    const [theme, setTheme] = useState<"light" | "dark">("light");
+    const { theme, toggleTheme } = useTheme();
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
     const { user, open: openAuth } = useAuth();
 
     const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-
-    useEffect(() => {
-        document.body.classList.toggle("theme-dark", theme === "dark");
-    }, [theme]);
 
     return (
         <>
@@ -65,7 +62,7 @@ export default function Header() {
                 {/* Правый блок */}
                 <nav style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <button
-                        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                        onClick={toggleTheme}
                         style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
                         aria-label="Переключить тему"
                     >
