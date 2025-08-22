@@ -26,24 +26,24 @@
 }
 
 body.theme-dark {
-  --bg: #303030;
-  --text: #F7F7F7;
-  --header-bg: #202020;
-  --header-text: #F7F7F7;
-  --header-border: #303030;
-  --input-bg: #404040;
-  --input-border: #61A35B;
-  --nav-link: #61A35B;
-  --accent: #61A35B;
-  --card-bg: #404040;
-  --card-border: #555555;
-  --card-text: #F7F7F7;
-  --muted-text: #9CA3AF;
-  --hover-bg: #E9444E;
-  --footer-bg: #202020;
-  --footer-text: #F7F7F7;
-  --modal-bg: #404040;
-  --border: #555555;
+  --bg: #111827;
+  --text: #f3f4f6;
+  --header-bg: #1f2937;
+  --header-text: #f3f4f6;
+  --header-border: #111827;
+  --input-bg: #374151;
+  --input-border: #4b5563;
+  --nav-link: #d1d5db;
+  --accent: #ef4444;
+  --card-bg: #1f2937;
+  --card-border: #374151;
+  --card-text: #f3f4f6;
+  --muted-text: #9ca3af;
+  --hover-bg: #374151;
+  --footer-bg: #1f2937;
+  --footer-text: #f3f4f6;
+  --modal-bg: #1f2937;
+  --border: #4b5563;
 }
 
 html,
@@ -210,6 +210,7 @@ body {
   .main-sidebar {
     display: none;
   }
+
   .mobile-menu {
     display: block;
   }
