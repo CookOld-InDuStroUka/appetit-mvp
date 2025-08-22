@@ -1,1 +1,5 @@
-[{ts}] @Имя — кратко что сделали; файлы; проверки; TODO
+[2025-08-22T06:00:17+00:00] @ChatGPT — added dish search endpoint with suggestions; apps/api/src/index.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm test (missing script); TODO
+[2025-08-22T06:06:37+00:00] @ChatGPT — fix missing express/cors types and broaden dish search query params; apps/api/tsconfig.json, apps/api/src/index.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm -F @appetit/api exec tsc --noEmit
+[2025-08-22T06:13:43+00:00] @ChatGPT — install express and cors type defs at workspace root; package.json, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm -F @appetit/api exec tsc --noEmit
+[2025-08-22T06:24:43+00:00] @ChatGPT — add ambient declarations to silence missing express/cors typings; apps/api/tsconfig.json, apps/api/src/ambient.d.ts, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm -F @appetit/api exec tsc --noEmit
+[2025-08-22T06:52:50+00:00] @ChatGPT — add cart context, dish add buttons with sauces, and removable cart items; apps/web/src/components/CartContext.tsx, apps/web/src/components/Header.tsx, apps/web/src/components/DishCard.tsx, apps/web/src/components/DishModal.tsx, apps/web/src/components/CartModal.tsx, apps/web/src/styles/globals.css, apps/web/src/pages/_app.tsx, CHANGELOG_APPETIT.txt, DEVLOG_APPETIT.txt; pnpm -F @appetit/web exec tsc --noEmit
