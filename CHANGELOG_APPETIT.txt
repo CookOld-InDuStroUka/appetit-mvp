@@ -1,3 +1,6 @@
+## 2025-08-23
+- feat: confirm dish availability changes in branch admin and reload list on success
+
 ## 2025-08-22
 - feat: replace unified /menu endpoint with /categories and /dishes and load menu sections dynamically
 - feat: seed multiple pickup branches and expose them in admin panel

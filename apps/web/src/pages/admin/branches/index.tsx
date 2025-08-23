@@ -30,12 +30,27 @@ export default function BranchesAdmin() {
   }, [branchId]);
 
   const toggle = async (dishId: string, available: boolean) => {
-    await fetch(`${API_BASE}/admin/branches/${branchId}/dishes/${dishId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ available }),
-    });
-    setDishes((d) => d.map((x) => (x.id === dishId ? { ...x, available } : x)));
+    const action = available ? "включить" : "отключить";
+    if (!window.confirm(`Вы уверены, что хотите ${action} блюдо?`)) return;
+
+    const res = await fetch(
+      `${API_BASE}/admin/branches/${branchId}/dishes/${dishId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ available }),
+      }
+    );
+
+    if (res.ok) {
+      const updated = await fetch(
+        `${API_BASE}/admin/branches/${branchId}/dishes`
+      ).then((r) => r.json());
+      setDishes(updated);
+      alert("Изменения сохранены");
+    } else {
+      alert("Не удалось сохранить изменения");
+    }
   };
 
   return (
