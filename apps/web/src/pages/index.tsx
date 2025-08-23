@@ -29,11 +29,19 @@ export default function Home() {
     fetch(`${API_BASE}/menu`)
       .then((r) => r.json())
       .then((data) => {
-        const menu: any[] = data.menu || [];
+        // some deployments return categories and dishes separately instead of ready-made "menu"
+        const menu: any[] = Array.isArray(data.menu)
+          ? data.menu
+          : (data.categories || []).map((c: any) => ({
+              ...c,
+              dishes: (data.dishes || []).filter((d: any) => d.categoryId === c.id),
+            }));
+
         const map: Record<string, DishDTO[]> = {};
         menu.forEach((c: any) => {
           map[c.name] = c.dishes || [];
         });
+
         setSections([
           { name: "Комбо", dishes: map["Комбо"] || [] },
           { name: "Блюда", dishes: map["Блюда"] || [] },
