@@ -4,6 +4,7 @@ APPETIT MVP — Руководство по запуску (Windows/PowerShell)
    - Node.js LTS (18/20)
    - pnpm:  npm i -g pnpm
    - Docker Desktop (запущен)
+   - API‑ключ Яндекс.Карт (для отображения карты)
 
 2) Распаковка
    - Распакуйте архив в удобную папку, далее все команды из папки проекта (корень архива).
@@ -13,8 +14,13 @@ APPETIT MVP — Руководство по запуску (Windows/PowerShell)
      PowerShell:
        Get-Content .env.example | Set-Content -Encoding UTF8 .env
 
-   - DATABASE_URL уже соответствует docker-compose:
-       postgresql://postgres:postgres@localhost:5432/appetit
+   - Проверьте и при необходимости измените переменные:
+       DATABASE_URL=postgresql://postgres:postgres@localhost:5432/appetit
+       API_PORT=3001
+       NEXT_PUBLIC_API_BASE=http://localhost:3001/api/v1
+       NEXT_PUBLIC_YANDEX_MAPS_API_KEY=<ваш ключ>
+       JWT_SECRET=dev-secret
+     (для prisma CLI можно скопировать DATABASE_URL в apps/api/prisma/.env)
 
 4) Поднять Postgres в Docker
    docker compose up -d
@@ -28,16 +34,26 @@ APPETIT MVP — Руководство по запуску (Windows/PowerShell)
    pnpm api:db:seed
 
 7) Запуск приложений
-   pnpm dev
-   - Web: http://localhost:3000
-   - API: http://localhost:3001/api/v1/health
+   Вариант A — вручную в двух окнах:
+     pnpm -C apps/api dev    # API: http://localhost:3001/api/v1/health
+     pnpm -C apps/web dev    # Web: http://localhost:3000
+   Вариант B — скрипт запуска (Windows PowerShell):
+     .\start-dev.ps1         # поднимает DB, API и Web
 
-8) Полезные эндпоинты
-   - GET /api/v1/health
-   - GET /api/v1/menu[?q=][&categorySlug=shawarma]
-   - GET /api/v1/zones
-   - GET /api/v1/cms/delivery-terms
-   - POST /api/v1/orders (см. apps/api/src/index.ts для формата)
+8) Полезные эндпоинты (BASE = http://localhost:3001/api/v1)
+   - GET /health
+   - GET /menu[?q=][&category=<slug>]
+   - GET /dishes/:id
+   - GET /dishes/search?q=
+   - GET /zones
+   - GET /branches
+   - GET /cms/delivery-terms
+   - POST /orders (см. apps/api/src/index.ts для формата)
+   - POST /auth/request-code
+   - POST /auth/verify-code
+   - POST /auth/register-email
+   - POST /admin/register
+   - POST /admin/login
 
 9) Архитектура
    - Монорепо pnpm workspaces:
@@ -53,6 +69,7 @@ APPETIT MVP — Руководство по запуску (Windows/PowerShell)
 10) Частые проблемы
    - P1012 (нет DATABASE_URL): проверьте .env и apps/api/prisma/.env
    - P1000 (неверные креды): docker-compose.yml задаёт postgres/postgres
+   - NEXT_PUBLIC_YANDEX_MAPS_API_KEY не задан: карта не отображается
    - UTF-16 .env: переконвертируйте в UTF-8:
        Get-Content .env | Set-Content -Encoding UTF8 .env
 

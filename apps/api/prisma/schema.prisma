@@ -27,6 +27,7 @@ model Dish {
   isActive     Boolean            @default(true)
   category     Category           @relation(fields: [categoryId], references: [id])
   variants     DishVariant[]
+  modifiers    DishModifier[]
   availability DishAvailability[]
   OrderItem    OrderItem[]
 }
@@ -39,6 +40,22 @@ model DishVariant {
   sortOrder  Int         @default(0)
   dish       Dish        @relation(fields: [dishId], references: [id])
   orderItems OrderItem[] //  обратная связь к OrderItem.variant
+}
+
+enum ModifierType {
+  addon
+  exclusion
+}
+
+model DishModifier {
+  id      String        @id @default(cuid())
+  dishId  String
+  name    String
+  price   Decimal       @default(0) @db.Decimal(10, 2)
+  type    ModifierType
+  dish    Dish          @relation(fields: [dishId], references: [id])
+
+  @@index([dishId])
 }
 
 model Branch {

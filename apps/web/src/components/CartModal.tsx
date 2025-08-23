@@ -7,6 +7,8 @@ export type CartItem = {
   price: number;
   imageUrl?: string;
   qty: number;
+  addons?: { name: string; price: number }[];
+  excluded?: string[];
 };
 
 type Props = {
@@ -94,17 +96,27 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
               {items.map((it) => (
-                <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <img
-                    src={it.imageUrl || "https://placehold.co/60x60"}
-                    alt={it.name}
-                    style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{it.name}</div>
-                    <div style={{ color: "var(--muted-text)", fontSize: 14 }}>{it.price} ₸</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <img
+                  src={it.imageUrl || "https://placehold.co/60x60"}
+                  alt={it.name}
+                  style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600 }}>{it.name}</div>
+                  <div style={{ color: "var(--muted-text)", fontSize: 14 }}>{it.price} ₸</div>
+                  {(it.addons && it.addons.length > 0) || (it.excluded && it.excluded.length > 0) ? (
+                    <div style={{ color: "var(--muted-text)", fontSize: 12 }}>
+                      {it.addons?.map((a) => (
+                        <div key={a.name}>+ {a.name}</div>
+                      ))}
+                      {it.excluded?.map((e) => (
+                        <div key={e}>- {e}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <button
                       onClick={() => updateQty(it.id, it.qty - 1)}
                       style={{
