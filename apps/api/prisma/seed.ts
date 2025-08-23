@@ -62,6 +62,16 @@ async function main() {
         isActive: true
       },
       {
+        id: "dish-test",
+        categoryId: dishesCat.id,
+        name: "Тестовая шаурма",
+        slug: "test-shawarma",
+        description: "Просто тестовое блюдо для проверки меню",
+        basePrice: 1234,
+        imageUrl: "https://placehold.co/600x200?text=Test+Dish",
+        isActive: true
+      },
+      {
         id: "combo-one",
         categoryId: comboCat.id,
         name: "Комбо для ОДНОГО",

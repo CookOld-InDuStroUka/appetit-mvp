@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx src/index.ts",
+    "build": "tsc",
     "prisma": "prisma",
     "generate": "prisma generate",
     "db:push": "prisma db push",
