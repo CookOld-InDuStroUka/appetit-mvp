@@ -115,8 +115,9 @@ app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
-  const q = (req.query.q as string)?.trim() || "";
-  const categorySlug = (req.query.categorySlug as string) || undefined;
+  const rawQ = (req.query.q ?? req.query.query ?? req.query.search) as string | undefined;
+  const q = rawQ?.trim() ?? "";
+  const categorySlug = (req.query.categorySlug ?? req.query.category ?? req.query.cat) as string | undefined;
   console.log("[menu] request", { q, categorySlug });
 
   try {
@@ -156,8 +157,16 @@ app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
       };
     });
 
+    const grouped: Record<string, any[]> = {};
+    dishes.forEach((d: any) => {
+      if (!grouped[d.categoryId]) grouped[d.categoryId] = [];
+      grouped[d.categoryId].push(d);
+    });
+
+    const menu = categories.map((c: any) => ({ ...c, dishes: grouped[c.id] || [] }));
+
     console.log("[menu] response", { categories: categories.length, dishes: dishes.length });
-    res.json({ categories, dishes });
+    res.json({ categories, dishes, menu });
   } catch (err) {
     console.error("[menu] error", err);
     res.status(500).json({ error: "Internal server error" });
