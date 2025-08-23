@@ -1,47 +1,55 @@
+@import url("https://fonts.cdnfonts.com/css/tt-hoves");
+
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --bg: #fff;
-  --text: #111827;
-  --header-bg: #0f172a;
-  --header-text: #fff;
-  --header-border: #0b1226;
-  --input-bg: #0b1226;
-  --input-border: #334155;
-  --nav-link: #cbd5e1;
-  --accent: #ef4444;
-  --card-bg: #fff;
-  --card-border: #eee;
-  --card-text: #000;
-  --muted-text: #666;
-  --hover-bg: #f3f4f6;
-  --footer-bg: #0f172a;
-  --footer-text: #fff;
-  --modal-bg: #fff;
-  --border: #e5e7eb;
+  --bg: #F7F7F7;
+  --text: #303030;
+  --header-bg: #303030;
+  --header-text: #F7F7F7;
+  --header-border: #303030;
+  --input-bg: #FFFFFF;
+  --input-border: #61A35B;
+  --nav-link: #61A35B;
+  --accent: #61A35B;
+  --card-bg: #FFFFFF;
+  --card-border: #EEEEEE;
+  --card-text: #303030;
+  --muted-text: #666666;
+  --hover-bg: #FFB700;
+  --footer-bg: #303030;
+  --footer-text: #F7F7F7;
+  --modal-bg: #FFFFFF;
+  --border: #E5E7EB;
+  --search-btn-bg: var(--input-bg);
+  --search-btn-color: #303030;
+  --search-btn-border: var(--input-border);
 }
 
 body.theme-dark {
-  --bg: #111827;
+  --bg: #181818;
   --text: #f3f4f6;
-  --header-bg: #1f2937;
+  --header-bg: #202020;
   --header-text: #f3f4f6;
-  --header-border: #111827;
-  --input-bg: #374151;
-  --input-border: #4b5563;
-  --nav-link: #d1d5db;
-  --accent: #ef4444;
-  --card-bg: #1f2937;
-  --card-border: #374151;
+  --header-border: #303030;
+  --input-bg: #2a2a2a;
+  --input-border: #3a3a3a;
+  --nav-link: #61A35B;
+  --accent: #61A35B;
+  --card-bg: #262626;
+  --card-border: #333333;
   --card-text: #f3f4f6;
   --muted-text: #9ca3af;
-  --hover-bg: #374151;
-  --footer-bg: #1f2937;
+  --hover-bg: #FFB700;
+  --footer-bg: #202020;
   --footer-text: #f3f4f6;
-  --modal-bg: #1f2937;
-  --border: #4b5563;
+  --modal-bg: #262626;
+  --border: #333333;
+  --search-btn-bg: #61A35B;
+  --search-btn-color: #fff;
+  --search-btn-border: #61A35B;
 }
 
 html,
@@ -61,9 +69,20 @@ main {
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "TTHoves", sans-serif;
   background: var(--bg);
   color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+header,
+footer,
+input,
+button,
+.modal,
+.modal-backdrop,
+.mobile-menu a {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar-link {
@@ -85,7 +104,7 @@ body {
   border-radius: 8px;
   padding: 15px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   background: var(--card-bg);
   color: var(--card-text);
 }
@@ -211,4 +230,27 @@ body {
   .mobile-menu {
     display: block;
   }
+}
+
+.option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.option-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
 }

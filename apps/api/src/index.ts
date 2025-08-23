@@ -115,42 +115,62 @@ app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
-  const q = (req.query.q as string)?.trim() || "";
-  const categorySlug = (req.query.categorySlug as string) || undefined;
-  let categoryId: string | undefined = undefined;
-  if (categorySlug) {
-    const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
-    categoryId = cat?.id;
-    if (!categoryId) return res.json({ categories: [], dishes: [] });
+  const rawQ = (req.query.q ?? req.query.query ?? req.query.search) as string | undefined;
+  const q = rawQ?.trim() ?? "";
+  const categorySlug = (req.query.categorySlug ?? req.query.category ?? req.query.cat) as string | undefined;
+  console.log("[menu] request", { q, categorySlug });
+
+  try {
+    let categoryId: string | undefined = undefined;
+    if (categorySlug) {
+      const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
+      categoryId = cat?.id;
+      if (!categoryId) {
+        console.log("[menu] category not found", { categorySlug });
+        return res.json({ categories: [], dishes: [] });
+      }
+    }
+
+    const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
+
+    const dishesRaw = await prisma.dish.findMany({
+      where: {
+        isActive: true,
+        ...(categoryId ? { categoryId } : {}),
+        ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
+      },
+      include: { variants: true },
+      orderBy: { name: "asc" }
+    });
+
+    const dishes = dishesRaw.map((d: any) => {
+      const base = Number(d.basePrice);
+      const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
+      return {
+        id: d.id,
+        categoryId: d.categoryId,
+        name: d.name,
+        description: d.description ?? undefined,
+        imageUrl: d.imageUrl ?? undefined,
+        basePrice: base,
+        minPrice: min
+      };
+    });
+
+    const grouped: Record<string, any[]> = {};
+    dishes.forEach((d: any) => {
+      if (!grouped[d.categoryId]) grouped[d.categoryId] = [];
+      grouped[d.categoryId].push(d);
+    });
+
+    const menu = categories.map((c: any) => ({ ...c, dishes: grouped[c.id] || [] }));
+
+    console.log("[menu] response", { categories: categories.length, dishes: dishes.length });
+    res.json({ categories, dishes, menu });
+  } catch (err) {
+    console.error("[menu] error", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
-
-  const dishesRaw = await prisma.dish.findMany({
-    where: {
-      isActive: true,
-      ...(categoryId ? { categoryId } : {}),
-      ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
-    },
-    include: { variants: true },
-    orderBy: { name: "asc" }
-  });
-
-  const dishes = dishesRaw.map((d: any) => {
-    const base = Number(d.basePrice);
-    const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
-    return {
-      id: d.id,
-      categoryId: d.categoryId,
-      name: d.name,
-      description: d.description ?? undefined,
-      imageUrl: d.imageUrl ?? undefined,
-      basePrice: base,
-      minPrice: min
-    };
-  });
-
-  res.json({ categories, dishes });
 });
 
 app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
@@ -174,7 +194,7 @@ app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
 app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
   const d = await prisma.dish.findUnique({
     where: { id: req.params.id },
-    include: { variants: true },
+    include: { variants: true, modifiers: true },
   });
   if (!d || !d.isActive) return res.status(404).json({ error: "Not found" });
 
@@ -187,6 +207,13 @@ app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
       price: base + Number(v.priceDelta),
     }));
 
+  const addons = d.modifiers
+    .filter((m: any) => m.type === "addon")
+    .map((m: any) => ({ id: m.id, name: m.name, price: Number(m.price) }));
+  const exclusions = d.modifiers
+    .filter((m: any) => m.type === "exclusion")
+    .map((m: any) => ({ id: m.id, name: m.name }));
+
   res.json({
     id: d.id,
     categoryId: d.categoryId,
@@ -195,6 +222,8 @@ app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
     imageUrl: d.imageUrl ?? undefined,
     basePrice: base,
     variants,
+    addons,
+    exclusions,
   });
 });
 

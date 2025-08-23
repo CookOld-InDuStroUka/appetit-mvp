@@ -24,7 +24,9 @@ export default function PickupMap({ branches, selected, onSelect, height = 300 }
       if (!(window as any).ymaps) {
         await new Promise<void>((resolve) => {
           const script = document.createElement("script");
-          script.src = "https://api-maps.yandex.ru/2.1/?lang=ru_RU";
+          const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
+          const base = "https://api-maps.yandex.ru/2.1/?lang=ru_RU";
+          script.src = apiKey ? `${base}&apikey=${apiKey}` : base;
           script.onload = () => resolve();
           document.head.appendChild(script);
         });

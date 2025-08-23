@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DishCard from "../components/DishCard";
 import DishModal from "../components/DishModal";
 import Header from "../components/Header";
@@ -22,30 +22,38 @@ type DishDTO = {
 };
 
 export default function Home() {
-  const [dishes, setDishes] = useState<DishDTO[]>([]);
+  const [sections, setSections] = useState<{ name: string; dishes: DishDTO[] }[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/menu`)
       .then((r) => r.json())
       .then((data) => {
-        setDishes(data.dishes || []);
+        // some deployments return categories and dishes separately instead of ready-made "menu"
+        const menu: any[] = Array.isArray(data.menu)
+          ? data.menu
+          : (data.categories || []).map((c: any) => ({
+              ...c,
+              dishes: (data.dishes || []).filter((d: any) => d.categoryId === c.id),
+            }));
+
+        const map: Record<string, DishDTO[]> = {};
+        menu.forEach((c: any) => {
+          map[c.name] = c.dishes || [];
+        });
+
+        setSections([
+          { name: "Комбо", dishes: map["Комбо"] || [] },
+          { name: "Блюда", dishes: map["Блюда"] || [] },
+          { name: "Закуски", dishes: map["Закуски"] || [] },
+          { name: "Соусы", dishes: map["Соусы"] || [] },
+          { name: "Напитки", dishes: map["Напитки"] || [] },
+        ]);
       })
       .catch(() => {
-        setDishes([]);
+        setSections([]);
       });
   }, []);
-
-  const sections = useMemo(() => {
-    const base = [
-      { name: "Комбо", dishes: [] as DishDTO[] },
-      { name: "Блюда", dishes: dishes },
-      { name: "Закуски", dishes: [] as DishDTO[] },
-      { name: "Соусы", dishes: [] as DishDTO[] },
-      { name: "Напитки", dishes: [] as DishDTO[] },
-    ];
-    return base;
-  }, [dishes]);
 
   return (
     <>
