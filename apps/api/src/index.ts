@@ -117,40 +117,51 @@ app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
 app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
   const q = (req.query.q as string)?.trim() || "";
   const categorySlug = (req.query.categorySlug as string) || undefined;
-  let categoryId: string | undefined = undefined;
-  if (categorySlug) {
-    const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
-    categoryId = cat?.id;
-    if (!categoryId) return res.json({ categories: [], dishes: [] });
+  console.log("[menu] request", { q, categorySlug });
+
+  try {
+    let categoryId: string | undefined = undefined;
+    if (categorySlug) {
+      const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
+      categoryId = cat?.id;
+      if (!categoryId) {
+        console.log("[menu] category not found", { categorySlug });
+        return res.json({ categories: [], dishes: [] });
+      }
+    }
+
+    const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
+
+    const dishesRaw = await prisma.dish.findMany({
+      where: {
+        isActive: true,
+        ...(categoryId ? { categoryId } : {}),
+        ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
+      },
+      include: { variants: true },
+      orderBy: { name: "asc" }
+    });
+
+    const dishes = dishesRaw.map((d: any) => {
+      const base = Number(d.basePrice);
+      const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
+      return {
+        id: d.id,
+        categoryId: d.categoryId,
+        name: d.name,
+        description: d.description ?? undefined,
+        imageUrl: d.imageUrl ?? undefined,
+        basePrice: base,
+        minPrice: min
+      };
+    });
+
+    console.log("[menu] response", { categories: categories.length, dishes: dishes.length });
+    res.json({ categories, dishes });
+  } catch (err) {
+    console.error("[menu] error", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
-
-  const dishesRaw = await prisma.dish.findMany({
-    where: {
-      isActive: true,
-      ...(categoryId ? { categoryId } : {}),
-      ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
-    },
-    include: { variants: true },
-    orderBy: { name: "asc" }
-  });
-
-  const dishes = dishesRaw.map((d: any) => {
-    const base = Number(d.basePrice);
-    const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
-    return {
-      id: d.id,
-      categoryId: d.categoryId,
-      name: d.name,
-      description: d.description ?? undefined,
-      imageUrl: d.imageUrl ?? undefined,
-      basePrice: base,
-      minPrice: min
-    };
-  });
-
-  res.json({ categories, dishes });
 });
 
 app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
