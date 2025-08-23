@@ -2,6 +2,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Clean previous examples to avoid leftover branches
+  await prisma.order.deleteMany();
+  await prisma.dishAvailability.deleteMany();
+  await prisma.zone.deleteMany();
+  await prisma.branch.deleteMany();
+
   // --- Branches & Zones (стабильные id) ---
   const seedBranches = [
     {

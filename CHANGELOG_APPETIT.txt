@@ -1,5 +1,6 @@
 ## 2025-08-23
-- feat: confirm dish availability changes in branch admin and reload list on success
+- feat: edit branch menu locally with save button and apply via confirmation
+- chore: clear example branches before seeding real branch data
 
 ## 2025-08-22
 - feat: replace unified /menu endpoint with /categories and /dishes and load menu sections dynamically

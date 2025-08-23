@@ -12,6 +12,8 @@ export default function BranchesAdmin() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [branchId, setBranchId] = useState<string>("");
   const [dishes, setDishes] = useState<Dish[]>([]);
+  const [original, setOriginal] = useState<Dish[]>([]);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE}/branches`)
@@ -26,31 +28,47 @@ export default function BranchesAdmin() {
     if (!branchId) return;
     fetch(`${API_BASE}/admin/branches/${branchId}/dishes`)
       .then((r) => r.json())
-      .then(setDishes);
+      .then((data: Dish[]) => {
+        setDishes(data);
+        setOriginal(data);
+        setDirty(false);
+      });
   }, [branchId]);
 
-  const toggle = async (dishId: string, available: boolean) => {
-    const action = available ? "включить" : "отключить";
-    if (!window.confirm(`Вы уверены, что хотите ${action} блюдо?`)) return;
-
-    const res = await fetch(
-      `${API_BASE}/admin/branches/${branchId}/dishes/${dishId}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ available }),
-      }
+  const toggle = (dishId: string) => {
+    setDishes((prev) =>
+      prev.map((d) => (d.id === dishId ? { ...d, available: !d.available } : d))
     );
+    setDirty(true);
+  };
 
-    if (res.ok) {
-      const updated = await fetch(
-        `${API_BASE}/admin/branches/${branchId}/dishes`
-      ).then((r) => r.json());
-      setDishes(updated);
-      alert("Изменения сохранены");
-    } else {
-      alert("Не удалось сохранить изменения");
+  const save = async () => {
+    if (!dirty) return;
+    if (!window.confirm("Применить изменения?")) return;
+
+    const updates = dishes.filter((d) => {
+      const orig = original.find((o) => o.id === d.id);
+      return orig && orig.available !== d.available;
+    });
+
+    for (const u of updates) {
+      await fetch(
+        `${API_BASE}/admin/branches/${branchId}/dishes/${u.id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: u.available }),
+        }
+      );
     }
+
+    const fresh = await fetch(
+      `${API_BASE}/admin/branches/${branchId}/dishes`
+    ).then((r) => r.json());
+    setDishes(fresh);
+    setOriginal(fresh);
+    setDirty(false);
+    alert("Изменения сохранены");
   };
 
   return (
@@ -82,17 +100,31 @@ export default function BranchesAdmin() {
             </select>
           </label>
         </div>
-        <div className="option-grid">
+        <div className="option-grid" style={{ marginBottom: 24 }}>
           {dishes.map((d) => (
             <button
               key={d.id}
               className={`option-btn${d.available ? " active" : ""}`}
-              onClick={() => toggle(d.id, !d.available)}
+              onClick={() => toggle(d.id)}
             >
               {d.name}
             </button>
           ))}
         </div>
+        <button
+          onClick={save}
+          disabled={!dirty}
+          style={{
+            padding: "10px 24px",
+            borderRadius: 8,
+            background: dirty ? "var(--primary)" : "var(--input-bg)",
+            color: dirty ? "#fff" : "var(--text)",
+            border: "none",
+            cursor: dirty ? "pointer" : "not-allowed",
+          }}
+        >
+          Подтвердить изменения
+        </button>
       </main>
       <Footer />
     </>
