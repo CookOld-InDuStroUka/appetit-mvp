@@ -12,27 +12,49 @@ type Props = {
   onClose: () => void;
 };
 
-const DEFAULT_INGREDIENTS = ["Лук", "Помидоры", "Сыр"];
-const DEFAULT_SAUCES = ["Сырный", "Чесночный", "Томатный"];
+const ADD_ONS = [
+  { name: "соус Горчичный", price: 240 },
+  { name: "соус Барбекю", price: 240 },
+  { name: "соус Сырный", price: 240 },
+  { name: "перчик острый", price: 240 },
+  { name: "соус Томатный", price: 240 },
+  { name: "соус Чесночный", price: 240 },
+];
+
+const REMOVE_ING = [
+  "без кетчупа",
+  "без майонеза",
+  "без лука",
+  "без помидор",
+  "без огурцов",
+  "без мяса",
+];
 
 export default function DishModal({ dish, onClose }: Props) {
   const [excluded, setExcluded] = useState<string[]>([]);
-  const [sauces, setSauces] = useState<string[]>([]);
+  const [addons, setAddons] = useState<string[]>([]);
+  const [qty, setQty] = useState(1);
   const { addItem } = useCart();
 
   if (!dish) return null;
 
-  const toggle = (ing: string) => {
+  const toggleExcluded = (ing: string) => {
     setExcluded((prev) =>
       prev.includes(ing) ? prev.filter((i) => i !== ing) : [...prev, ing]
     );
   };
 
-  const toggleSauce = (s: string) => {
-    setSauces((prev) =>
-      prev.includes(s) ? prev.filter((i) => i !== s) : [...prev, s]
+  const toggleAddon = (name: string) => {
+    setAddons((prev) =>
+      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name]
     );
   };
+
+  const addonsTotal = addons.reduce((sum, a) => {
+    const item = ADD_ONS.find((o) => o.name === a);
+    return sum + (item ? item.price : 0);
+  }, 0);
+  const total = dish.basePrice + addonsTotal;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -47,55 +69,69 @@ export default function DishModal({ dish, onClose }: Props) {
         />
         <h2>{dish.name}</h2>
         {dish.description && <p>{dish.description}</p>}
-        <h4 style={{ marginTop: 20 }}>Ингредиенты</h4>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {DEFAULT_INGREDIENTS.map((ing) => (
-            <li key={ing} style={{ marginBottom: 8 }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!excluded.includes(ing)}
-                  onChange={() => toggle(ing)}
-                />{" "}
-                {ing}
-              </label>
-            </li>
+
+        <h4 style={{ marginTop: 20 }}>Добавь вкуса</h4>
+        <div className="option-grid">
+          {ADD_ONS.map((o) => (
+            <button
+              key={o.name}
+              onClick={() => toggleAddon(o.name)}
+              className={`option-btn${addons.includes(o.name) ? " active" : ""}`}
+            >
+              <span>{o.name}</span>
+              <span style={{ fontWeight: 600 }}>+{o.price} ₸</span>
+            </button>
           ))}
-        </ul>
-        <h4 style={{ marginTop: 20 }}>Соусы</h4>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {DEFAULT_SAUCES.map((s) => (
-            <li key={s} style={{ marginBottom: 8 }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={sauces.includes(s)}
-                  onChange={() => toggleSauce(s)}
-                />{" "}
-                {s}
-              </label>
-            </li>
+        </div>
+
+        <h4 style={{ marginTop: 20 }}>Убери лишнее</h4>
+        <div className="option-grid">
+          {REMOVE_ING.map((ing) => (
+            <button
+              key={ing}
+              onClick={() => toggleExcluded(ing)}
+              className={`option-btn${excluded.includes(ing) ? " active" : ""}`}
+            >
+              {ing}
+            </button>
           ))}
-        </ul>
-        <p style={{ fontWeight: 600 }}>
-          Цена: {dish.basePrice} ₸
-        </p>
-        <button
-          onClick={() =>
-            addItem({
-              id: dish.id,
-              name: dish.name,
-              price: dish.basePrice,
-              imageUrl: dish.imageUrl,
-              qty: 1,
-            })
-          }
-          className="add-btn"
-          style={{ marginTop: 12, padding: "10px 16px" }}
-          aria-label="Добавить"
-        >
-          +
-        </button>
+        </div>
+
+        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            onClick={() => setQty((q) => Math.max(1, q - 1))}
+            className="option-btn"
+            aria-label="Уменьшить"
+            style={{ width: 32, height: 32, padding: 0 }}
+          >
+            –
+          </button>
+          <span>{qty}</span>
+          <button
+            onClick={() => setQty((q) => q + 1)}
+            className="option-btn"
+            aria-label="Увеличить"
+            style={{ width: 32, height: 32, padding: 0 }}
+          >
+            +
+          </button>
+          <div style={{ marginLeft: "auto", fontWeight: 600 }}>{total * qty} ₸</div>
+          <button
+            onClick={() =>
+              addItem({
+                id: dish.id,
+                name: dish.name,
+                price: total,
+                imageUrl: dish.imageUrl,
+                qty,
+              })
+            }
+            className="add-btn"
+            aria-label="Добавить"
+          >
+            В корзину
+          </button>
+        </div>
       </div>
     </div>
   );

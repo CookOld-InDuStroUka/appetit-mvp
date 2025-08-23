@@ -15,42 +15,94 @@ async function main() {
       data: { id: "seed-zone", name: "Зона Центр", branchId: branch.id, deliveryFee: 500, minOrder: 2000 }
     }));
 
-  // --- Category (по slug, но через findFirst — не требует unique-типа) ---
-  const cat = await prisma.category.upsert({
-    where: { slug: "shawarma" },
-    update: {},
-    create: { id: "cat-shawarma", slug: "shawarma", name: "Шаурма", sortOrder: 1, isActive: true }
+  // --- Categories ---
+  const dishesCat = await prisma.category.upsert({
+    where: { slug: "dishes" },
+    update: { name: "Блюда" },
+    create: { id: "cat-dishes", slug: "dishes", name: "Блюда", sortOrder: 2, isActive: true }
   });
-  // --- Dish (по slug, тоже findFirst) ---
-  let dish =
-    (await prisma.dish.findFirst({ where: { slug: "beef-shawarma" } })) ??
-    (await prisma.dish.create({
-      data: {
-        id: "dish-beef-shawarma",
-        categoryId: cat.id,
-        name: "Шаурма говяжья",
-        slug: "beef-shawarma",
-        description: "Говядина, овощи, соус, лаваш",
-        basePrice: 1900,
-        imageUrl: "https://placehold.co/640x360?text=Beef",
+
+  const comboCat = await prisma.category.upsert({
+    where: { slug: "combo" },
+    update: {},
+    create: { id: "cat-combo", slug: "combo", name: "Комбо", sortOrder: 1, isActive: true }
+  });
+
+  // --- Dishes ---
+  await prisma.dish.createMany({
+    data: [
+      {
+        id: "dish-firm-big",
+        categoryId: dishesCat.id,
+        name: "Фирменная Большая шаурма",
+        slug: "firm-big",
+        description: "Тонкий лаваш, сочные кусочки говядины, картофель фри, лук, помидор, белый соус",
+        basePrice: 2990,
+        imageUrl: "https://placehold.co/600x200?text=Shawarma+1",
+        isActive: true
+      },
+      {
+        id: "dish-doner-chicken",
+        categoryId: dishesCat.id,
+        name: "Донер с курицей",
+        slug: "doner-chicken",
+        description: "Булочка, кусочки курицы, картофель фри, лук, красный соус, белый соус",
+        basePrice: 1490,
+        imageUrl: "https://placehold.co/600x200?text=Doner+Chicken",
+        isActive: true
+      },
+      {
+        id: "dish-hotdog",
+        categoryId: dishesCat.id,
+        name: "Хот-дог",
+        slug: "hot-dog",
+        description: "Булочка, сосиска, лук, соус",
+        basePrice: 990,
+        imageUrl: "https://placehold.co/600x200?text=Hotdog",
+        isActive: true
+      },
+      {
+        id: "combo-one",
+        categoryId: comboCat.id,
+        name: "Комбо для ОДНОГО",
+        slug: "combo-one",
+        description: "Фирменная шаурма, картошка фри и айран",
+        basePrice: 2490,
+        imageUrl: "https://placehold.co/600x200?text=Combo+1",
+        isActive: true
+      },
+      {
+        id: "combo-two",
+        categoryId: comboCat.id,
+        name: "Комбо для ДВОИХ",
+        slug: "combo-two",
+        description: "2 фирменные шаурмы, порция фри и Pepsi",
+        basePrice: 4490,
+        imageUrl: "https://placehold.co/600x200?text=Combo+2",
+        isActive: true
+      },
+      {
+        id: "combo-company",
+        categoryId: comboCat.id,
+        name: "Комбо для КОМПАНИИ",
+        slug: "combo-company",
+        description: "4 средние шаурмы на выбор, 2 порции фри и 2 напитка",
+        basePrice: 8900,
+        imageUrl: "https://placehold.co/600x200?text=Combo+3",
         isActive: true
       }
-    }));
-
-  // --- Variants (createMany + skipDuplicates) ---
-  await prisma.dishVariant.createMany({
-    data: [
-      { id: "var-beef-m", dishId: dish.id, name: "Средняя", priceDelta: 0, sortOrder: 1 },
-      { id: "var-beef-l", dishId: dish.id, name: "Большая", priceDelta: 500, sortOrder: 2 }
     ],
     skipDuplicates: true
   });
 
-  // --- Availability (upsert составного ключа) ---
-  await prisma.dishAvailability.upsert({
-    where: { dishId_zoneId: { dishId: dish.id, zoneId: zone.id } },
-    update: {},
-    create: { dishId: dish.id, zoneId: zone.id }
+  // --- Availability for all dishes ---
+  const allDishes = await prisma.dish.findMany({
+    where: { categoryId: { in: [dishesCat.id, comboCat.id] } },
+    select: { id: true }
+  });
+  await prisma.dishAvailability.createMany({
+    data: allDishes.map(d => ({ dishId: d.id, zoneId: zone.id })),
+    skipDuplicates: true
   });
 
   // --- CMS (upsert по slug) ---
