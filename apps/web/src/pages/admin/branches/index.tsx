@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
 type Branch = { id: string; name: string; address?: string };
 type Dish = { id: string; name: string; available: boolean };
 
@@ -9,7 +12,7 @@ export default function BranchesAdmin() {
   const [dishes, setDishes] = useState<Dish[]>([]);
 
   useEffect(() => {
-    fetch("/api/v1/branches")
+    fetch(`${API_BASE}/branches`)
       .then((r) => r.json())
       .then((data: Branch[]) => {
         setBranches(data);
@@ -19,13 +22,13 @@ export default function BranchesAdmin() {
 
   useEffect(() => {
     if (!branchId) return;
-    fetch(`/api/v1/admin/branches/${branchId}/dishes`)
+    fetch(`${API_BASE}/admin/branches/${branchId}/dishes`)
       .then((r) => r.json())
       .then(setDishes);
   }, [branchId]);
 
   const toggle = async (dishId: string, available: boolean) => {
-    await fetch(`/api/v1/admin/branches/${branchId}/dishes/${dishId}`, {
+    await fetch(`${API_BASE}/admin/branches/${branchId}/dishes/${dishId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ available }),

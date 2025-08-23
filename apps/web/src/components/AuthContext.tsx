@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState } from "react";
 import AuthModal from "./AuthModal";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
 export type User = { id: string; phone?: string; email?: string; bonus: number };
 
 type AuthCtx = {
@@ -23,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const close = () => setOpen(false);
 
   const requestCode = async (phone: string) => {
-    await fetch("/api/v1/auth/request-code", {
+    await fetch(`${API_BASE}/auth/request-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone })
@@ -31,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyCode = async (phone: string, code: string) => {
-    const res = await fetch("/api/v1/auth/verify-code", {
+    const res = await fetch(`${API_BASE}/auth/verify-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, code })
@@ -44,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const registerEmail = async (email: string, password: string) => {
-    const res = await fetch("/api/v1/auth/register-email", {
+    const res = await fetch(`${API_BASE}/auth/register-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })

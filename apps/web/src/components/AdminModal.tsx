@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
 export default function AdminModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -7,7 +10,7 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   const send = async (path: "login" | "register") => {
-    await fetch(`/api/v1/admin/${path}`, {
+    await fetch(`${API_BASE}/admin/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
