@@ -28,6 +28,24 @@ async function main() {
     create: { id: "cat-combo", slug: "combo", name: "Комбо", sortOrder: 1, isActive: true }
   });
 
+  const snacksCat = await prisma.category.upsert({
+    where: { slug: "snacks" },
+    update: {},
+    create: { id: "cat-snacks", slug: "snacks", name: "Закуски", sortOrder: 3, isActive: true }
+  });
+
+  const saucesCat = await prisma.category.upsert({
+    where: { slug: "sauces" },
+    update: {},
+    create: { id: "cat-sauces", slug: "sauces", name: "Соусы", sortOrder: 4, isActive: true }
+  });
+
+  const drinksCat = await prisma.category.upsert({
+    where: { slug: "drinks" },
+    update: {},
+    create: { id: "cat-drinks", slug: "drinks", name: "Напитки", sortOrder: 5, isActive: true }
+  });
+
   // --- Dishes ---
   await prisma.dish.createMany({
     data: [
@@ -101,6 +119,37 @@ async function main() {
         imageUrl: "https://placehold.co/600x200?text=Combo+3",
         isActive: true
       }
+      ,
+      {
+        id: "snack-fries",
+        categoryId: snacksCat.id,
+        name: "Картофель фри",
+        slug: "fries",
+        description: "Хрустящий картофель фри",
+        basePrice: 590,
+        imageUrl: "https://placehold.co/600x200?text=Fries",
+        isActive: true
+      },
+      {
+        id: "sauce-cheese",
+        categoryId: saucesCat.id,
+        name: "Соус сырный",
+        slug: "cheese-sauce",
+        description: "Нежный сырный соус",
+        basePrice: 190,
+        imageUrl: "https://placehold.co/600x200?text=Sauce",
+        isActive: true
+      },
+      {
+        id: "drink-cola",
+        categoryId: drinksCat.id,
+        name: "Кола",
+        slug: "cola",
+        description: "Освежающий напиток",
+        basePrice: 490,
+        imageUrl: "https://placehold.co/600x200?text=Cola",
+        isActive: true
+      }
     ],
     skipDuplicates: true
   });
@@ -126,7 +175,11 @@ async function main() {
 
   // --- Availability for all dishes ---
   const allDishes = await prisma.dish.findMany({
-    where: { categoryId: { in: [dishesCat.id, comboCat.id] } },
+    where: {
+      categoryId: {
+        in: [dishesCat.id, comboCat.id, snacksCat.id, saucesCat.id, drinksCat.id]
+      }
+    },
     select: { id: true }
   });
   await prisma.dishAvailability.createMany({

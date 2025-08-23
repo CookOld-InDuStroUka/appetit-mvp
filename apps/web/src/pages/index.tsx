@@ -40,7 +40,7 @@ export default function Home() {
             return { name: cat.name, dishes };
           })
         );
-        setSections(sectionsData);
+        setSections(sectionsData.filter((sec) => sec.dishes.length > 0));
       } catch {
         setSections([]);
       }
