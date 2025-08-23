@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -C apps/api dev",
-    "build": "pnpm -C apps/api build"
+    "build": "pnpm --filter @appetit/api build"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
