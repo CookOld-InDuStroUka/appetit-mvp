@@ -1,4 +1,5 @@
 ## 2025-08-22
+- feat: seed multiple pickup branches and expose them in admin panel
 - feat: allow selecting branch in admin to toggle dish availability
 - feat: display pickup branch map inside delivery modal when "Самовывоз" is chosen
 - feat: show delivery/pickup toggle with address or branch map inside cart and hide Yandex branding

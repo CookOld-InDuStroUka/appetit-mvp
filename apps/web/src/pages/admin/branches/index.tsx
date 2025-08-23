@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-type Branch = { id: string; name: string };
+type Branch = { id: string; name: string; address?: string };
 type Dish = { id: string; name: string; available: boolean };
 
 export default function BranchesAdmin() {
@@ -42,6 +42,7 @@ export default function BranchesAdmin() {
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
+              {b.address ? ` – ${b.address}` : ""}
             </option>
           ))}
         </select>

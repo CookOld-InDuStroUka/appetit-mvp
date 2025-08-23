@@ -2,18 +2,53 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // --- Branch & Zone (стабильные id) ---
-  const branch =
-    (await prisma.branch.findUnique({ where: { id: "seed-branch" } })) ??
-    (await prisma.branch.create({
-      data: { id: "seed-branch", name: "Центр", address: "ул. Пример, 1", phone: "+7 777 000 11 22" }
-    }));
+  // --- Branches & Zones (стабильные id) ---
+  const seedBranches = [
+    {
+      id: "seed-branch",
+      name: "Центр",
+      address: "ул. Пример, 1",
+      phone: "+7 777 000 11 22",
+      zoneId: "seed-zone",
+      zoneName: "Зона Центр"
+    },
+    {
+      id: "seed-branch-2",
+      name: "Запад",
+      address: "ул. Пример, 2",
+      phone: "+7 777 000 22 33",
+      zoneId: "seed-zone-2",
+      zoneName: "Зона Запад"
+    },
+    {
+      id: "seed-branch-3",
+      name: "Восток",
+      address: "ул. Пример, 3",
+      phone: "+7 777 000 33 44",
+      zoneId: "seed-zone-3",
+      zoneName: "Зона Восток"
+    }
+  ];
 
-  const zone =
-    (await prisma.zone.findUnique({ where: { id: "seed-zone" } })) ??
-    (await prisma.zone.create({
-      data: { id: "seed-zone", name: "Зона Центр", branchId: branch.id, deliveryFee: 500, minOrder: 2000 }
-    }));
+  for (const b of seedBranches) {
+    await prisma.branch.upsert({
+      where: { id: b.id },
+      update: { name: b.name, address: b.address, phone: b.phone },
+      create: { id: b.id, name: b.name, address: b.address, phone: b.phone }
+    });
+
+    await prisma.zone.upsert({
+      where: { id: b.zoneId },
+      update: { name: b.zoneName, branchId: b.id, deliveryFee: 500, minOrder: 2000 },
+      create: {
+        id: b.zoneId,
+        name: b.zoneName,
+        branchId: b.id,
+        deliveryFee: 500,
+        minOrder: 2000
+      }
+    });
+  }
 
   // --- Categories ---
   const dishesCat = await prisma.category.upsert({
@@ -119,8 +154,9 @@ async function main() {
     where: { categoryId: { in: [dishesCat.id, comboCat.id] } },
     select: { id: true }
   });
+  const zones = await prisma.zone.findMany({ select: { id: true } });
   await prisma.dishAvailability.createMany({
-    data: allDishes.map(d => ({ dishId: d.id, zoneId: zone.id })),
+    data: zones.flatMap(z => allDishes.map(d => ({ dishId: d.id, zoneId: z.id }))),
     skipDuplicates: true
   });
 
