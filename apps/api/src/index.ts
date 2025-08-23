@@ -114,15 +114,11 @@ app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
   res.json(zones);
 });
 
-app.get(`${BASE}/menu/categories`, async (_req: Request, res: Response) => {
-  const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
-  res.json(categories);
-});
-
-app.get(`${BASE}/menu/dishes`, async (req: Request, res: Response) => {
+app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
   const rawQ = (req.query.q ?? req.query.query ?? req.query.search) as string | undefined;
   const q = rawQ?.trim() ?? "";
   const categorySlug = (req.query.categorySlug ?? req.query.category ?? req.query.cat) as string | undefined;
+  console.log("[menu] request", { q, categorySlug });
 
   try {
     let categoryId: string | undefined = undefined;
@@ -130,10 +126,12 @@ app.get(`${BASE}/menu/dishes`, async (req: Request, res: Response) => {
       const cat = await prisma.category.findFirst({ where: { slug: categorySlug, isActive: true } });
       categoryId = cat?.id;
       if (!categoryId) {
-        console.log("[menu/dishes] category not found", { categorySlug });
-        return res.json([]);
+        console.log("[menu] category not found", { categorySlug });
+        return res.json({ categories: [], dishes: [] });
       }
     }
+
+    const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
 
     const dishesRaw = await prisma.dish.findMany({
       where: {
@@ -147,9 +145,7 @@ app.get(`${BASE}/menu/dishes`, async (req: Request, res: Response) => {
 
     const dishes = dishesRaw.map((d: any) => {
       const base = Number(d.basePrice);
-      const min = d.variants.length
-        ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta)))
-        : base;
+      const min = d.variants.length ? base + Math.min(...d.variants.map((v: any) => Number(v.priceDelta))) : base;
       return {
         id: d.id,
         categoryId: d.categoryId,
@@ -157,13 +153,22 @@ app.get(`${BASE}/menu/dishes`, async (req: Request, res: Response) => {
         description: d.description ?? undefined,
         imageUrl: d.imageUrl ?? undefined,
         basePrice: base,
-        minPrice: min,
+        minPrice: min
       };
     });
 
-    res.json(dishes);
+    const grouped: Record<string, any[]> = {};
+    dishes.forEach((d: any) => {
+      if (!grouped[d.categoryId]) grouped[d.categoryId] = [];
+      grouped[d.categoryId].push(d);
+    });
+
+    const menu = categories.map((c: any) => ({ ...c, dishes: grouped[c.id] || [] }));
+
+    console.log("[menu] response", { categories: categories.length, dishes: dishes.length });
+    res.json({ categories, dishes, menu });
   } catch (err) {
-    console.error("[menu/dishes] error", err);
+    console.error("[menu] error", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

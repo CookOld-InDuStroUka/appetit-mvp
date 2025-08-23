@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @appetit/api dev",
-    "build": "pnpm --filter @appetit/api build"
+    "dev": "pnpm -C apps/api dev",
+    "build": "pnpm -C apps/api build"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

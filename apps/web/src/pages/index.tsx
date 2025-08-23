@@ -26,26 +26,33 @@ export default function Home() {
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const categories: any[] = await fetch(`${API_BASE}/menu/categories`).then((r) => r.json());
-        const desired = ["Комбо", "Блюда", "Закуски", "Соусы", "Напитки"];
-        const sectionsData = await Promise.all(
-          desired.map(async (name) => {
-            const cat = categories.find((c) => c.name === name);
-            if (!cat) return { name, dishes: [] };
-            const dishes: DishDTO[] = await fetch(
-              `${API_BASE}/menu/dishes?categorySlug=${cat.slug}`
-            ).then((r) => r.json());
-            return { name: cat.name, dishes };
-          })
-        );
-        setSections(sectionsData.filter((sec) => sec.dishes.length > 0));
-      } catch {
+    fetch(`${API_BASE}/menu`)
+      .then((r) => r.json())
+      .then((data) => {
+        // some deployments return categories and dishes separately instead of ready-made "menu"
+        const menu: any[] = Array.isArray(data.menu)
+          ? data.menu
+          : (data.categories || []).map((c: any) => ({
+              ...c,
+              dishes: (data.dishes || []).filter((d: any) => d.categoryId === c.id),
+            }));
+
+        const map: Record<string, DishDTO[]> = {};
+        menu.forEach((c: any) => {
+          map[c.name] = c.dishes || [];
+        });
+
+        setSections([
+          { name: "Комбо", dishes: map["Комбо"] || [] },
+          { name: "Блюда", dishes: map["Блюда"] || [] },
+          { name: "Закуски", dishes: map["Закуски"] || [] },
+          { name: "Соусы", dishes: map["Соусы"] || [] },
+          { name: "Напитки", dishes: map["Напитки"] || [] },
+        ]);
+      })
+      .catch(() => {
         setSections([]);
-      }
-    };
-    load();
+      });
   }, []);
 
   return (

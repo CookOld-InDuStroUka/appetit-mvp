@@ -18,9 +18,9 @@ export default function CategoryPage() {
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`${API_BASE}/menu/dishes?categorySlug=${slug}`)
+    fetch(`${API_BASE}/menu?categorySlug=${slug}`)
       .then((r) => r.json())
-      .then((data) => setDishes(data || []))
+      .then((data) => setDishes(data.dishes || []))
       .catch(() => setDishes([]));
   }, [slug]);
 
