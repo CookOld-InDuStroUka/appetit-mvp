@@ -93,8 +93,7 @@ export default function BranchesAdmin() {
             >
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name}
-                  {b.address ? ` – ${b.address}` : ""}
+                  {b.address ?? b.name}
                 </option>
               ))}
             </select>
