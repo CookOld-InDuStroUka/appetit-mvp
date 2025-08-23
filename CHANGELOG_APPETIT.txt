@@ -2,6 +2,7 @@
 - feat: replace unified /menu endpoint with /categories and /dishes and load menu sections dynamically
 - feat: seed multiple pickup branches and expose them in admin panel
 - feat: allow selecting branch in admin to toggle dish availability
+- feat: replace placeholder branches with real addresses and restyle admin branch page with site header and toggle buttons
 - feat: display pickup branch map inside delivery modal when "Самовывоз" is chosen
 - feat: show delivery/pickup toggle with address or branch map inside cart and hide Yandex branding
 - fix: align header actions to the right after the search field

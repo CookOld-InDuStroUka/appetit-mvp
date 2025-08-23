@@ -5,28 +5,60 @@ async function main() {
   // --- Branches & Zones (стабильные id) ---
   const seedBranches = [
     {
-      id: "seed-branch",
-      name: "Центр",
-      address: "ул. Пример, 1",
-      phone: "+7 777 000 11 22",
-      zoneId: "seed-zone",
-      zoneName: "Зона Центр"
+      id: "kazakhstan",
+      name: "КАЗАХСТАН, 70А",
+      address: "КАЗАХСТАН, 70А",
+      phone: "+7 777 000 00 01",
+      zoneId: "zone-kazakhstan",
+      zoneName: "Зона Казахстан 70А"
     },
     {
-      id: "seed-branch-2",
-      name: "Запад",
-      address: "ул. Пример, 2",
-      phone: "+7 777 000 22 33",
-      zoneId: "seed-zone-2",
-      zoneName: "Зона Запад"
+      id: "satpaeva",
+      name: "САТПАЕВА, 8А",
+      address: "САТПАЕВА, 8А",
+      phone: "+7 777 000 00 02",
+      zoneId: "zone-satpaeva",
+      zoneName: "Зона Сатпаева 8А"
     },
     {
-      id: "seed-branch-3",
-      name: "Восток",
-      address: "ул. Пример, 3",
-      phone: "+7 777 000 33 44",
-      zoneId: "seed-zone-3",
-      zoneName: "Зона Восток"
+      id: "novatorov",
+      name: "НОВАТОРОВ, 18/2",
+      address: "НОВАТОРОВ, 18/2",
+      phone: "+7 777 000 00 03",
+      zoneId: "zone-novatorov",
+      zoneName: "Зона Новаторов 18/2"
+    },
+    {
+      id: "zhybek",
+      name: "ЖИБЕК ЖОЛЫ, 1к8",
+      address: "ЖИБЕК ЖОЛЫ, 1к8",
+      phone: "+7 777 000 00 04",
+      zoneId: "zone-zhybek",
+      zoneName: "Зона Жибек Жолы 1к8"
+    },
+    {
+      id: "samarskoe",
+      name: "САМАРСКОЕ ШОССЕ, 5/1",
+      address: "САМАРСКОЕ ШОССЕ, 5/1",
+      phone: "+7 777 000 00 05",
+      zoneId: "zone-samarskoe",
+      zoneName: "Зона Самарское шоссе 5/1"
+    },
+    {
+      id: "kabanbay",
+      name: "КАБАНБАЙ БАТЫРА,148",
+      address: "КАБАНБАЙ БАТЫРА,148",
+      phone: "+7 777 000 00 06",
+      zoneId: "zone-kabanbay",
+      zoneName: "Зона Кабанбай батыра 148"
+    },
+    {
+      id: "nazarbaeva",
+      name: "НАЗАРБАЕВА, 28А",
+      address: "НАЗАРБАЕВА, 28А",
+      phone: "+7 777 000 00 07",
+      zoneId: "zone-nazarbaeva",
+      zoneName: "Зона Назарбаева 28А"
     }
   ];
 
