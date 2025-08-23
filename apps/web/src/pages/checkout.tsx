@@ -62,7 +62,7 @@ export default function Checkout() {
             </select>
           </label>
         </>}
-        <label>ID блюда для теста (из /menu) <input value={form.dishId || ""} onChange={e => setForm({ ...form, dishId: e.target.value })} /></label>
+        <label>ID блюда для теста (из /dishes) <input value={form.dishId || ""} onChange={e => setForm({ ...form, dishId: e.target.value })} /></label>
         <button onClick={submit}>Создать заказ</button>
       </div>
     </main>

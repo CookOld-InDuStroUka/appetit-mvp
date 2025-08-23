@@ -42,7 +42,8 @@ APPETIT MVP — Руководство по запуску (Windows/PowerShell)
 
 8) Полезные эндпоинты (BASE = http://localhost:3001/api/v1)
    - GET /health
-   - GET /menu[?q=][&category=<slug>]
+   - GET /categories
+   - GET /dishes[?q=][&categoryId=][&branchId=]
    - GET /dishes/:id
    - GET /dishes/search?q=
    - GET /zones

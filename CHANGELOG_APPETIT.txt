@@ -1,4 +1,5 @@
 ## 2025-08-22
+- feat: replace unified /menu endpoint with /categories and /dishes and load menu sections dynamically
 - feat: seed multiple pickup branches and expose them in admin panel
 - feat: allow selecting branch in admin to toggle dish availability
 - feat: display pickup branch map inside delivery modal when "Самовывоз" is chosen

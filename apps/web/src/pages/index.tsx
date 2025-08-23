@@ -28,33 +28,22 @@ export default function Home() {
   const { branch } = useDelivery();
 
   useEffect(() => {
-    fetch(`${API_BASE}/menu?branchId=${branch}`)
-      .then((r) => r.json())
-      .then((data) => {
-        // some deployments return categories and dishes separately instead of ready-made "menu"
-        const menu: any[] = Array.isArray(data.menu)
-          ? data.menu
-          : (data.categories || []).map((c: any) => ({
-              ...c,
-              dishes: (data.dishes || []).filter((d: any) => d.categoryId === c.id),
-            }));
-
-        const map: Record<string, DishDTO[]> = {};
-        menu.forEach((c: any) => {
-          map[c.name] = c.dishes || [];
-        });
-
-        setSections([
-          { name: "Комбо", dishes: map["Комбо"] || [] },
-          { name: "Блюда", dishes: map["Блюда"] || [] },
-          { name: "Закуски", dishes: map["Закуски"] || [] },
-          { name: "Соусы", dishes: map["Соусы"] || [] },
-          { name: "Напитки", dishes: map["Напитки"] || [] },
-        ]);
-      })
-      .catch(() => {
+    const load = async () => {
+      try {
+        const categories = await fetch(`${API_BASE}/categories`).then((r) => r.json());
+        const items = await Promise.all(
+          categories.map((c: any) =>
+            fetch(`${API_BASE}/dishes?categoryId=${c.id}&branchId=${branch}`)
+              .then((r) => r.json())
+              .then((dishes: DishDTO[]) => ({ name: c.name, dishes }))
+          )
+        );
+        setSections(items.filter((sec) => sec.dishes.length > 0));
+      } catch {
         setSections([]);
-      });
+      }
+    };
+    load();
   }, [branch]);
 
   return (
