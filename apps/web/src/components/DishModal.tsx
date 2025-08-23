@@ -19,13 +19,14 @@ type Props = {
   onClose: () => void;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const DEFAULT_INGREDIENTS = ["Лук", "Помидоры", "Сыр"];
+const DEFAULT_SAUCES = ["Сырный", "Чесночный", "Томатный"];
 
 export default function DishModal({ dish, onClose }: Props) {
   const [details, setDetails] = useState<DishDetails | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [excluded, setExcluded] = useState<string[]>([]);
-  const [qty, setQty] = useState(1);
+  const [sauces, setSauces] = useState<string[]>([]);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -42,28 +43,17 @@ export default function DishModal({ dish, onClose }: Props) {
 
   if (!dish) return null;
 
-  const toggleAddon = (id: string) => {
-    setSelectedAddons((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleExcluded = (id: string) => {
+  const toggle = (ing: string) => {
     setExcluded((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(ing) ? prev.filter((i) => i !== ing) : [...prev, ing]
     );
   };
 
-  const addonsTotal = selectedAddons.reduce((sum, id) => {
-    const item = details?.addons?.find((a) => a.id === id);
-    return sum + (item ? item.price : 0);
-  }, 0);
-  const base = details?.basePrice ?? dish.basePrice;
-  const total = base + addonsTotal;
-
-  const selectedAddonObjs = details?.addons?.filter((a) => selectedAddons.includes(a.id)) || [];
-  const selectedExcludedNames =
-    details?.exclusions?.filter((e) => excluded.includes(e.id)).map((e) => e.name) || [];
+  const toggleSauce = (s: string) => {
+    setSauces((prev) =>
+      prev.includes(s) ? prev.filter((i) => i !== s) : [...prev, s]
+    );
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -77,80 +67,56 @@ export default function DishModal({ dish, onClose }: Props) {
           style={{ width: "100%", borderRadius: 8 }}
         />
         <h2>{dish.name}</h2>
-        {details?.description && <p>{details.description}</p>}
-
-        {details?.addons && details.addons.length > 0 && (
-          <>
-            <h4 style={{ marginTop: 20 }}>Добавь вкуса</h4>
-            <div className="option-grid">
-              {details.addons.map((o) => (
-                <button
-                  key={o.id}
-                  onClick={() => toggleAddon(o.id)}
-                  className={`option-btn${selectedAddons.includes(o.id) ? " active" : ""}`}
-                >
-                  <span>{o.name}</span>
-                  <span style={{ fontWeight: 600 }}>+{o.price} ₸</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {details?.exclusions && details.exclusions.length > 0 && (
-          <>
-            <h4 style={{ marginTop: 20 }}>Убери лишнее</h4>
-            <div className="option-grid">
-              {details.exclusions.map((ing) => (
-                <button
-                  key={ing.id}
-                  onClick={() => toggleExcluded(ing.id)}
-                  className={`option-btn${excluded.includes(ing.id) ? " active" : ""}`}
-                >
-                  {ing.name}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="option-btn"
-            aria-label="Уменьшить"
-            style={{ width: 32, height: 32, padding: 0 }}
-          >
-            –
-          </button>
-          <span>{qty}</span>
-          <button
-            onClick={() => setQty((q) => q + 1)}
-            className="option-btn"
-            aria-label="Увеличить"
-            style={{ width: 32, height: 32, padding: 0 }}
-          >
-            +
-          </button>
-          <div style={{ marginLeft: "auto", fontWeight: 600 }}>{total * qty} ₸</div>
-          <button
-            onClick={() =>
-              addItem({
-                id: dish.id + JSON.stringify(selectedAddons) + JSON.stringify(selectedExcludedNames),
-                name: dish.name,
-                price: total,
-                imageUrl: details?.imageUrl || dish.imageUrl,
-                qty,
-                addons: selectedAddonObjs.map((a) => ({ name: a.name, price: a.price })),
-                excluded: selectedExcludedNames,
-              })
-            }
-            className="add-btn"
-            aria-label="Добавить"
-          >
-            В корзину
-          </button>
-        </div>
+        {dish.description && <p>{dish.description}</p>}
+        <h4 style={{ marginTop: 20 }}>Ингредиенты</h4>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {DEFAULT_INGREDIENTS.map((ing) => (
+            <li key={ing} style={{ marginBottom: 8 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={!excluded.includes(ing)}
+                  onChange={() => toggle(ing)}
+                />{" "}
+                {ing}
+              </label>
+            </li>
+          ))}
+        </ul>
+        <h4 style={{ marginTop: 20 }}>Соусы</h4>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {DEFAULT_SAUCES.map((s) => (
+            <li key={s} style={{ marginBottom: 8 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={sauces.includes(s)}
+                  onChange={() => toggleSauce(s)}
+                />{" "}
+                {s}
+              </label>
+            </li>
+          ))}
+        </ul>
+        <p style={{ fontWeight: 600 }}>
+          Цена: {dish.basePrice} ₸
+        </p>
+        <button
+          onClick={() =>
+            addItem({
+              id: dish.id,
+              name: dish.name,
+              price: dish.basePrice,
+              imageUrl: dish.imageUrl,
+              qty: 1,
+            })
+          }
+          className="add-btn"
+          style={{ marginTop: 12, padding: "10px 16px" }}
+          aria-label="Добавить"
+        >
+          +
+        </button>
       </div>
     </div>
   );

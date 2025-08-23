@@ -91,25 +91,13 @@ async function main() {
         imageUrl: "https://placehold.co/600x200?text=Combo+3",
         isActive: true
       }
-    ],
-    skipDuplicates: true
-  });
+    }));
 
-  // --- Modifiers for dishes ---
-  await prisma.dishModifier.createMany({
+  // --- Variants (createMany + skipDuplicates) ---
+  await prisma.dishVariant.createMany({
     data: [
-      { dishId: "dish-firm-big", name: "соус Горчичный", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "соус Барбекю", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "соус Сырный", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "перчик острый", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "соус Томатный", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "соус Чесночный", price: 240, type: "addon" },
-      { dishId: "dish-firm-big", name: "без кетчупа", price: 0, type: "exclusion" },
-      { dishId: "dish-firm-big", name: "без майонеза", price: 0, type: "exclusion" },
-      { dishId: "dish-firm-big", name: "без лука", price: 0, type: "exclusion" },
-      { dishId: "dish-firm-big", name: "без помидор", price: 0, type: "exclusion" },
-      { dishId: "dish-firm-big", name: "без огурцов", price: 0, type: "exclusion" },
-      { dishId: "dish-firm-big", name: "без мяса", price: 0, type: "exclusion" }
+      { id: "var-beef-m", dishId: dish.id, name: "Средняя", priceDelta: 0, sortOrder: 1 },
+      { id: "var-beef-l", dishId: dish.id, name: "Большая", priceDelta: 500, sortOrder: 2 }
     ],
     skipDuplicates: true
   });
