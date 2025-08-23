@@ -114,10 +114,43 @@ app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
   res.json(zones);
 });
 
+app.get(`${BASE}/admin/branches/:branchId/dishes`, async (req: Request, res: Response) => {
+  const branch = await prisma.branch.findUnique({ where: { id: req.params.branchId }, include: { zones: true } });
+  if (!branch) return res.status(404).json({ error: "Branch not found" });
+
+  const zoneIds = branch.zones.map((z: any) => z.id);
+  const dishes = await prisma.dish.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
+  const availability = await prisma.dishAvailability.findMany({ where: { zoneId: { in: zoneIds } } });
+  const availSet = new Set(availability.map((a: any) => a.dishId));
+
+  const result = dishes.map((d: any) => ({ id: d.id, name: d.name, available: availSet.has(d.id) }));
+  res.json(result);
+});
+
+app.post(`${BASE}/admin/branches/:branchId/dishes/:dishId`, async (req: Request, res: Response) => {
+  const branch = await prisma.branch.findUnique({ where: { id: req.params.branchId }, include: { zones: true } });
+  if (!branch) return res.status(404).json({ error: "Branch not found" });
+
+  const available = Boolean(req.body.available);
+  const zoneIds = branch.zones.map((z: any) => z.id);
+
+  if (available) {
+    await prisma.dishAvailability.createMany({
+      data: zoneIds.map((zoneId: string) => ({ dishId: req.params.dishId, zoneId })),
+      skipDuplicates: true,
+    });
+  } else {
+    await prisma.dishAvailability.deleteMany({ where: { dishId: req.params.dishId, zoneId: { in: zoneIds } } });
+  }
+
+  res.json({ ok: true });
+});
+
 app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
   const rawQ = (req.query.q ?? req.query.query ?? req.query.search) as string | undefined;
   const q = rawQ?.trim() ?? "";
   const categorySlug = (req.query.categorySlug ?? req.query.category ?? req.query.cat) as string | undefined;
+  const branchId = req.query.branchId as string | undefined;
   console.log("[menu] request", { q, categorySlug });
 
   try {
@@ -133,11 +166,18 @@ app.get(`${BASE}/menu`, async (req: Request, res: Response) => {
 
     const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } });
 
+    let zoneIds: string[] = [];
+    if (branchId) {
+      const branch = await prisma.branch.findUnique({ where: { id: branchId }, include: { zones: true } });
+      zoneIds = branch?.zones.map((z: any) => z.id) || [];
+    }
+
     const dishesRaw = await prisma.dish.findMany({
       where: {
         isActive: true,
         ...(categoryId ? { categoryId } : {}),
-        ...(q ? { name: { contains: q, mode: "insensitive" } } : {})
+        ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+        ...(zoneIds.length ? { availability: { some: { zoneId: { in: zoneIds } } } } : {}),
       },
       include: { variants: true },
       orderBy: { name: "asc" }

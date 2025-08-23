@@ -6,6 +6,7 @@ import MainMenu from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 import MobileMenu from "../components/MobileMenu";
+import { useDelivery } from "../components/DeliveryContext";
 
 // use local API if the env variable is missing so the menu still loads
 const API_BASE =
@@ -24,9 +25,10 @@ type DishDTO = {
 export default function Home() {
   const [sections, setSections] = useState<{ name: string; dishes: DishDTO[] }[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
+  const { branch } = useDelivery();
 
   useEffect(() => {
-    fetch(`${API_BASE}/menu`)
+    fetch(`${API_BASE}/menu?branchId=${branch}`)
       .then((r) => r.json())
       .then((data) => {
         // some deployments return categories and dishes separately instead of ready-made "menu"
@@ -53,7 +55,7 @@ export default function Home() {
       .catch(() => {
         setSections([]);
       });
-  }, []);
+  }, [branch]);
 
   return (
     <>
