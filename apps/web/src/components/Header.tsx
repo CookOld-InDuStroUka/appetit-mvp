@@ -52,7 +52,16 @@ export default function Header() {
                 </Link>
 
                 {/* Поиск */}
-                <div style={{ flex: "0 1 280px", display: "flex", alignItems: "center", gap: 8, marginLeft: 12, minWidth: 160 }}>
+                <div
+                    style={{
+                        flex: isSmall ? "1 1 100%" : "0 1 280px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginLeft: isSmall ? 0 : 12,
+                        minWidth: 160,
+                    }}
+                >
                     <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
@@ -91,7 +100,17 @@ export default function Header() {
                 </div>
 
                 {/* Правый блок */}
-                <nav style={{ display: "flex", alignItems: "center", gap: 12, marginLeft: "auto" }}>
+                <nav
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        marginLeft: isSmall ? 0 : "auto",
+                        width: isSmall ? "100%" : undefined,
+                        justifyContent: isSmall ? "space-between" : undefined,
+                        flexWrap: isSmall ? "wrap" : undefined,
+                    }}
+                >
                     <button
                         onClick={openDelivery}
                         style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nav-link)" }}
