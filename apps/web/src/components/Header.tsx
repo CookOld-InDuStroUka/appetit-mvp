@@ -191,6 +191,57 @@ export default function Header() {
                   }}
                 >
                   <button
+                    onClick={openDelivery}
+                    aria-label="Способ доставки"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  >
+                    🚚
+                  </button>
+                  <button
+                    onClick={toggleTheme}
+                    aria-label="Переключить тему"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {theme === "light" ? "🌙" : "☀️"}
+                  </button>
+                  {user ? (
+                    <span
+                      style={{
+                        color: "var(--header-text)",
+                        fontSize: 18,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {user.bonus}₸
+                    </span>
+                  ) : (
+                    <button
+                      onClick={openAuth}
+                      aria-label="Войти"
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "var(--header-text)",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      👤
+                    </button>
+                  )}
+                  <button
                     aria-label="Поиск"
                     onClick={() => setSearchOpen(true)}
                     style={{
