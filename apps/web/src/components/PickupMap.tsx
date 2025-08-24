@@ -5,6 +5,7 @@ export type Branch = {
   id: string;
   name: string;
   coords: [number, number];
+  hours?: string;
 };
 
 type Props = {
@@ -83,7 +84,7 @@ export default function PickupMap({
         <div
           style={{
             position: "absolute",
-            bottom: 56,
+            bottom: 72,
             left: 8,
             right: 56,
           }}
@@ -96,6 +97,7 @@ export default function PickupMap({
               padding: 8,
             }}
           >
+            <h3 style={{ margin: "0 0 8px" }}>Откуда хотите забрать</h3>
             {branches.map((b) => (
               <div
                 key={b.id}
@@ -115,6 +117,15 @@ export default function PickupMap({
                   }}
                 >
                   {b.name}
+                  {b.hours && (
+                    <span style={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "var(--muted-text)",
+                    }}>
+                      {b.hours}
+                    </span>
+                  )}
                 </button>
               </div>
             ))}
@@ -124,7 +135,7 @@ export default function PickupMap({
       <div
         style={{
           position: "absolute",
-          bottom: 8,
+          bottom: mobile ? 72 : 8,
           right: 8,
           display: "flex",
           flexDirection: "column",

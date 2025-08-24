@@ -211,6 +211,7 @@ export default function DeliveryModal() {
         ) : (
           <>
             <div style={{ marginBottom: 8 }}>
+              <h3 style={{ margin: "0 0 8px" }}>Откуда хотите забрать</h3>
               {branches.map((b) => (
                 <label
                   key={b.id}
@@ -225,6 +226,11 @@ export default function DeliveryModal() {
                     style={{ marginRight: 8 }}
                   />
                   {b.name}
+                  {b.hours && (
+                    <span style={{ fontSize: 12, color: "var(--muted-text)", display: "block", marginLeft: 24 }}>
+                      {b.hours}
+                    </span>
+                  )}
                 </label>
               ))}
               <p style={{ fontSize: 14, color: "var(--muted-text)" }}>

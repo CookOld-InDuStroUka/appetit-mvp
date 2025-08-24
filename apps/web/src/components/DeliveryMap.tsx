@@ -154,7 +154,7 @@ export default function DeliveryMap({
       <div
         style={mobile ? {
           position: "absolute",
-          bottom: 8,
+          bottom: 72,
           left: 8,
           right: 56,
           display: "flex",
@@ -332,7 +332,7 @@ export default function DeliveryMap({
       <div
         style={{
           position: "absolute",
-          bottom: 8,
+          bottom: mobile ? 72 : 8,
           right: 8,
           display: "flex",
           flexDirection: "column",

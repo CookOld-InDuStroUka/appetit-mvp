@@ -7,17 +7,42 @@ const API_BASE =
 
 // Fallback филиалы с координатами на случай, если API недоступно
 const DEFAULT_BRANCHES: Branch[] = [
-  { id: "novatorov", name: "ул. Новаторов, 18/2", coords: [49.955147, 82.647584] },
-  { id: "satpaeva", name: "пр. Каныша Сатпаева, 8А", coords: [49.899568, 82.618955] },
-  { id: "kazakhstan", name: "ул. Казахстан, 70А", coords: [49.948655, 82.629438] },
-  { id: "nazarbaeva", name: "пр. Нурсултана Назарбаева, 28А", coords: [49.962379, 82.602893] },
-  { id: "zhybek", name: "ул. Жибек Жолы, 1 к8", coords: [49.928821, 82.612936] },
   {
-    id: "kabanbay",
-    name: "рынок «Кайнар», ул. Кабанбай Батыра, 148",
-    coords: [49.952353, 82.632187],
+    id: "kazakhstan",
+    name: "ул. Казахстан, 70А",
+    coords: [49.948655, 82.629438],
+    hours: "12:00 – 23:00",
   },
-  { id: "samarskoe", name: "Самарское шоссе, 5/1", coords: [49.898645, 82.634676] },
+  {
+    id: "satpaeva",
+    name: "пр. Каныша Сатпаева, 8А",
+    coords: [49.899568, 82.618955],
+    hours: "круглосуточно",
+  },
+  {
+    id: "novatorov",
+    name: "ул. Новаторов, 18/2",
+    coords: [49.955147, 82.647584],
+    hours: "круглосуточно",
+  },
+  {
+    id: "zhybek",
+    name: "ул. Жибек Жолы, 1 к8",
+    coords: [49.928821, 82.612936],
+    hours: "11:00 – 02:00",
+  },
+  {
+    id: "samarskoe",
+    name: "Самарское шоссе, 5/1",
+    coords: [49.898645, 82.634676],
+    hours: "10:00 – 00:00",
+  },
+  {
+    id: "nazarbaeva",
+    name: "пр. Нурсултана Назарбаева, 28А",
+    coords: [49.962379, 82.602893],
+    hours: "10:00 – 02:00",
+  },
 ];
 
 type Ctx = {
@@ -80,6 +105,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
               id: b.id,
               name: b.address || b.name,
               coords: fallback?.coords || [0, 0],
+              hours: b.hours || fallback?.hours,
             };
           });
           setBranches(mapped);
