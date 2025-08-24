@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
@@ -8,6 +8,14 @@ import { useDelivery } from "./DeliveryContext";
 
 export default function Header() {
     const [q, setQ] = useState("");
+    const [isSmall, setIsSmall] = useState(false);
+
+    useEffect(() => {
+        const check = () => setIsSmall(window.innerWidth < 600);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
     const [isCartOpen, setCartOpen] = useState(false);
     const { theme, toggleTheme } = useTheme();
     const { items: cartItems, updateQty, clear, removeItem } = useCart();
@@ -60,7 +68,26 @@ export default function Header() {
                             padding: "8px 12px", borderRadius: 8, border: "1px solid var(--search-btn-border)",
                             background: "var(--search-btn-bg)", color: "var(--search-btn-color)", cursor: "pointer"
                         }}
-                    >Искать</button>
+                    >
+                        {isSmall ? (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        ) : (
+                            "Искать"
+                        )}
+                    </button>
                 </div>
 
                 {/* Правый блок */}

@@ -8,6 +8,7 @@ const slides = [
 
 export default function PromoSlider() {
   const [index, setIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), 3000);
@@ -17,8 +18,28 @@ export default function PromoSlider() {
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const next = () => setIndex((i) => (i + 1) % slides.length);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.touches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? next() : prev();
+      setTouchStart(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
+
   return (
     <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: "relative",
         overflow: "hidden",
@@ -26,6 +47,7 @@ export default function PromoSlider() {
         height: "200px",
         marginBottom: "20px",
         borderRadius: "8px",
+        touchAction: "pan-y",
       }}
     >
       {slides.map((src, i) => (

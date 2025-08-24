@@ -132,7 +132,7 @@ export default function BranchesAdmin() {
           style={{
             padding: "10px 24px",
             borderRadius: 8,
-            background: dirty ? "var(--primary)" : "var(--input-bg)",
+            background: dirty ? "var(--accent)" : "var(--input-bg)",
             color: dirty ? "#fff" : "var(--text)",
             border: "none",
             cursor: dirty ? "pointer" : "not-allowed",

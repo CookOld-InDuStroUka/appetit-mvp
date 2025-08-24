@@ -18,7 +18,7 @@ export default function Footer() {
             <li><Link href="/contacts" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Контакты</Link></li>
           </ul>
           <div style={{ textAlign: "right", flex: "1 1 200px" }}>
-            <p style={{ margin: 0, marginBottom: 8 }}>Акции, которые нельзя есть, — в наших приложениях!</p>
+            <p style={{ margin: 0, marginBottom: 8 }}>Акции, скидки, кэшбэк − в нашем приложении!</p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <a href="#" style={{ background: "#fff", color: "#000", padding: "6px 12px", borderRadius: 8, textDecoration: "none", fontSize: 12 }}>App Store</a>
               <a href="#" style={{ background: "#fff", color: "#000", padding: "6px 12px", borderRadius: 8, textDecoration: "none", fontSize: 12 }}>Google Play</a>
