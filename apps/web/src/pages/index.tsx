@@ -51,7 +51,15 @@ export default function Home() {
       <Header />
       <div className="page-layout">
         <MainMenu />
-        <main style={{ flex: 1, padding: "20px", boxSizing: "border-box" }}>
+        <main
+          style={{
+            flex: 1,
+            padding: "20px",
+            boxSizing: "border-box",
+            minWidth: 0,
+            overflowX: "hidden",
+          }}
+        >
           <PromoSlider />
           <MobileMenu />
           {sections.map((sec) => (
