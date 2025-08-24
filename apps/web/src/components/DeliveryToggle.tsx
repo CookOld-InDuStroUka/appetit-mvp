@@ -37,9 +37,14 @@ export default function DeliveryToggle({ value, onChange }: Props) {
           cursor: "pointer",
           color: value === "delivery" ? "#fff" : "var(--text)",
           zIndex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 4,
         }}
       >
-        Доставка
+        <span className="toggle-icon">🛵</span>
+        <span className="toggle-label">Доставка</span>
       </button>
       <button
         onClick={() => onChange("pickup")}
@@ -51,9 +56,14 @@ export default function DeliveryToggle({ value, onChange }: Props) {
           cursor: "pointer",
           color: value === "pickup" ? "#fff" : "var(--text)",
           zIndex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 4,
         }}
       >
-        Самовывоз
+        <span className="toggle-icon">🏠</span>
+        <span className="toggle-label">Самовывоз</span>
       </button>
     </div>
   );

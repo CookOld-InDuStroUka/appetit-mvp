@@ -10,7 +10,7 @@ type Props = {
   branches: Branch[];
   selected: string;
   onSelect: (id: string) => void;
-  height?: number;
+  height?: number | string;
 };
 
 export default function PickupMap({ branches, selected, onSelect, height = 300 }: Props) {
@@ -83,6 +83,35 @@ export default function PickupMap({ branches, selected, onSelect, height = 300 }
         ref={mapRef}
         style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}
       />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 8,
+          left: 8,
+          right: 56,
+        }}
+      >
+        <div className="history-list">
+          {branches.map((b) => (
+            <div key={b.id} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+              <button
+                onClick={() => onSelect(b.id)}
+                style={{
+                  flex: 1,
+                  textAlign: "left",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  color: b.id === selected ? "var(--accent)" : "var(--text)",
+                }}
+              >
+                {b.name}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
       <div
         style={{
           position: "absolute",

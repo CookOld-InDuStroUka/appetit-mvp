@@ -11,7 +11,12 @@ type Props = {
   setDoorCode: (v: string) => void;
   floor: string;
   setFloor: (v: string) => void;
-  height?: number;
+  comment: string;
+  setComment: (v: string) => void;
+  history: string[];
+  onHistorySelect: (addr: string) => void;
+  removeHistory: (addr: string) => void;
+  height?: number | string;
 };
 
 export default function DeliveryMap({
@@ -25,12 +30,22 @@ export default function DeliveryMap({
   setDoorCode,
   floor,
   setFloor,
+  comment,
+  setComment,
+  history,
+  onHistorySelect,
+  removeHistory,
   height = 360,
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstance = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const geocodeRef = useRef<((q: string) => void) | null>(null);
+  const BOUNDS: [[number, number], [number, number]] = [
+    [49.7, 82.4],
+    [50.1, 83.1],
+  ];
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -82,7 +97,7 @@ export default function DeliveryMap({
         };
 
         const geocodeAddress = (query: string) => {
-          ymaps.geocode(query).then((res: any) => {
+          ymaps.geocode(query, { boundedBy: BOUNDS }).then((res: any) => {
             const first = res.geoObjects.get(0);
             if (first) {
               const coords = first.geometry.getCoordinates();
@@ -92,6 +107,7 @@ export default function DeliveryMap({
             }
           });
         };
+        geocodeRef.current = geocodeAddress;
 
         // Yandex Suggest requires a separate API permission. Attempting to
         // initialize it without the necessary access throws a FeatureRemovedError
@@ -102,7 +118,7 @@ export default function DeliveryMap({
 
         map.events.add("click", (e: any) => {
           const coords = e.get("coords") as [number, number];
-          ymaps.geocode(coords).then((res: any) => {
+          ymaps.geocode(coords, { boundedBy: BOUNDS }).then((res: any) => {
             const first = res.geoObjects.get(0);
             if (first) {
               setAddress(first.getAddressLine());
@@ -117,7 +133,7 @@ export default function DeliveryMap({
           ymaps.geolocation.get().then((res: any) => {
             const position = res.geoObjects.position || res.geoObjects.get(0).geometry.getCoordinates();
             const coords: [number, number] = position;
-            ymaps.geocode(coords).then((geo: any) => {
+            ymaps.geocode(coords, { boundedBy: BOUNDS }).then((geo: any) => {
               const first = geo.geoObjects.get(0);
               if (first) {
                 setAddress(first.getAddressLine());
@@ -152,6 +168,44 @@ export default function DeliveryMap({
           gap: 4,
         }}
       >
+        {history.length > 0 && (
+          <div className="history-list">
+            {history.map((h) => (
+              <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                <button
+                  onClick={() => {
+                    geocodeRef.current?.(h);
+                    onHistorySelect(h);
+                  }}
+                  style={{
+                    flex: 1,
+                    textAlign: "left",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    color: "var(--text)",
+                  }}
+                >
+                  {h}
+                </button>
+                <button
+                  onClick={() => removeHistory(h)}
+                  aria-label="Удалить"
+                  style={{
+                    marginLeft: 8,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--muted-text)",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <input
           ref={inputRef}
           name="address"
@@ -161,7 +215,7 @@ export default function DeliveryMap({
             if (e.key === "Enter" && mapInstance.current) {
               const ymaps = (window as any).ymaps;
               if (ymaps) {
-                ymaps.geocode(e.currentTarget.value).then((res: any) => {
+                ymaps.geocode(e.currentTarget.value, { boundedBy: BOUNDS }).then((res: any) => {
                   const first = res.geoObjects.get(0);
                   if (first) {
                     const coords = first.geometry.getCoordinates();
@@ -183,7 +237,7 @@ export default function DeliveryMap({
           onBlur={(e) => {
             const ymaps = (window as any).ymaps;
             if (ymaps && e.currentTarget.value) {
-              ymaps.geocode(e.currentTarget.value).then((res: any) => {
+              ymaps.geocode(e.currentTarget.value, { boundedBy: BOUNDS }).then((res: any) => {
                 const first = res.geoObjects.get(0);
                 if (first) {
                   const coords = first.geometry.getCoordinates();
@@ -260,6 +314,19 @@ export default function DeliveryMap({
             onChange={(e) => setApt(e.target.value)}
             placeholder="Квартира"
             style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "#fff",
+            }}
+          />
+          <input
+            name="comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Комментарий"
+            style={{
+              gridColumn: "1 / -1",
               padding: "8px 12px",
               borderRadius: 8,
               border: "1px solid var(--border)",
