@@ -17,6 +17,9 @@ export default function DeliveryModal() {
     branch,
     setBranch,
     branches,
+    history,
+    addHistory,
+    removeHistory,
     close,
   } = useDelivery();
 
@@ -43,7 +46,42 @@ export default function DeliveryModal() {
 
         {mode === "delivery" ? (
           <div>
-            <DeliveryMap address={address} setAddress={setAddress} height={300} />
+            <DeliveryMap address={address} setAddress={setAddress} height={360} />
+            {history.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                {history.map((h) => (
+                  <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                    <button
+                      onClick={() => setAddress(h)}
+                      style={{
+                        flex: 1,
+                        textAlign: "left",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        color: "var(--text)",
+                      }}
+                    >
+                      {h}
+                    </button>
+                    <button
+                      onClick={() => removeHistory(h)}
+                      aria-label="Удалить"
+                      style={{
+                        marginLeft: 8,
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "var(--muted-text)",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <input
                 value={apt}
@@ -70,6 +108,24 @@ export default function DeliveryModal() {
                 }}
               />
             </div>
+            <button
+              onClick={() => {
+                addHistory(address);
+                close();
+              }}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "none",
+                background: "var(--accent)",
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              Подтвердить
+            </button>
           </div>
         ) : (
           <div>
@@ -98,8 +154,23 @@ export default function DeliveryModal() {
               branches={branches}
               selected={branch}
               onSelect={setBranch}
-              height={300}
+              height={360}
             />
+            <button
+              onClick={close}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "none",
+                background: "var(--accent)",
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              Подтвердить
+            </button>
           </div>
         )}
       </div>

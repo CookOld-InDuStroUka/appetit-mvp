@@ -35,7 +35,11 @@ export default function PickupMap({ branches, selected, onSelect, height = 300 }
       (window as any).ymaps.ready(() => {
         const ymaps = (window as any).ymaps;
         const center: [number, number] = branches[0]?.coords || [49.9483, 82.6275];
-        const map = new ymaps.Map(mapRef.current, { center, zoom: 12, controls: [] });
+        const map = new ymaps.Map(mapRef.current, {
+          center,
+          zoom: 12,
+          controls: ["geolocationControl", "zoomControl"],
+        });
 
         branches.forEach((b) => {
           const pm = new ymaps.Placemark(

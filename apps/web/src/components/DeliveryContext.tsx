@@ -23,6 +23,7 @@ type Ctx = {
   comment: string;
   branch: string;
   branches: Branch[];
+  history: string[];
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -31,6 +32,8 @@ type Ctx = {
   setApt: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
+  addHistory: (addr: string) => void;
+  removeHistory: (addr: string) => void;
 };
 
 const Ctx = createContext<Ctx | undefined>(undefined);
@@ -43,6 +46,18 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [branch, setBranch] = useState(DEFAULT_BRANCHES[0].id);
   const [isOpen, setOpen] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("deliveryAddresses");
+    if (stored) {
+      try {
+        setHistory(JSON.parse(stored));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/branches`)
@@ -69,6 +84,23 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const open = () => setOpen(true);
   const close = () => setOpen(false);
 
+  const addHistory = (addr: string) => {
+    if (!addr) return;
+    setHistory((prev) => {
+      const next = [addr, ...prev.filter((a) => a !== addr)].slice(0, 5);
+      localStorage.setItem("deliveryAddresses", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeHistory = (addr: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((a) => a !== addr);
+      localStorage.setItem("deliveryAddresses", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <Ctx.Provider
       value={{
@@ -78,6 +110,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         comment,
         branch,
         branches,
+        history,
         isOpen,
         open,
         close,
@@ -86,6 +119,8 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         setApt,
         setComment,
         setBranch,
+        addHistory,
+        removeHistory,
       }}
     >
       {children}

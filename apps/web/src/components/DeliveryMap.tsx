@@ -6,8 +6,9 @@ type Props = {
   height?: number;
 };
 
-export default function DeliveryMap({ address, setAddress, height = 300 }: Props) {
+export default function DeliveryMap({ address, setAddress, height = 360 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -36,7 +37,7 @@ export default function DeliveryMap({ address, setAddress, height = 300 }: Props
         const map = new ymaps.Map(mapRef.current, {
           center,
           zoom: 12,
-          controls: [],
+          controls: ["geolocationControl", "zoomControl"],
         });
         const polygon = new ymaps.Polygon([zone], {}, {
           fillColor: "rgba(255,85,0,0.15)",
@@ -44,6 +45,24 @@ export default function DeliveryMap({ address, setAddress, height = 300 }: Props
           strokeWidth: 2,
         });
         map.geoObjects.add(polygon);
+
+        map.events.add("click", (e: any) => {
+          const coords = e.get("coords") as [number, number];
+          ymaps.geocode(coords).then((res: any) => {
+            const first = res.geoObjects.get(0);
+            if (first) {
+              setAddress(first.getAddressLine());
+            }
+          });
+          if (markerRef.current) {
+            map.geoObjects.remove(markerRef.current);
+          }
+          markerRef.current = new ymaps.Placemark(coords, {}, {
+            preset: "islands#dotIcon",
+            iconColor: "#ff5500",
+          });
+          map.geoObjects.add(markerRef.current);
+        });
       });
     };
 
