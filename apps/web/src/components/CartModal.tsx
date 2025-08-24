@@ -46,7 +46,18 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
             )}
             <button
               onClick={onClose}
-              style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--muted-text)" }}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--muted-text)",
+                fontSize: 24,
+                width: 32,
+                height: 32,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               aria-label="Закрыть"
             >
               ×

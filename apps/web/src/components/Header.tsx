@@ -7,9 +7,14 @@ import { useTheme } from "./ThemeContext";
 import { useDelivery } from "./DeliveryContext";
 
 export default function Header() {
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
   const [q, setQ] = useState("");
   const [isSmall, setIsSmall] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   useEffect(() => {
     const check = () => {
@@ -30,8 +35,25 @@ export default function Header() {
 
   const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
 
+  useEffect(() => {
+    if (!q.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      fetch(`${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}`)
+        .then((r) => r.json())
+        .then((d) => setSuggestions(d))
+        .catch(() => setSuggestions([]));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [q, API_BASE]);
+
   const searchSubmit = () => {
-    if (q.trim()) location.href = `/?q=${encodeURIComponent(q.trim())}`;
+    if (q.trim()) {
+      setSuggestions([]);
+      location.href = `/?q=${encodeURIComponent(q.trim())}`;
+    }
   };
 
   return (
@@ -81,6 +103,7 @@ export default function Header() {
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
+                    position: "relative",
                   }}
                 >
                   <input
@@ -124,6 +147,42 @@ export default function Header() {
                       <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                   </button>
+                  {suggestions.length > 0 && (
+                    <ul
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        background: "var(--card-bg)",
+                        border: "1px solid var(--border)",
+                        borderTop: "none",
+                        maxHeight: 200,
+                        overflowY: "auto",
+                        zIndex: 100,
+                        listStyle: "none",
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      {suggestions.map((s) => (
+                        <li key={s.id}>
+                          <a
+                            href={`/dish/${s.id}`}
+                            style={{
+                              display: "block",
+                              padding: "8px 12px",
+                              textDecoration: "none",
+                              color: "var(--text)",
+                            }}
+                            onClick={() => setSearchOpen(false)}
+                          >
+                            {s.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <button
                   onClick={() => setCartOpen(true)}
@@ -332,6 +391,7 @@ export default function Header() {
                   gap: 8,
                   marginLeft: 12,
                   minWidth: 160,
+                  position: "relative",
                 }}
               >
                 <input
@@ -361,6 +421,42 @@ export default function Header() {
                 >
                   Искать
                 </button>
+                {suggestions.length > 0 && (
+                  <ul
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      background: "var(--card-bg)",
+                      border: "1px solid var(--border)",
+                      borderTop: "none",
+                      maxHeight: 200,
+                      overflowY: "auto",
+                      zIndex: 100,
+                      listStyle: "none",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    {suggestions.map((s) => (
+                      <li key={s.id}>
+                        <a
+                          href={`/dish/${s.id}`}
+                          style={{
+                            display: "block",
+                            padding: "8px 12px",
+                            textDecoration: "none",
+                            color: "var(--text)",
+                          }}
+                          onClick={() => setSearchOpen(false)}
+                        >
+                          {s.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <nav
                 style={{
