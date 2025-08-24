@@ -20,6 +20,9 @@ type Ctx = {
   mode: "delivery" | "pickup";
   address: string;
   apt: string;
+  entrance: string;
+  doorCode: string;
+  floor: string;
   comment: string;
   branch: string;
   branches: Branch[];
@@ -30,6 +33,9 @@ type Ctx = {
   setMode: (v: "delivery" | "pickup") => void;
   setAddress: (v: string) => void;
   setApt: (v: string) => void;
+   setEntrance: (v: string) => void;
+   setDoorCode: (v: string) => void;
+   setFloor: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
   addHistory: (addr: string) => void;
@@ -42,6 +48,9 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<"delivery" | "pickup">("delivery");
   const [address, setAddress] = useState("");
   const [apt, setApt] = useState("");
+  const [entrance, setEntrance] = useState("");
+  const [doorCode, setDoorCode] = useState("");
+  const [floor, setFloor] = useState("");
   const [comment, setComment] = useState("");
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [branch, setBranch] = useState(DEFAULT_BRANCHES[0].id);
@@ -107,6 +116,9 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         mode,
         address,
         apt,
+        entrance,
+        doorCode,
+        floor,
         comment,
         branch,
         branches,
@@ -117,6 +129,9 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         setMode,
         setAddress,
         setApt,
+        setEntrance,
+        setDoorCode,
+        setFloor,
         setComment,
         setBranch,
         addHistory,

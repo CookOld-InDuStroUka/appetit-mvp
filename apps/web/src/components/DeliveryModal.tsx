@@ -12,6 +12,12 @@ export default function DeliveryModal() {
     setAddress,
     apt,
     setApt,
+    entrance,
+    setEntrance,
+    doorCode,
+    setDoorCode,
+    floor,
+    setFloor,
     comment,
     setComment,
     branch,
@@ -28,7 +34,7 @@ export default function DeliveryModal() {
 
   return (
     <div className="modal-backdrop" onClick={handleBackdrop}>
-      <div className="modal" style={{ maxWidth: 460 }} onClick={stopProp}>
+      <div className="modal" style={{ maxWidth: 520 }} onClick={stopProp}>
         <div style={{ display: "flex", justifyContent: "center", position: "relative", marginBottom: 16 }}>
           <h2 style={{ margin: 0 }}>Способ получения</h2>
           <button
@@ -46,7 +52,19 @@ export default function DeliveryModal() {
 
         {mode === "delivery" ? (
           <div>
-            <DeliveryMap address={address} setAddress={setAddress} height={360} />
+            <DeliveryMap
+              address={address}
+              setAddress={setAddress}
+              apt={apt}
+              setApt={setApt}
+              entrance={entrance}
+              setEntrance={setEntrance}
+              doorCode={doorCode}
+              setDoorCode={setDoorCode}
+              floor={floor}
+              setFloor={setFloor}
+              height={400}
+            />
             {history.length > 0 && (
               <div style={{ marginTop: 8 }}>
                 {history.map((h) => (
@@ -82,25 +100,13 @@ export default function DeliveryModal() {
                 ))}
               </div>
             )}
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input
-                value={apt}
-                onChange={(e) => setApt(e.target.value)}
-                placeholder="Квартира/офис"
-                style={{
-                  flex: 1,
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "var(--card-bg)",
-                }}
-              />
+            <div style={{ marginTop: 8 }}>
               <input
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Комментарий"
                 style={{
-                  flex: 1,
+                  width: "100%",
                   padding: "8px 12px",
                   borderRadius: 8,
                   border: "1px solid var(--border)",
