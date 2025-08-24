@@ -79,6 +79,30 @@ export default function DeliveryMap({
         });
         map.geoObjects.add(polygon);
 
+        const violetZone = [
+          [49.95846, 82.624979],
+          [49.956209, 82.615576],
+          [49.955639, 82.613504],
+          [49.953047, 82.585578],
+          [49.954739, 82.579566],
+          [49.95554, 82.575413],
+          [49.958677, 82.572319],
+          [49.975467, 82.555823],
+          [49.984726, 82.577318],
+          [49.990487, 82.573297],
+          [49.994606, 82.583638],
+          [49.988557, 82.592573],
+          [49.968048, 82.629707],
+          [49.960424, 82.627909],
+        ];
+        const violetPolygon = new ymaps.Polygon([violetZone], {}, {
+          fillColor: "rgba(128,0,128,0.15)",
+          strokeColor: "#800080",
+          strokeWidth: 2,
+          interactivityModel: "default#transparent",
+        });
+        map.geoObjects.add(violetPolygon);
+
         const placeMarker = (coords: [number, number]) => {
           if (markerRef.current) {
             map.geoObjects.remove(markerRef.current);
