@@ -92,11 +92,15 @@ export default function DeliveryMap({
           });
         };
 
-        if (inputRef.current) {
-          const suggest = new ymaps.SuggestView(inputRef.current);
-          suggest.events.add("select", (e: any) => {
-            geocodeAddress(e.get("item").value);
-          });
+        if (inputRef.current && ymaps.SuggestView) {
+          try {
+            const suggest = new ymaps.SuggestView(inputRef.current);
+            suggest.events.add("select", (e: any) => {
+              geocodeAddress(e.get("item").value);
+            });
+          } catch (err) {
+            console.warn("Yandex suggest unavailable", err);
+          }
         }
 
         map.events.add("click", (e: any) => {
@@ -287,7 +291,12 @@ export default function DeliveryMap({
           📍
         </button>
         <button
-          onClick={() => mapInstance.current && mapInstance.current.zoomIn()}
+          onClick={() => {
+            if (mapInstance.current) {
+              const current = mapInstance.current.getZoom();
+              mapInstance.current.setZoom(current + 1);
+            }
+          }}
           aria-label="Увеличить"
           style={{
             width: 32,
@@ -301,7 +310,12 @@ export default function DeliveryMap({
           +
         </button>
         <button
-          onClick={() => mapInstance.current && mapInstance.current.zoomOut()}
+          onClick={() => {
+            if (mapInstance.current) {
+              const current = mapInstance.current.getZoom();
+              mapInstance.current.setZoom(current - 1);
+            }
+          }}
           aria-label="Уменьшить"
           style={{
             width: 32,
