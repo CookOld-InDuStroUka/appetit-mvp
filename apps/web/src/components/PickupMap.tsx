@@ -134,12 +134,13 @@ export default function PickupMap({
           onClick={() => mapInstance.current && (mapInstance.current as any)._locateMe?.()}
           aria-label="Моё местоположение"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           📍
@@ -153,12 +154,13 @@ export default function PickupMap({
           }}
           aria-label="Увеличить"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           +
@@ -172,12 +174,13 @@ export default function PickupMap({
           }}
           aria-label="Уменьшить"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           -

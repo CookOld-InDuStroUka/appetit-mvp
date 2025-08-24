@@ -259,9 +259,13 @@ button,
 
 .toggle-icon {
   margin-right: 4px;
+  font-size: 16px;
 }
 
 @media (max-width: 600px) {
+  .toggle-icon {
+    font-size: 20px;
+  }
   .toggle-label {
     display: none;
   }

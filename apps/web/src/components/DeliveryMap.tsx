@@ -18,6 +18,7 @@ type Props = {
   onHistorySelect: (addr: string) => void;
   removeHistory: (addr: string) => void;
   height?: number | string;
+  mobile?: boolean;
 };
 
 export default function DeliveryMap({
@@ -37,6 +38,7 @@ export default function DeliveryMap({
   onHistorySelect,
   removeHistory,
   height = 360,
+  mobile = false,
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,184 +148,190 @@ export default function DeliveryMap({
         ref={mapRef}
         style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}
       />
-      <div
-        style={{
-          position: "absolute",
-          bottom: 8,
-          left: 8,
-          right: 56,
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-        }}
-      >
-        {history.length > 0 && (
-          <div className="history-list">
-            {history.map((h) => (
-              <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-                <button
-                  onClick={() => {
-                    geocodeRef.current?.(h);
-                    onHistorySelect(h);
-                  }}
-                  style={{
-                    flex: 1,
-                    textAlign: "left",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "var(--text)",
-                  }}
-                >
-                  {h}
-                </button>
-                <button
-                  onClick={() => removeHistory(h)}
-                  aria-label="Удалить"
-                  style={{
-                    marginLeft: 8,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--muted-text)",
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <input
-          ref={inputRef}
-          name="address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && mapInstance.current) {
-              const ymaps = (window as any).ymaps;
-              if (ymaps) {
-                ymaps.geocode(e.currentTarget.value, { boundedBy: BOUNDS }).then((res: any) => {
-                  const first = res.geoObjects.get(0);
-                  if (first) {
-                    const coords = first.geometry.getCoordinates();
-                    setAddress(first.getAddressLine());
-                    if (markerRef.current) {
-                      mapInstance.current.geoObjects.remove(markerRef.current);
-                    }
-                    markerRef.current = new ymaps.Placemark(coords, {}, {
-                      preset: "islands#dotIcon",
-                      iconColor: "#ff5500",
-                    });
-                    mapInstance.current.geoObjects.add(markerRef.current);
-                    mapInstance.current.setCenter(coords, 16);
-                  }
-                });
-              }
-            }
-          }}
-          onBlur={(e) => {
-            const ymaps = (window as any).ymaps;
-            if (ymaps && e.currentTarget.value) {
-              ymaps.geocode(e.currentTarget.value, { boundedBy: BOUNDS }).then((res: any) => {
-                const first = res.geoObjects.get(0);
-                if (first) {
-                  const coords = first.geometry.getCoordinates();
-                  setAddress(first.getAddressLine());
-                  if (markerRef.current) {
-                    mapInstance.current.geoObjects.remove(markerRef.current);
-                  }
-                  markerRef.current = new ymaps.Placemark(coords, {}, {
-                    preset: "islands#dotIcon",
-                    iconColor: "#ff5500",
-                  });
-                  mapInstance.current.geoObjects.add(markerRef.current);
-                  mapInstance.current.setCenter(coords, 16);
-                }
-              });
-            }
-          }}
-          placeholder="Адрес доставки"
-          required
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "#fff",
-          }}
-        />
+      {mobile && (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            position: "absolute",
+            bottom: 8,
+            left: 8,
+            right: 56,
+            display: "flex",
+            flexDirection: "column",
             gap: 4,
           }}
         >
+          {history.length > 0 && (
+            <div className="history-list">
+              {history.map((h) => (
+                <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
+                  <button
+                    onClick={() => {
+                      geocodeRef.current?.(h);
+                      onHistorySelect(h);
+                    }}
+                    style={{
+                      flex: 1,
+                      textAlign: "left",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "var(--text)",
+                    }}
+                  >
+                    {h}
+                  </button>
+                  <button
+                    onClick={() => removeHistory(h)}
+                    aria-label="Удалить"
+                    style={{
+                      marginLeft: 8,
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--muted-text)",
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <input
-            name="entrance"
-            value={entrance}
-            onChange={(e) => setEntrance(e.target.value)}
-            placeholder="Подъезд"
+            ref={inputRef}
+            name="address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && mapInstance.current) {
+                const ymaps = (window as any).ymaps;
+                if (ymaps) {
+                  ymaps
+                    .geocode(e.currentTarget.value, { boundedBy: BOUNDS })
+                    .then((res: any) => {
+                      const first = res.geoObjects.get(0);
+                      if (first) {
+                        const coords = first.geometry.getCoordinates();
+                        setAddress(first.getAddressLine());
+                        if (markerRef.current) {
+                          mapInstance.current.geoObjects.remove(markerRef.current);
+                        }
+                        markerRef.current = new ymaps.Placemark(coords, {}, {
+                          preset: "islands#dotIcon",
+                          iconColor: "#ff5500",
+                        });
+                        mapInstance.current.geoObjects.add(markerRef.current);
+                        mapInstance.current.setCenter(coords, 16);
+                      }
+                    });
+                }
+              }
+            }}
+            onBlur={(e) => {
+              const ymaps = (window as any).ymaps;
+              if (ymaps && e.currentTarget.value) {
+                ymaps
+                  .geocode(e.currentTarget.value, { boundedBy: BOUNDS })
+                  .then((res: any) => {
+                    const first = res.geoObjects.get(0);
+                    if (first) {
+                      const coords = first.geometry.getCoordinates();
+                      setAddress(first.getAddressLine());
+                      if (markerRef.current) {
+                        mapInstance.current.geoObjects.remove(markerRef.current);
+                      }
+                      markerRef.current = new ymaps.Placemark(coords, {}, {
+                        preset: "islands#dotIcon",
+                        iconColor: "#ff5500",
+                      });
+                      mapInstance.current.geoObjects.add(markerRef.current);
+                      mapInstance.current.setCenter(coords, 16);
+                    }
+                  });
+              }
+            }}
+            placeholder="Адрес доставки"
+            required
             style={{
+              width: "100%",
               padding: "8px 12px",
               borderRadius: 8,
               border: "1px solid var(--border)",
               background: "#fff",
             }}
           />
-          <input
-            name="doorCode"
-            value={doorCode}
-            onChange={(e) => setDoorCode(e.target.value)}
-            placeholder="Код двери"
+          <div
             style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "#fff",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+              gap: 4,
             }}
-          />
-          <input
-            name="floor"
-            value={floor}
-            onChange={(e) => setFloor(e.target.value)}
-            placeholder="Этаж"
-            style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "#fff",
-            }}
-          />
-          <input
-            name="apartment"
-            value={apt}
-            onChange={(e) => setApt(e.target.value)}
-            placeholder="Квартира"
-            style={{
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "#fff",
-            }}
-          />
-          <input
-            name="comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Комментарий"
-            style={{
-              gridColumn: "1 / -1",
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "#fff",
-            }}
-          />
+          >
+            <input
+              name="entrance"
+              value={entrance}
+              onChange={(e) => setEntrance(e.target.value)}
+              placeholder="Подъезд"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#fff",
+              }}
+            />
+            <input
+              name="doorCode"
+              value={doorCode}
+              onChange={(e) => setDoorCode(e.target.value)}
+              placeholder="Код двери"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#fff",
+              }}
+            />
+            <input
+              name="floor"
+              value={floor}
+              onChange={(e) => setFloor(e.target.value)}
+              placeholder="Этаж"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#fff",
+              }}
+            />
+            <input
+              name="apartment"
+              value={apt}
+              onChange={(e) => setApt(e.target.value)}
+              placeholder="Квартира"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#fff",
+              }}
+            />
+            <input
+              name="comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Комментарий"
+              style={{
+                gridColumn: "1 / -1",
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+                background: "#fff",
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <div
         style={{
           position: "absolute",
@@ -338,12 +346,13 @@ export default function DeliveryMap({
           onClick={() => mapInstance.current && (mapInstance.current as any)._locateMe?.()}
           aria-label="Моё местоположение"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           📍
@@ -357,12 +366,13 @@ export default function DeliveryMap({
           }}
           aria-label="Увеличить"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           +
@@ -376,12 +386,13 @@ export default function DeliveryMap({
           }}
           aria-label="Уменьшить"
           style={{
-            width: 32,
-            height: 32,
+            width: mobile ? 40 : 32,
+            height: mobile ? 40 : 32,
             borderRadius: 4,
             border: "1px solid var(--border)",
             background: "#fff",
             cursor: "pointer",
+            fontSize: mobile ? 20 : 16,
           }}
         >
           -
