@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 
 const slides = [
-  "https://via.placeholder.com/600x200?text=Promo+1",
-  "https://via.placeholder.com/600x200?text=Promo+2",
-  "https://via.placeholder.com/600x200?text=Promo+3",
+  "/promo1.svg",
+  "/promo2.svg",
+  "/promo3.svg",
 ];
 
 export default function PromoSlider() {
