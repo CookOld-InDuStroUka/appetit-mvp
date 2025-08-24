@@ -67,7 +67,8 @@ export default function Header() {
           color: "var(--header-text)",
           borderBottom: "1px solid var(--header-border)",
           width: "100%",
-          overflow: "hidden",
+          overflowX: "hidden",
+          overflowY: "visible",
         }}
       >
         <div
