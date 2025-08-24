@@ -33,11 +33,10 @@ export default function Header() {
             width: "100%"
         }}>
             <div style={{
-                width: "100%",
                 maxWidth: "1280px",
                 margin: "0 auto",
                 display: "flex", alignItems: "center", gap: "clamp(8px,2vw,16px)", padding: "10px clamp(8px,4vw,24px)",
-                flexWrap: "wrap"
+                flexWrap: "wrap", boxSizing: "border-box", width: "100%"
             }}>
                 {/* Лого */}
                 <Link href="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
