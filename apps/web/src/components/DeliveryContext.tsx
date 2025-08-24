@@ -25,7 +25,6 @@ type Ctx = {
   address: string;
   apt: string;
   entrance: string;
-  doorCode: string;
   floor: string;
   comment: string;
   branch: string;
@@ -38,7 +37,6 @@ type Ctx = {
   setAddress: (v: string) => void;
   setApt: (v: string) => void;
    setEntrance: (v: string) => void;
-   setDoorCode: (v: string) => void;
    setFloor: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
@@ -53,7 +51,6 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState("");
   const [apt, setApt] = useState("");
   const [entrance, setEntrance] = useState("");
-  const [doorCode, setDoorCode] = useState("");
   const [floor, setFloor] = useState("");
   const [comment, setComment] = useState("");
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
@@ -121,7 +118,6 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         address,
         apt,
         entrance,
-        doorCode,
         floor,
         comment,
         branch,
@@ -134,7 +130,6 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         setAddress,
         setApt,
         setEntrance,
-        setDoorCode,
         setFloor,
         setComment,
         setBranch,

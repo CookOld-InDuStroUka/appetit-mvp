@@ -14,8 +14,6 @@ export default function DeliveryModal() {
     setApt,
     entrance,
     setEntrance,
-    doorCode,
-    setDoorCode,
     floor,
     setFloor,
     comment,
@@ -63,8 +61,6 @@ export default function DeliveryModal() {
               setApt={setApt}
               entrance={entrance}
               setEntrance={setEntrance}
-              doorCode={doorCode}
-              setDoorCode={setDoorCode}
               floor={floor}
               setFloor={setFloor}
               comment={comment}
@@ -173,136 +169,13 @@ export default function DeliveryModal() {
 
         {mode === "delivery" ? (
           <>
-            <input
-              name="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Адрес доставки"
-              required
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid var(--border)",
-                background: "#fff",
-                marginBottom: 8,
-              }}
-            />
-            {history.length > 0 && (
-              <div className="history-list" style={{ marginBottom: 8 }}>
-                {history.map((h) => (
-                  <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-                    <button
-                      onClick={() => setAddress(h)}
-                      style={{
-                        flex: 1,
-                        textAlign: "left",
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: 0,
-                        color: "var(--text)",
-                      }}
-                    >
-                      {h}
-                    </button>
-                    <button
-                      onClick={() => removeHistory(h)}
-                      aria-label="Удалить"
-                      style={{
-                        marginLeft: 8,
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "var(--muted-text)",
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                gap: 4,
-                marginBottom: 8,
-              }}
-            >
-              <input
-                name="entrance"
-                value={entrance}
-                onChange={(e) => setEntrance(e.target.value)}
-                placeholder="Подъезд"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "#fff",
-                }}
-              />
-              <input
-                name="doorCode"
-                value={doorCode}
-                onChange={(e) => setDoorCode(e.target.value)}
-                placeholder="Код двери"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "#fff",
-                }}
-              />
-              <input
-                name="floor"
-                value={floor}
-                onChange={(e) => setFloor(e.target.value)}
-                placeholder="Этаж"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "#fff",
-                }}
-              />
-              <input
-                name="apartment"
-                value={apt}
-                onChange={(e) => setApt(e.target.value)}
-                placeholder="Квартира"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "#fff",
-                }}
-              />
-              <input
-                name="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Комментарий"
-                style={{
-                  gridColumn: "1 / -1",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: "#fff",
-                }}
-              />
-            </div>
             <DeliveryMap
-              mobile={false}
               address={address}
               setAddress={setAddress}
               apt={apt}
               setApt={setApt}
               entrance={entrance}
               setEntrance={setEntrance}
-              doorCode={doorCode}
-              setDoorCode={setDoorCode}
               floor={floor}
               setFloor={setFloor}
               comment={comment}
@@ -310,7 +183,7 @@ export default function DeliveryModal() {
               history={history}
               onHistorySelect={setAddress}
               removeHistory={removeHistory}
-              height={300}
+              height={360}
             />
             <button
               onClick={() => {

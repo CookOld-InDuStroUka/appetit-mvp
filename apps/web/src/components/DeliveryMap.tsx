@@ -8,8 +8,6 @@ type Props = {
   setApt: (v: string) => void;
   entrance: string;
   setEntrance: (v: string) => void;
-  doorCode: string;
-  setDoorCode: (v: string) => void;
   floor: string;
   setFloor: (v: string) => void;
   comment: string;
@@ -28,8 +26,6 @@ export default function DeliveryMap({
   setApt,
   entrance,
   setEntrance,
-  doorCode,
-  setDoorCode,
   floor,
   setFloor,
   comment,
@@ -122,18 +118,25 @@ export default function DeliveryMap({
         const locateMe = () => {
           const ymaps = (window as any).ymaps;
           if (!ymaps) return;
-          ymaps.geolocation.get().then((res: any) => {
-            const position = res.geoObjects.position || res.geoObjects.get(0).geometry.getCoordinates();
-            const coords: [number, number] = position;
-            ymaps.geocode(coords, { boundedBy: BOUNDS }).then((geo: any) => {
-              const first = geo.geoObjects.get(0);
-              if (first) {
-                setAddress(first.getAddressLine());
-              }
+          ymaps.geolocation
+            .get()
+            .then((res: any) => {
+              const position =
+                res.geoObjects.position ||
+                res.geoObjects.get(0).geometry.getCoordinates();
+              const coords: [number, number] = position;
+              ymaps.geocode(coords, { boundedBy: BOUNDS }).then((geo: any) => {
+                const first = geo.geoObjects.get(0);
+                if (first) {
+                  setAddress(first.getAddressLine());
+                }
+              });
+              placeMarker(coords);
+              map.setCenter(coords, 16);
+            })
+            .catch(() => {
+              /* geolocation unavailable */
             });
-            placeMarker(coords);
-            map.setCenter(coords, 16);
-          });
         };
 
         (map as any)._locateMe = locateMe;
@@ -148,18 +151,25 @@ export default function DeliveryMap({
         ref={mapRef}
         style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}
       />
-      {mobile && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 8,
-            left: 8,
-            right: 56,
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
+      <div
+        style={mobile ? {
+          position: "absolute",
+          bottom: 8,
+          left: 8,
+          right: 56,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        } : {
+          position: "absolute",
+          bottom: 8,
+          left: 8,
+          width: 260,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
           {history.length > 0 && (
             <div className="history-list">
               {history.map((h) => (
@@ -281,18 +291,6 @@ export default function DeliveryMap({
               }}
             />
             <input
-              name="doorCode"
-              value={doorCode}
-              onChange={(e) => setDoorCode(e.target.value)}
-              placeholder="Код двери"
-              style={{
-                padding: "8px 12px",
-                borderRadius: 8,
-                border: "1px solid var(--border)",
-                background: "#fff",
-              }}
-            />
-            <input
               name="floor"
               value={floor}
               onChange={(e) => setFloor(e.target.value)}
@@ -331,7 +329,6 @@ export default function DeliveryMap({
             />
           </div>
         </div>
-      )}
       <div
         style={{
           position: "absolute",
