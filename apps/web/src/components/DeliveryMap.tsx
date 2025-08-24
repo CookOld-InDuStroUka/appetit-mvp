@@ -59,25 +59,12 @@ export default function DeliveryMap({
         return;
       }
       const center: [number, number] = [49.9483, 82.6275];
-        const zone = [
-          [49.995, 82.55],
-          [49.9, 82.55],
-          [49.9, 82.7],
-          [49.995, 82.7],
-        ];
         const map = new ymaps.Map(mapRef.current, {
           center,
           zoom: 12,
           controls: [],
         });
         mapInstance.current = map;
-        const polygon = new ymaps.Polygon([zone], {}, {
-          fillColor: "rgba(255,85,0,0.15)",
-          strokeColor: "#ff5500",
-          strokeWidth: 2,
-          interactivityModel: "default#transparent",
-        });
-        map.geoObjects.add(polygon);
 
         const violetZone = [
           [49.95846, 82.624979],
