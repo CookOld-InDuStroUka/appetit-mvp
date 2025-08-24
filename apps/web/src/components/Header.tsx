@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
@@ -15,6 +16,8 @@ export default function Header() {
   const [suggestions, setSuggestions] = useState<
     { id: string; name: string }[]
   >([]);
+  const searchRef = useRef<HTMLDivElement | null>(null);
+  const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
   useEffect(() => {
     const check = () => {
@@ -49,12 +52,68 @@ export default function Header() {
     return () => clearTimeout(t);
   }, [q, API_BASE]);
 
+  useEffect(() => {
+    if (suggestions.length === 0 || !searchRef.current) return;
+    const update = () => {
+      const r = searchRef.current!.getBoundingClientRect();
+      setSuggestPos({ left: r.left, top: r.bottom, width: r.width });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update);
+    };
+  }, [suggestions.length, searchOpen, isSmall]);
+
   const searchSubmit = () => {
     if (q.trim()) {
       setSuggestions([]);
       location.href = `/?q=${encodeURIComponent(q.trim())}`;
     }
   };
+
+  const suggestionPortal =
+    typeof document !== "undefined" && suggestions.length > 0
+      ? createPortal(
+          <ul
+            style={{
+              position: "fixed",
+              top: suggestPos.top,
+              left: suggestPos.left,
+              width: suggestPos.width,
+              background: "var(--card-bg)",
+              border: "1px solid var(--border)",
+              borderTop: "none",
+              maxHeight: 200,
+              overflowY: "auto",
+              zIndex: 1000,
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+            }}
+          >
+            {suggestions.map((s) => (
+              <li key={s.id}>
+                <a
+                  href={`/dish/${s.id}`}
+                  style={{
+                    display: "block",
+                    padding: "8px 12px",
+                    textDecoration: "none",
+                    color: "var(--text)",
+                  }}
+                  onClick={() => setSearchOpen(false)}
+                >
+                  {s.name}
+                </a>
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )
+      : null;
 
   return (
     <>
@@ -99,6 +158,7 @@ export default function Header() {
                   ←
                 </button>
                 <div
+                  ref={searchRef}
                   style={{
                     flex: 1,
                     display: "flex",
@@ -148,42 +208,7 @@ export default function Header() {
                       <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                   </button>
-                  {suggestions.length > 0 && (
-                    <ul
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        background: "var(--card-bg)",
-                        border: "1px solid var(--border)",
-                        borderTop: "none",
-                        maxHeight: 200,
-                        overflowY: "auto",
-                        zIndex: 100,
-                        listStyle: "none",
-                        margin: 0,
-                        padding: 0,
-                      }}
-                    >
-                      {suggestions.map((s) => (
-                        <li key={s.id}>
-                          <a
-                            href={`/dish/${s.id}`}
-                            style={{
-                              display: "block",
-                              padding: "8px 12px",
-                              textDecoration: "none",
-                              color: "var(--text)",
-                            }}
-                            onClick={() => setSearchOpen(false)}
-                          >
-                            {s.name}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {/* suggestions rendered via portal */}
                 </div>
                 <button
                   onClick={() => setCartOpen(true)}
@@ -385,6 +410,7 @@ export default function Header() {
                 </span>
               </Link>
               <div
+                ref={searchRef}
                 style={{
                   flex: "0 1 280px",
                   display: "flex",
@@ -422,42 +448,7 @@ export default function Header() {
                 >
                   Искать
                 </button>
-                {suggestions.length > 0 && (
-                  <ul
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      background: "var(--card-bg)",
-                      border: "1px solid var(--border)",
-                      borderTop: "none",
-                      maxHeight: 200,
-                      overflowY: "auto",
-                      zIndex: 100,
-                      listStyle: "none",
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  >
-                    {suggestions.map((s) => (
-                      <li key={s.id}>
-                        <a
-                          href={`/dish/${s.id}`}
-                          style={{
-                            display: "block",
-                            padding: "8px 12px",
-                            textDecoration: "none",
-                            color: "var(--text)",
-                          }}
-                          onClick={() => setSearchOpen(false)}
-                        >
-                          {s.name}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                {/* suggestions rendered via portal */}
               </div>
               <nav
                 style={{
@@ -559,6 +550,7 @@ export default function Header() {
           )}
         </div>
       </header>
+      {suggestionPortal}
       {isCartOpen && (
         <CartModal
           items={cartItems}
