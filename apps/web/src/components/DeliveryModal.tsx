@@ -103,6 +103,12 @@ export default function DeliveryModal() {
               position: "absolute",
               top: 16,
               right: 16,
+              fontSize: 24,
+              width: 32,
+              height: 32,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             aria-label="Закрыть"
           >
@@ -160,6 +166,12 @@ export default function DeliveryModal() {
               position: "absolute",
               right: 0,
               top: 0,
+              fontSize: 24,
+              width: 32,
+              height: 32,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             aria-label="Закрыть"
           >

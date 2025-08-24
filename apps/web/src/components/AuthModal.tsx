@@ -26,7 +26,26 @@ export default function AuthModal() {
       <div className="modal" style={{ maxWidth: 360 }} onClick={stop}>
         <div style={{ position: "relative", marginBottom: 16, textAlign: "center" }}>
           <h2 style={{ margin: 0 }}>Авторизация</h2>
-          <button onClick={close} style={{ position: "absolute", right: 0, top: 0, background: "transparent", border: "none", cursor: "pointer" }}>×</button>
+          <button
+            onClick={close}
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 24,
+              width: 32,
+              height: 32,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            aria-label="Закрыть"
+          >
+            ×
+          </button>
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
