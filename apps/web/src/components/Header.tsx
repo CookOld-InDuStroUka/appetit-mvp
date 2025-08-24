@@ -63,6 +63,7 @@ export default function Header() {
                     }}
                 >
                     <input
+                        name="search"
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Найти блюдо…"

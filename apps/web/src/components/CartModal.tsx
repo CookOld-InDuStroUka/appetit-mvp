@@ -166,6 +166,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
 
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               <input
+                name="promo"
                 value={promo}
                 onChange={(e) => setPromo(e.target.value)}
                 placeholder="Промокод"

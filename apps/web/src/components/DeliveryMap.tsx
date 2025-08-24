@@ -92,7 +92,11 @@ export default function DeliveryMap({
           });
         };
 
-        if (inputRef.current && ymaps.SuggestView) {
+        // Yandex SuggestView requires a separate API key. When the key doesn't
+        // include this feature the constructor throws a FeatureRemovedError that
+        // bubbles to the console. To keep the map usable without Suggest support
+        // we skip initialization if the module isn't fully available.
+        if (inputRef.current && typeof ymaps.SuggestView === "function") {
           try {
             const suggest = new ymaps.SuggestView(inputRef.current);
             suggest.events.add("select", (e: any) => {
@@ -157,6 +161,7 @@ export default function DeliveryMap({
       >
         <input
           ref={inputRef}
+          name="address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           onKeyDown={(e) => {
@@ -221,6 +226,7 @@ export default function DeliveryMap({
           }}
         >
           <input
+            name="entrance"
             value={entrance}
             onChange={(e) => setEntrance(e.target.value)}
             placeholder="Подъезд"
@@ -232,6 +238,7 @@ export default function DeliveryMap({
             }}
           />
           <input
+            name="doorCode"
             value={doorCode}
             onChange={(e) => setDoorCode(e.target.value)}
             placeholder="Код двери"
@@ -243,6 +250,7 @@ export default function DeliveryMap({
             }}
           />
           <input
+            name="floor"
             value={floor}
             onChange={(e) => setFloor(e.target.value)}
             placeholder="Этаж"
@@ -254,6 +262,7 @@ export default function DeliveryMap({
             }}
           />
           <input
+            name="apartment"
             value={apt}
             onChange={(e) => setApt(e.target.value)}
             placeholder="Квартира"

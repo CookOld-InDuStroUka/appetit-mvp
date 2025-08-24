@@ -102,6 +102,7 @@ export default function DeliveryModal() {
             )}
             <div style={{ marginTop: 8 }}>
               <input
+                name="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Комментарий"

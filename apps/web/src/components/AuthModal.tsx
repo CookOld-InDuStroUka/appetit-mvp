@@ -39,6 +39,7 @@ export default function AuthModal() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p>Введите ваш номер телефона, чтобы получить код подтверждения.</p>
               <input
+                name="phone"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
@@ -56,6 +57,7 @@ export default function AuthModal() {
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p>Введите код из SMS</p>
               <input
+                name="code"
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
@@ -68,12 +70,14 @@ export default function AuthModal() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <input
+              name="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               placeholder="Email"
             />
             <input
+              name="password"
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
