@@ -15,7 +15,7 @@ export default function Footer() {
 
   return (
     <footer style={{ background: "var(--footer-bg)", color: "var(--footer-text)", marginTop: 40, width: "100%" }}>
-      <div style={{ width: "100%", maxWidth: "1280px", margin: "0 auto", padding: "40px clamp(16px,5vw,48px)" }}>
+      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "40px clamp(16px,5vw,48px)", width: "100%", boxSizing: "border-box" }}>
         <div
           style={{
             display: "flex",
