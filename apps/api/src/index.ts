@@ -119,11 +119,21 @@ app.get(`${BASE}/admin/branches/:branchId/dishes`, async (req: Request, res: Res
   if (!branch) return res.status(404).json({ error: "Branch not found" });
 
   const zoneIds = branch.zones.map((z: any) => z.id);
-  const dishes = await prisma.dish.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
+  const dishes = await prisma.dish.findMany({
+    where: { isActive: true },
+    include: { category: true },
+    orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
+  });
   const availability = await prisma.dishAvailability.findMany({ where: { zoneId: { in: zoneIds } } });
   const availSet = new Set(availability.map((a: any) => a.dishId));
 
-  const result = dishes.map((d: any) => ({ id: d.id, name: d.name, available: availSet.has(d.id) }));
+  const result = dishes.map((d: any) => ({
+    id: d.id,
+    name: d.name,
+    categoryId: d.categoryId,
+    categoryName: d.category?.name ?? "",
+    available: availSet.has(d.id),
+  }));
   res.json(result);
 });
 

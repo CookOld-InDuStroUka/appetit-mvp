@@ -6,7 +6,13 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type Branch = { id: string; name: string; address?: string };
-type Dish = { id: string; name: string; available: boolean };
+type Dish = {
+  id: string;
+  name: string;
+  categoryId: string;
+  categoryName: string;
+  available: boolean;
+};
 
 export default function BranchesAdmin() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -99,17 +105,27 @@ export default function BranchesAdmin() {
             </select>
           </label>
         </div>
-        <div className="option-grid" style={{ marginBottom: 24 }}>
-          {dishes.map((d) => (
-            <button
-              key={d.id}
-              className={`option-btn${d.available ? " active" : ""}`}
-              onClick={() => toggle(d.id)}
-            >
-              {d.name}
-            </button>
-          ))}
-        </div>
+        {Object.entries(
+          dishes.reduce<Record<string, Dish[]>>((acc, d) => {
+            (acc[d.categoryName] ||= []).push(d);
+            return acc;
+          }, {})
+        ).map(([cat, items]) => (
+          <section key={cat} style={{ marginBottom: 24 }}>
+            <h3 style={{ margin: "16px 0" }}>{cat}</h3>
+            <div className="option-grid">
+              {items.map((d) => (
+                <button
+                  key={d.id}
+                  className={`option-btn${d.available ? " active" : ""}`}
+                  onClick={() => toggle(d.id)}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          </section>
+        ))}
         <button
           onClick={save}
           disabled={!dirty}
