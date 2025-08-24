@@ -10,17 +10,7 @@ export const MENU_ITEMS = [
 
 export default function MainMenu() {
   return (
-    <aside
-      className="main-sidebar"
-      style={{
-        width: "clamp(140px, 18vw, 220px)",
-        padding: 20,
-        borderRight: "1px solid var(--card-border)",
-        position: "sticky",
-        top: 70,
-        alignSelf: "flex-start",
-      }}
-    >
+    <aside className="main-sidebar">
       <nav>
         <ul
           style={{

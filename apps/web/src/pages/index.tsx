@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <>
       <Header />
-      <div style={{ display: "flex", width: "100%", maxWidth: "1280px", margin: "0 auto" }}>
+      <div className="page-layout">
         <MainMenu />
         <main style={{ flex: 1, padding: "20px", boxSizing: "border-box" }}>
           <PromoSlider />
