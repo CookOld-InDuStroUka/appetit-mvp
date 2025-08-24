@@ -87,7 +87,11 @@ export default function DeliveryModal() {
               transform: "translateX(-50%)",
             }}
           >
-            <DeliveryToggle value={mode} onChange={setMode} />
+            <DeliveryToggle
+              value={mode}
+              onChange={setMode}
+              style={{ width: 240 }}
+            />
           </div>
           <button
             onClick={close}
@@ -134,7 +138,7 @@ export default function DeliveryModal() {
     <div className="modal-backdrop" onClick={handleBackdrop}>
       <div
         className="modal"
-        style={{ maxWidth: 520 }}
+        style={{ maxWidth: 640 }}
         onClick={stopProp}
       >
         <div
@@ -183,7 +187,7 @@ export default function DeliveryModal() {
               history={history}
               onHistorySelect={setAddress}
               removeHistory={removeHistory}
-              height={360}
+              height={420}
             />
             <button
               onClick={() => {

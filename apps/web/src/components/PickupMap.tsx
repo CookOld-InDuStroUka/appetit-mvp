@@ -83,7 +83,7 @@ export default function PickupMap({
         <div
           style={{
             position: "absolute",
-            bottom: 8,
+            bottom: 56,
             left: 8,
             right: 56,
           }}
@@ -111,6 +111,7 @@ export default function PickupMap({
                     cursor: "pointer",
                     padding: 0,
                     color: b.id === selected ? "var(--accent)" : "var(--text)",
+                    fontSize: 16,
                   }}
                 >
                   {b.name}

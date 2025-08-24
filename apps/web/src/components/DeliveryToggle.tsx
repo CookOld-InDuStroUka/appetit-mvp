@@ -3,9 +3,10 @@ import React from "react";
 type Props = {
   value: "delivery" | "pickup";
   onChange: (val: "delivery" | "pickup") => void;
+  style?: React.CSSProperties;
 };
 
-export default function DeliveryToggle({ value, onChange }: Props) {
+export default function DeliveryToggle({ value, onChange, style }: Props) {
   return (
     <div
       style={{
@@ -14,6 +15,7 @@ export default function DeliveryToggle({ value, onChange }: Props) {
         border: "1px solid var(--border)",
         borderRadius: 8,
         overflow: "hidden",
+        ...style,
       }}
     >
       <div
@@ -62,7 +64,7 @@ export default function DeliveryToggle({ value, onChange }: Props) {
           gap: 4,
         }}
       >
-        <span className="toggle-icon">🏠</span>
+        <span className="toggle-icon">🚶‍♂️</span>
         <span className="toggle-label">Самовывоз</span>
       </button>
     </div>
