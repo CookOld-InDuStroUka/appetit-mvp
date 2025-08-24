@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { loadYmaps } from "../utils/ymapsLoader";
 
 type Props = {
   address: string;
@@ -51,20 +52,9 @@ export default function DeliveryMap({
     if (!mapRef.current) return;
 
     const initMap = async () => {
-      if (!(window as any).ymaps) {
-        await new Promise<void>((resolve) => {
-          const script = document.createElement("script");
-          const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
-          const base = "https://api-maps.yandex.ru/2.1/?lang=ru_RU";
-          script.src = apiKey ? `${base}&apikey=${apiKey}` : base;
-          script.onload = () => resolve();
-          document.head.appendChild(script);
-        });
-      }
-
-      (window as any).ymaps.ready(() => {
-        const ymaps = (window as any).ymaps;
-        const center: [number, number] = [49.9483, 82.6275];
+      const ymaps = await loadYmaps();
+      if (!ymaps || !mapRef.current) return;
+      const center: [number, number] = [49.9483, 82.6275];
         const zone = [
           [49.995, 82.55],
           [49.9, 82.55],
@@ -145,7 +135,6 @@ export default function DeliveryMap({
         };
 
         (map as any)._locateMe = locateMe;
-      });
     };
 
     initMap();
