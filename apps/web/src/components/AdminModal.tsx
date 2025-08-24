@@ -27,12 +27,14 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <input
+            name="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="Email"
             style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
           />
           <input
+            name="password"
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}

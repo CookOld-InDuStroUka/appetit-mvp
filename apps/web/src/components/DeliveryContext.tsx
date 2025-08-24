@@ -7,30 +7,43 @@ const API_BASE =
 
 // Fallback филиалы с координатами на случай, если API недоступно
 const DEFAULT_BRANCHES: Branch[] = [
-  { id: "kazakhstan", name: "КАЗАХСТАН, 70А", coords: [49.963, 82.605] },
-  { id: "satpaeva", name: "САТПАЕВА, 8А", coords: [49.967, 82.64] },
-  { id: "novatorov", name: "НОВАТОРОВ, 18/2", coords: [49.955, 82.62] },
-  { id: "zhybek", name: "ЖИБЕК ЖОЛЫ, 1к8", coords: [49.943, 82.63] },
-  { id: "samarskoe", name: "САМАРСКОЕ ШОССЕ, 5/1", coords: [49.935, 82.605] },
-  { id: "kabanbay", name: "КАБАНБАЙ БАТЫРА,148", coords: [49.955, 82.65] },
-  { id: "nazarbaeva", name: "НАЗАРБАЕВА, 28А", coords: [49.978, 82.65] },
+  { id: "novatorov", name: "ул. Новаторов, 18/2", coords: [49.955147, 82.647584] },
+  { id: "satpaeva", name: "пр. Каныша Сатпаева, 8А", coords: [49.899568, 82.618955] },
+  { id: "kazakhstan", name: "ул. Казахстан, 70А", coords: [49.948655, 82.629438] },
+  { id: "nazarbaeva", name: "пр. Нурсултана Назарбаева, 28А", coords: [49.962379, 82.602893] },
+  { id: "zhybek", name: "ул. Жибек Жолы, 1 к8", coords: [49.928821, 82.612936] },
+  {
+    id: "kabanbay",
+    name: "рынок «Кайнар», ул. Кабанбай Батыра, 148",
+    coords: [49.952353, 82.632187],
+  },
+  { id: "samarskoe", name: "Самарское шоссе, 5/1", coords: [49.898645, 82.634676] },
 ];
 
 type Ctx = {
   mode: "delivery" | "pickup";
   address: string;
   apt: string;
+  entrance: string;
+  doorCode: string;
+  floor: string;
   comment: string;
   branch: string;
   branches: Branch[];
+  history: string[];
   isOpen: boolean;
   open: () => void;
   close: () => void;
   setMode: (v: "delivery" | "pickup") => void;
   setAddress: (v: string) => void;
   setApt: (v: string) => void;
+   setEntrance: (v: string) => void;
+   setDoorCode: (v: string) => void;
+   setFloor: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
+  addHistory: (addr: string) => void;
+  removeHistory: (addr: string) => void;
 };
 
 const Ctx = createContext<Ctx | undefined>(undefined);
@@ -39,10 +52,25 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<"delivery" | "pickup">("delivery");
   const [address, setAddress] = useState("");
   const [apt, setApt] = useState("");
+  const [entrance, setEntrance] = useState("");
+  const [doorCode, setDoorCode] = useState("");
+  const [floor, setFloor] = useState("");
   const [comment, setComment] = useState("");
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [branch, setBranch] = useState(DEFAULT_BRANCHES[0].id);
   const [isOpen, setOpen] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("deliveryAddresses");
+    if (stored) {
+      try {
+        setHistory(JSON.parse(stored));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/branches`)
@@ -69,23 +97,49 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const open = () => setOpen(true);
   const close = () => setOpen(false);
 
+  const addHistory = (addr: string) => {
+    if (!addr) return;
+    setHistory((prev) => {
+      const next = [addr, ...prev.filter((a) => a !== addr)].slice(0, 5);
+      localStorage.setItem("deliveryAddresses", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeHistory = (addr: string) => {
+    setHistory((prev) => {
+      const next = prev.filter((a) => a !== addr);
+      localStorage.setItem("deliveryAddresses", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return (
     <Ctx.Provider
       value={{
         mode,
         address,
         apt,
+        entrance,
+        doorCode,
+        floor,
         comment,
         branch,
         branches,
+        history,
         isOpen,
         open,
         close,
         setMode,
         setAddress,
         setApt,
+        setEntrance,
+        setDoorCode,
+        setFloor,
         setComment,
         setBranch,
+        addHistory,
+        removeHistory,
       }}
     >
       {children}

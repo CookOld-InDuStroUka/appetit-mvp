@@ -15,6 +15,7 @@ type Props = {
 
 export default function PickupMap({ branches, selected, onSelect, height = 300 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
   const markers = useRef<Record<string, any>>({});
 
   useEffect(() => {
@@ -35,7 +36,22 @@ export default function PickupMap({ branches, selected, onSelect, height = 300 }
       (window as any).ymaps.ready(() => {
         const ymaps = (window as any).ymaps;
         const center: [number, number] = branches[0]?.coords || [49.9483, 82.6275];
-        const map = new ymaps.Map(mapRef.current, { center, zoom: 12, controls: [] });
+        const map = new ymaps.Map(mapRef.current, {
+          center,
+          zoom: 12,
+          controls: [],
+        });
+        mapInstance.current = map;
+
+        const locateMe = () => {
+          ymaps.geolocation.get().then((res: any) => {
+            const position =
+              res.geoObjects.position ||
+              res.geoObjects.get(0).geometry.getCoordinates();
+            map.setCenter(position, 14);
+          });
+        };
+        (map as any)._locateMe = locateMe;
 
         branches.forEach((b) => {
           const pm = new ymaps.Placemark(
@@ -61,6 +77,76 @@ export default function PickupMap({ branches, selected, onSelect, height = 300 }
     });
   }, [selected]);
 
-  return <div ref={mapRef} style={{ height, borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }} />;
+  return (
+    <div style={{ position: "relative", height }}>
+      <div
+        ref={mapRef}
+        style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 8,
+          right: 8,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        <button
+          onClick={() => mapInstance.current && (mapInstance.current as any)._locateMe?.()}
+          aria-label="Моё местоположение"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 4,
+            border: "1px solid var(--border)",
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          📍
+        </button>
+        <button
+          onClick={() => {
+            if (mapInstance.current) {
+              const current = mapInstance.current.getZoom();
+              mapInstance.current.setZoom(current + 1);
+            }
+          }}
+          aria-label="Увеличить"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 4,
+            border: "1px solid var(--border)",
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          +
+        </button>
+        <button
+          onClick={() => {
+            if (mapInstance.current) {
+              const current = mapInstance.current.getZoom();
+              mapInstance.current.setZoom(current - 1);
+            }
+          }}
+          aria-label="Уменьшить"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 4,
+            border: "1px solid var(--border)",
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          -
+        </button>
+      </div>
+    </div>
+  );
 }
 

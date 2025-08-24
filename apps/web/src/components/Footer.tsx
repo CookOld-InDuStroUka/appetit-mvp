@@ -1,14 +1,40 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminModal from "./AdminModal";
 
 export default function Footer() {
   const [adminOpen, setAdminOpen] = useState(false);
+  const [isSmall, setIsSmall] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsSmall(window.innerWidth < 600);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <footer style={{ background: "var(--footer-bg)", color: "var(--footer-text)", marginTop: 40, width: "100%" }}>
       <div style={{ width: "100%", maxWidth: "1280px", margin: "0 auto", padding: "40px clamp(16px,5vw,48px)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: "1 1 200px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: isSmall ? "flex-start" : "space-between",
+            flexWrap: "wrap",
+            gap: isSmall ? 16 : 24,
+          }}
+        >
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              flex: isSmall ? "1 1 100%" : "1 1 200px",
+            }}
+          >
             <li><Link href="/addresses" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Адреса и зоны доставки</Link></li>
             <li><Link href="/reviews" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Отзывы</Link></li>
             <li><Link href="/promotions" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Акции</Link></li>
@@ -17,9 +43,20 @@ export default function Footer() {
             <li><Link href="/vacancies" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Вакансии</Link></li>
             <li><Link href="/contacts" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Контакты</Link></li>
           </ul>
-          <div style={{ textAlign: "right", flex: "1 1 200px" }}>
-            <p style={{ margin: 0, marginBottom: 8 }}>Акции, которые нельзя есть, — в наших приложениях!</p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <div
+            style={{
+              textAlign: isSmall ? "left" : "right",
+              flex: isSmall ? "1 1 100%" : "1 1 200px",
+            }}
+          >
+            <p style={{ margin: 0, marginBottom: 8 }}>Акции, скидки, кэшбэк − в нашем приложении!</p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: isSmall ? "flex-start" : "flex-end",
+                gap: 8,
+              }}
+            >
               <a href="#" style={{ background: "#fff", color: "#000", padding: "6px 12px", borderRadius: 8, textDecoration: "none", fontSize: 12 }}>App Store</a>
               <a href="#" style={{ background: "#fff", color: "#000", padding: "6px 12px", borderRadius: 8, textDecoration: "none", fontSize: 12 }}>Google Play</a>
             </div>
