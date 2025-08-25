@@ -147,6 +147,21 @@ button,
   color: #fff;
 }
 
+.admin-nav-btn {
+  text-decoration: none;
+  color: var(--header-text);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.admin-nav-btn:hover {
+  background: var(--hover-bg);
+  color: var(--accent);
+}
+
 @media (max-width: 600px) {
   .dish-card {
     padding: 10px;
