@@ -70,15 +70,7 @@ export default function MenuAdmin() {
           <h2>{cat.name}</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {cat.dishes.map((d) => (
-              <li
-                key={d.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 8,
-                }}
-              >
+              <li key={d.id} className="admin-dish-item">
                 <span style={{ flex: 1 }}>
                   {d.name} — {d.basePrice}₸
                 </span>
