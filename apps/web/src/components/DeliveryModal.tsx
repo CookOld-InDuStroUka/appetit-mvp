@@ -10,7 +10,7 @@ function parseHours(hours?: string) {
   if (lower.includes("круглосуточ")) {
     return { open: "00:00", close: "23:59", overnight: false };
   }
-  const m = hours.match(/(\d{2}:\d{2})\s*[–—-]\s*(\d{2}:\d{2})/);
+  const m = hours.match(/(\d{2}:\d{2})\s*[–—−-]\s*(\d{2}:\d{2})/);
   if (m) {
     const open = m[1];
     const close = m[2];

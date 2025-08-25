@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
 import UserInfoModal from "./UserInfoModal";
@@ -23,10 +23,11 @@ type Props = {
   onClear: () => void;
   updateQty: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
+  initialPromo?: string;
 };
 
-export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
-  const [promo, setPromo] = useState("");
+export default function CartModal({ items, onClose, onClear, updateQty, removeItem, initialPromo }: Props) {
+  const [promo, setPromo] = useState(initialPromo || "");
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<"cash" | "card">("cash");
   const [useBonus, setUseBonus] = useState(false);
@@ -34,6 +35,33 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const { user, open: openAuth, setUser } = useAuth();
   const { mode, address, apt, entrance, floor, comment, branch, branches, pickupTime, open: openDelivery } = useDelivery();
   const [showUserInfo, setShowUserInfo] = useState(false);
+
+  const applyPromo = async (code: string) => {
+    try {
+      const r = await fetch(`${API_BASE}/promo-codes/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, branchId: branch }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setDiscount(data.discount);
+      } else {
+        setDiscount(0);
+        alert("Промокод не найден");
+      }
+    } catch {
+      setDiscount(0);
+    }
+  };
+
+  useEffect(() => {
+    if (initialPromo) {
+      const upper = initialPromo.toUpperCase();
+      setPromo(upper);
+      applyPromo(upper);
+    }
+  }, [initialPromo]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round((total * discount) / 100);
@@ -50,7 +78,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     if (!hours) return { open: "00:00", close: "23:59", overnight: false };
     const lower = hours.toLowerCase();
     if (lower.includes("круглосуточ")) return { open: "00:00", close: "23:59", overnight: false };
-    const m = hours.match(/(\d{2}:\d{2})\s*[–—-]\s*(\d{2}:\d{2})/);
+    const m = hours.match(/(\d{2}:\d{2})\s*[–—−-]\s*(\d{2}:\d{2})/);
     if (m) {
       const open = m[1];
       const close = m[2];
@@ -337,24 +365,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 }}
               />
               <button
-                onClick={async () => {
-                  try {
-                    const r = await fetch(`${API_BASE}/promo-codes/check`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ code: promo, branchId: branch }),
-                    });
-                    if (r.ok) {
-                      const data = await r.json();
-                      setDiscount(data.discount);
-                    } else {
-                      setDiscount(0);
-                      alert("Промокод не найден");
-                    }
-                  } catch {
-                    setDiscount(0);
-                  }
-                }}
+                onClick={() => applyPromo(promo)}
                 style={{
                   padding: "8px 12px",
                   borderRadius: 8,

@@ -17,11 +17,22 @@ export default function Header() {
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
+  const [pendingPromo, setPendingPromo] = useState<string | null>(null);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { promo?: string } | undefined;
+      if (detail?.promo) setPendingPromo(detail.promo);
+      setCartOpen(true);
+    };
+    document.addEventListener("open-cart", handler);
+    return () => document.removeEventListener("open-cart", handler);
+  }, []);
 
   // подсказки поиска
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(
@@ -158,7 +169,9 @@ export default function Header() {
               <span>RU</span>
               <ChevronDown />
             </button>
-
+            <Link href="/promos" className="link">
+              Акции
+            </Link>
             <Link href="/contacts" className="link">
               Контакты
             </Link>
@@ -289,10 +302,14 @@ export default function Header() {
       {isCartOpen && (
         <CartModal
           items={cartItems}
-          onClose={() => setCartOpen(false)}
+          onClose={() => {
+            setCartOpen(false);
+            setPendingPromo(null);
+          }}
           onClear={clear}
           updateQty={updateQty}
           removeItem={removeItem}
+          initialPromo={pendingPromo || undefined}
         />
       )}
     </>

@@ -185,8 +185,12 @@ export default function PromoSlider({
               <div style={{ marginTop: 12 }}>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(modal.promoCode!);
-                    setModal({ ...modal, text: "Промокод скопирован" });
+                    document.dispatchEvent(
+                      new CustomEvent("open-cart", {
+                        detail: { promo: modal.promoCode },
+                      })
+                    );
+                    setModal(null);
                   }}
                 >
                   {"Применить промокод"}
