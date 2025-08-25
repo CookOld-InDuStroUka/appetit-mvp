@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../components/AuthContext";
 import type { OrderDTO } from "@appetit/shared";
+import { formatAstanaTime } from "../utils/time";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
@@ -79,14 +80,7 @@ export default function OrdersPage() {
                 {o.type === "delivery" ? (
                   <div>Примерное время прибытия: —</div>
                 ) : (
-                  <div>
-                    Самовывоз: {o.pickupTime
-                      ? new Date(o.pickupTime).toLocaleTimeString("ru-RU", {
-                          hour12: false,
-                          timeZone: "Asia/Almaty",
-                        })
-                      : "—"}
-                  </div>
+                  <div>Самовывоз: {o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</div>
                 )}
                 <div>Сумма: {o.total} ₸</div>
               </li>

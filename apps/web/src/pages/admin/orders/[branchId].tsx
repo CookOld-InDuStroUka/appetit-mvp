@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import AdminLayout from "../../../components/AdminLayout";
+import { formatAstanaTime } from "../../../utils/time";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -119,16 +120,7 @@ export default function OrdersAdmin() {
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>
-              <td>
-                {o.pickupTime
-                  ? new Date(o.pickupTime).toLocaleTimeString("ru-RU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                      timeZone: "Asia/Almaty",
-                    })
-                  : "—"}
-              </td>
+              <td>{o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</td>
               <td>
                 <select
                   value={o.status}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
 import UserInfoModal from "./UserInfoModal";
@@ -33,32 +33,68 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [useBonus, setUseBonus] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, open: openAuth, setUser } = useAuth();
-  const { mode, address, apt, entrance, floor, comment, branch, branches, pickupTime, open: openDelivery } = useDelivery();
+  const {
+    mode,
+    address,
+    apt,
+    entrance,
+    floor,
+    comment,
+    branch,
+    branches,
+    pickupTime,
+    open: openDelivery,
+    setBranch,
+  } = useDelivery();
   const [showUserInfo, setShowUserInfo] = useState(false);
 
+  const skipAlert = useRef(false);
   const applyPromo = async (code: string) => {
-    try {
+    const tryCheck = async (branchId?: string) => {
       const payload: any = { code };
-      if (branch) payload.branchId = branch;
+      if (branchId) payload.branchId = branchId;
       const r = await fetch(`${API_BASE}/promo-codes/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (r.ok) {
-        const data = await r.json();
-        setDiscount(data.discount);
-      } else {
+      if (!r.ok) return null;
+      return r.json();
+    };
+
+    try {
+      let data = await tryCheck(branch);
+      if (!data) {
+        data = await tryCheck();
+        if (data) {
+          setDiscount(data.discount);
+          if (!skipAlert.current) alert("Промокод применён");
+          skipAlert.current = false;
+          return;
+        }
+        for (const b of branches) {
+          if (b.id === branch) continue;
+          const res = await tryCheck(b.id);
+          if (res) {
+            skipAlert.current = true;
+            setDiscount(res.discount);
+            setBranch(b.id);
+            alert(`Промокод действует только для филиала ${b.name}. Промокод применён.`);
+            return;
+          }
+        }
         setDiscount(0);
-        const err = await r.json().catch(() => null);
-        alert(
-          err?.error === "Invalid code" && branch
-            ? "Промокод недействителен для выбранного филиала"
-            : "Промокод не найден"
-        );
+        if (!skipAlert.current) alert("Промокод не найден");
+        skipAlert.current = false;
+        return;
       }
+      setDiscount(data.discount);
+      if (!skipAlert.current) alert("Промокод применён");
+      skipAlert.current = false;
     } catch {
       setDiscount(0);
+      if (!skipAlert.current) alert("Промокод не найден");
+      skipAlert.current = false;
     }
   };
 
@@ -73,6 +109,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     if (promo) {
       applyPromo(promo);
     }
+    skipAlert.current = false;
   }, [promo, branch]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
