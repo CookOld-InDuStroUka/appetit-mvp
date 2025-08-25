@@ -1,15 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { PromoSlide } from "../types/promo";
 
 type PromoSliderProps = {
-  slides?: string[];
+  slides?: PromoSlide[];
   intervalMs?: number;
   width?: number;
   height?: number;
 };
 
 // Слайды по умолчанию соответствуют файлам в public/
-const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.svg", "/promo3.svg"];
+const DEFAULT_SLIDES: PromoSlide[] = [
+  { image: "/promo1.jpg" },
+  { image: "/promo2.svg" },
+  { image: "/promo3.svg" },
+];
 
 export default function PromoSlider({
   slides = DEFAULT_SLIDES,
@@ -21,6 +26,7 @@ export default function PromoSlider({
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [imgs, setImgs] = useState(slides);
+  const [modal, setModal] = useState<PromoSlide["modal"] | null>(null);
 
   useEffect(() => setImgs(slides), [slides]);
 
@@ -87,9 +93,9 @@ export default function PromoSlider({
           Нет доступных промо
         </div>
       ) : (
-        imgs.map((src, i) => (
+        imgs.map((slide, i) => (
           <div
-            key={`${src}-${i}`}
+            key={`${slide.image}-${i}`}
             style={{
               position: "absolute",
               top: 0,
@@ -98,9 +104,13 @@ export default function PromoSlider({
               height: "100%",
               transition: prefersReducedMotion ? undefined : "left 0.5s ease-in-out",
             }}
+            onClick={() => {
+              if (slide.modal) setModal(slide.modal);
+              else if (slide.link) window.open(slide.link, "_blank");
+            }}
           >
             <Image
-              src={src}
+              src={slide.image}
               alt={`Promo ${i + 1}`}
               fill
               sizes={sizesAttr}
@@ -147,6 +157,56 @@ export default function PromoSlider({
               }}
             />
           ))}
+        </div>
+      )}
+      {modal && (
+        <div
+          onClick={() => setModal(null)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", padding: 20, borderRadius: 8, maxWidth: 400, textAlign: "center" }}
+          >
+            <h3 style={{ marginTop: 0 }}>{modal.title}</h3>
+            <p>{modal.text}</p>
+            {modal.promoCode && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(modal.promoCode!);
+                    setModal({ ...modal, text: "Промокод скопирован" });
+                  }}
+                >
+                  {"Применить промокод"}
+                </button>
+                <div style={{ marginTop: 8, fontWeight: 700 }}>{modal.promoCode}</div>
+              </div>
+            )}
+            {modal.shareText && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={() => {
+                    if (navigator.share) navigator.share({ text: modal.shareText });
+                    else navigator.clipboard.writeText(modal.shareText!);
+                  }}
+                >
+                  {"Поделиться промокодом"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import MainMenu from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
+import { PromoSlide } from "../types/promo";
 import MobileMenu from "../components/MobileMenu";
 import { useDelivery } from "../components/DeliveryContext";
 
@@ -26,6 +27,7 @@ type DishDTO = {
 export default function Home() {
   const [sections, setSections] = useState<{ name: string; dishes: DishDTO[] }[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
+  const [slides, setSlides] = useState<PromoSlide[]>([]);
   const { branch } = useDelivery();
 
   useEffect(() => {
@@ -47,6 +49,17 @@ export default function Home() {
     load();
   }, [branch]);
 
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("promoSlides") : null;
+    if (saved) {
+      try {
+        setSlides(JSON.parse(saved));
+      } catch {
+        setSlides([]);
+      }
+    }
+  }, []);
+
   return (
     <>
       <Header />
@@ -61,7 +74,7 @@ export default function Home() {
             overflowX: "hidden",
           }}
         >
-          <PromoSlider />
+          <PromoSlider slides={slides.length ? slides : undefined} />
           <MobileMenu />
           {sections.map((sec) => (
             <section key={sec.name} id={sec.name} style={{ marginBottom: "40px" }}>
