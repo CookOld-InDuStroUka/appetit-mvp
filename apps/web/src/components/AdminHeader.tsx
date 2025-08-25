@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useTheme } from "./ThemeContext";
 
 export default function AdminHeader() {
   const [isSmall, setIsSmall] = useState(false);
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const check = () => setIsSmall(window.innerWidth < 600);
@@ -49,25 +51,70 @@ export default function AdminHeader() {
           padding: "10px clamp(8px,4vw,24px)",
         }}
       >
-        <span style={{ fontWeight: 700 }}>Панель администратора</span>
-        {isSmall ? (
-          <button
-            onClick={() => setOpen(!open)}
-            aria-label="Меню"
-            style={{
-              background: "transparent",
-              border: "1px solid var(--header-text)",
-              color: "var(--header-text)",
-              padding: "6px 10px",
-              borderRadius: 6,
-              cursor: "pointer",
-            }}
-          >
-            ☰
-          </button>
-        ) : (
-          <nav style={{ display: "flex", gap: 12 }}>{linkEls}</nav>
-        )}
+        <Link
+          href="/admin"
+          style={{
+            fontFamily: "Roboto, sans-serif",
+            fontWeight: 700,
+            fontSize: 24,
+            textDecoration: "none",
+            color: "var(--header-text)",
+          }}
+        >
+          APPETIT
+        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {isSmall ? (
+            <>
+              <button
+                onClick={toggleTheme}
+                aria-label="Переключить тему"
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--header-text)",
+                  color: "var(--header-text)",
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                {theme === "light" ? "🌙" : "☀️"}
+              </button>
+              <button
+                onClick={() => setOpen(!open)}
+                aria-label="Меню"
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--header-text)",
+                  color: "var(--header-text)",
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                ☰
+              </button>
+            </>
+          ) : (
+            <>
+              <nav style={{ display: "flex", gap: 12 }}>{linkEls}</nav>
+              <button
+                onClick={toggleTheme}
+                aria-label="Переключить тему"
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--header-text)",
+                  color: "var(--header-text)",
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
+              >
+                {theme === "light" ? "🌙" : "☀️"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
       {isSmall && open && (
         <nav

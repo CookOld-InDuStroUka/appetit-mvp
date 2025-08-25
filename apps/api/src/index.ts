@@ -223,6 +223,70 @@ app.post(`${BASE}/admin/branches/:branchId/dishes/:dishId`, async (req: Request,
   res.json({ ok: true });
 });
 
+const DishUpsertSchema = z.object({
+  name: z.string().min(1),
+  categoryId: z.string(),
+  basePrice: z.coerce.number().nonnegative(),
+  description: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+});
+
+app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
+  const categories = await prisma.category.findMany({
+    orderBy: { sortOrder: "asc" },
+    include: { dishes: { orderBy: { name: "asc" } } },
+  });
+  const result = categories.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    dishes: c.dishes.map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      categoryId: d.categoryId,
+      basePrice: Number(d.basePrice),
+    })),
+  }));
+  res.json(result);
+});
+
+app.post(`${BASE}/admin/dishes`, async (req: Request, res: Response) => {
+  const parsed = DishUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const dish = await prisma.dish.create({
+    data: {
+      name: data.name,
+      categoryId: data.categoryId,
+      basePrice: data.basePrice,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl ?? null,
+    },
+  });
+  res.json(dish);
+});
+
+app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
+  const parsed = DishUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const dish = await prisma.dish.update({
+    where: { id: req.params.id },
+    data: {
+      name: data.name,
+      categoryId: data.categoryId,
+      basePrice: data.basePrice,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl ?? null,
+    },
+  });
+  res.json(dish);
+});
+
+app.delete(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
+  await prisma.dish.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
 app.get(`${BASE}/categories`, async (_req: Request, res: Response) => {
   const categories = await prisma.category.findMany({
     where: { isActive: true },
