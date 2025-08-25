@@ -1,18 +1,20 @@
 import React, { useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
+import UserInfoModal from "./UserInfoModal";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export type CartItem = {
-  id: string;
+  id: string; // уникальный ключ позиции в корзине
+  dishId: string;
   name: string;
   price: number;
   imageUrl?: string;
   qty: number;
-  addons?: { name: string; price: number }[];
-  excluded?: string[];
+  addons?: { id: string; name: string; price: number }[];
+  excluded?: { id: string; name: string }[];
 };
 
 type Props = {
@@ -31,6 +33,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [loading, setLoading] = useState(false);
   const { user, open: openAuth, setUser } = useAuth();
   const { mode, address, apt, entrance, floor, comment, branch, branches, open: openDelivery } = useDelivery();
+  const [showUserInfo, setShowUserInfo] = useState(false);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round((total * discount) / 100);
@@ -47,8 +50,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       openAuth();
       return;
     }
-    if (!user.phone) {
-      alert("Добавьте телефон в профиле");
+    if (!user.phone || !user.name) {
+      setShowUserInfo(true);
       return;
     }
     if (items.length === 0) {
@@ -73,7 +76,13 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       zoneId: null,
       address: mode === "delivery" ? addr : null,
       branchId: branch,
-      items: items.map((i) => ({ dishId: i.id, variantId: null, qty: i.qty })),
+      items: items.map((i) => ({
+        dishId: i.dishId,
+        variantId: null,
+        qty: i.qty,
+        addonIds: i.addons?.map((a) => a.id),
+        exclusionIds: i.excluded?.map((e) => e.id),
+      })),
       paymentMethod: payment,
       promoCode: promo || null,
       userId: user.id,
@@ -103,9 +112,10 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   };
 
   return (
-    <div className="modal-backdrop" onClick={handleBackdrop}>
-      <div className="modal" style={{ maxWidth: 420 }} onClick={stopProp}>
-        <div style={{ display: "flex", justifyContent: "center", position: "relative", marginBottom: 16 }}>
+    <>
+      <div className="modal-backdrop" onClick={handleBackdrop}>
+        <div className="modal" style={{ maxWidth: 420 }} onClick={stopProp}>
+          <div style={{ display: "flex", justifyContent: "center", position: "relative", marginBottom: 16 }}>
           <h2 style={{ margin: 0 }}>Корзина</h2>
           <div style={{ position: "absolute", right: 0, top: 0, display: "flex", gap: 8 }}>
             {items.length > 0 && (
@@ -189,13 +199,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600 }}>{it.name}</div>
                   <div style={{ color: "var(--muted-text)", fontSize: 14 }}>{it.price} ₸</div>
-                  {(it.addons && it.addons.length > 0) || (it.excluded && it.excluded.length > 0) ? (
+                  {(it.addons && it.addons.length > 0) ||
+                  (it.excluded && it.excluded.length > 0) ? (
                     <div style={{ color: "var(--muted-text)", fontSize: 12 }}>
                       {it.addons?.map((a) => (
-                        <div key={a.name}>+ {a.name}</div>
+                        <div key={a.id}>+ {a.name}</div>
                       ))}
                       {it.excluded?.map((e) => (
-                        <div key={e}>- {e}</div>
+                        <div key={e.id}>- {e.name}</div>
                       ))}
                     </div>
                   ) : null}
@@ -372,6 +383,18 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         )}
       </div>
     </div>
+    {showUserInfo && user && (
+      <UserInfoModal
+        user={user}
+        onClose={() => setShowUserInfo(false)}
+        onSaved={(u) => {
+          setUser(u);
+          setShowUserInfo(false);
+          submit();
+        }}
+      />
+    )}
+  </>
   );
 }
 

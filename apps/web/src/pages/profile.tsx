@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const reorder = (o: OrderDTO) => {
     const items = o.items.map((i) => ({
       id: i.dishId,
+      dishId: i.dishId,
       name: i.dishName || "Блюдо",
       price: i.unitPrice,
       qty: i.qty,

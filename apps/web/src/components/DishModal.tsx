@@ -61,9 +61,10 @@ export default function DishModal({ dish, onClose }: Props) {
   const base = details?.basePrice ?? dish.basePrice;
   const total = base + addonsTotal;
 
-  const selectedAddonObjs = details?.addons?.filter((a) => selectedAddons.includes(a.id)) || [];
-  const selectedExcludedNames =
-    details?.exclusions?.filter((e) => excluded.includes(e.id)).map((e) => e.name) || [];
+  const selectedAddonObjs =
+    details?.addons?.filter((a) => selectedAddons.includes(a.id)) || [];
+  const selectedExcludedObjs =
+    details?.exclusions?.filter((e) => excluded.includes(e.id)) || [];
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -136,13 +137,24 @@ export default function DishModal({ dish, onClose }: Props) {
           <button
             onClick={() =>
               addItem({
-                id: dish.id + JSON.stringify(selectedAddons) + JSON.stringify(selectedExcludedNames),
+                id:
+                  dish.id +
+                  JSON.stringify(selectedAddons) +
+                  JSON.stringify(excluded),
+                dishId: dish.id,
                 name: dish.name,
                 price: total,
                 imageUrl: details?.imageUrl || dish.imageUrl,
                 qty,
-                addons: selectedAddonObjs.map((a) => ({ name: a.name, price: a.price })),
-                excluded: selectedExcludedNames,
+                addons: selectedAddonObjs.map((a) => ({
+                  id: a.id,
+                  name: a.name,
+                  price: a.price,
+                })),
+                excluded: selectedExcludedObjs.map((e) => ({
+                  id: e.id,
+                  name: e.name,
+                })),
               })
             }
             className="add-btn"

@@ -147,6 +147,8 @@ model OrderItem {
   order     Order        @relation(fields: [orderId], references: [id])
   dish      Dish         @relation(fields: [dishId], references: [id])
   variant   DishVariant? @relation(fields: [variantId], references: [id])
+  addons     String[]     @default([])
+  exclusions String[]     @default([])
 }
 
 model CmsPage {

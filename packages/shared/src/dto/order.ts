@@ -2,6 +2,8 @@ export type OrderItemInput = {
   dishId: string;
   variantId?: string | null;
   qty: number;
+  addonIds?: string[];
+  exclusionIds?: string[];
 };
 
 export type CreateOrderInput = {
@@ -43,6 +45,8 @@ export type OrderItemDTO = {
   total: number;
   dishName?: string;
   dishImageUrl?: string | null;
+  addons?: string[];
+  exclusions?: string[];
 };
 
 export type OrderDTO = {

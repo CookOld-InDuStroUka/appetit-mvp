@@ -732,7 +732,9 @@ const OrderSchema = z.object({
   items: z.array(z.object({
     dishId: z.string(),
     variantId: z.string().optional().nullable(),
-    qty: z.number().int().positive()
+    qty: z.number().int().positive(),
+    addonIds: z.array(z.string()).optional(),
+    exclusionIds: z.array(z.string()).optional(),
   })).min(1),
   paymentMethod: z.enum(["cash", "card"]),
   promoCode: z
@@ -765,19 +767,58 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
 
   // fetch all dishes/variants referenced
   const dishes = await prisma.dish.findMany({
-    where: { id: { in: data.items.map(i => i.dishId) } },
-    include: { variants: true }
+    where: { id: { in: data.items.map((i) => i.dishId) } },
+    include: { variants: true },
   });
 
-  let subtotal = 0;
+  const modifierIds = data.items.flatMap((i) => [
+    ...(i.addonIds ?? []),
+    ...(i.exclusionIds ?? []),
+  ]);
+  const modifiers: any[] = modifierIds.length
+    ? await prisma.dishModifier.findMany({ where: { id: { in: modifierIds } } })
+    : [];
+
+  const prepared = [] as {
+    item: typeof data.items[number];
+    unit: number;
+    addonNames: string[];
+    exclusionNames: string[];
+  }[];
+
   for (const item of data.items) {
     const d = dishes.find((x: any) => x.id === item.dishId);
-    if (!d) return res.status(400).json({ error: `dish not found: ${item.dishId}` });
+    if (!d)
+      return res
+        .status(400)
+        .json({ error: `dish not found: ${item.dishId}` });
     const base = Number(d.basePrice);
-    const variantDelta = item.variantId ? Number(d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0) : 0;
-    const unit = base + variantDelta;
-    subtotal += unit * item.qty;
+    const variantDelta = item.variantId
+      ? Number(
+          d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0
+        )
+      : 0;
+    const mods = [
+      ...(item.addonIds ?? []),
+      ...(item.exclusionIds ?? []),
+    ].map((id) => modifiers.find((m) => m.id === id)).filter(Boolean) as any[];
+    const addonNames = mods
+      .filter((m) => m.type === "addon")
+      .map((m) => m.name);
+    const exclusionNames = mods
+      .filter((m) => m.type === "exclusion")
+      .map((m) => m.name);
+    const addonTotal = mods
+      .filter((m) => m.type === "addon")
+      .reduce((sum, m) => sum + Number(m.price), 0);
+    const unit = base + variantDelta + addonTotal;
+    prepared.push({ item, unit, addonNames, exclusionNames });
   }
+
+  const subtotal = prepared.reduce(
+    (sum, p) => sum + p.unit * p.item.qty,
+    0
+  );
 
   let deliveryFee = 0;
   let zoneId: string | undefined;
@@ -877,19 +918,15 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       promoCodeId: promoCodeId ?? null,
       userId: user.id,
       items: {
-        create: data.items.map(item => {
-          const d = dishes.find((x: any) => x.id === item.dishId)!;
-          const base = Number(d.basePrice);
-          const variantDelta = item.variantId ? Number(d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0) : 0;
-          const unit = base + variantDelta;
-          return {
-            dishId: item.dishId,
-            variantId: item.variantId ?? null,
-            qty: item.qty,
-            unitPrice: unit,
-            total: unit * item.qty
-          };
-        })
+        create: prepared.map((p) => ({
+          dishId: p.item.dishId,
+          variantId: p.item.variantId ?? null,
+          qty: p.item.qty,
+          unitPrice: p.unit,
+          total: p.unit * p.item.qty,
+          addons: p.addonNames,
+          exclusions: p.exclusionNames,
+        })),
       }
     },
     include: { items: true }
@@ -942,6 +979,8 @@ app.get(`${BASE}/admin/orders`, async (_req: Request, res: Response) => {
         qty: i.qty,
         unitPrice: Number(i.unitPrice),
         total: Number(i.total),
+        addons: i.addons,
+        exclusions: i.exclusions,
       })),
     }))
   );
@@ -990,6 +1029,8 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
         total: Number(i.total),
         dishName: i.dish?.name,
         dishImageUrl: i.dish?.imageUrl ?? null,
+        addons: i.addons,
+        exclusions: i.exclusions,
       })),
     })),
   });

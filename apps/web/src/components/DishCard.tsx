@@ -45,6 +45,7 @@ export default function DishCard({ dish, onClick }: Props) {
     e.stopPropagation();
     addItem({
       id: dish.id,
+      dishId: dish.id,
       name: dish.name,
       price: dish.basePrice,
       imageUrl: src,
