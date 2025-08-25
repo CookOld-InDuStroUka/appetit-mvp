@@ -185,8 +185,7 @@ model PromoCode {
   conditions  String?
   maxUses     Int?
   usedCount   Int      @default(0)
-  branchId    String?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branches    Branch[]
   orders      Order[]
 }
 

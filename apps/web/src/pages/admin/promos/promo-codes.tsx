@@ -12,7 +12,7 @@ type Promo = {
   conditions?: string | null;
   maxUses?: number | null;
   usedCount: number;
-  branchId?: string | null;
+  branchIds: string[];
 };
 
 type Branch = { id: string; name: string };
@@ -25,7 +25,7 @@ export default function PromoCodesAdmin() {
     discount: 0,
     expiresAt: "",
     maxUses: "",
-    branchId: "",
+    branchIds: [] as string[],
   });
 
   const load = async () => {
@@ -34,7 +34,17 @@ export default function PromoCodesAdmin() {
         fetch(`${API_BASE}/admin/promo-codes`).then((r) => r.json()),
         fetch(`${API_BASE}/branches`).then((r) => r.json()),
       ]);
-      setPromos(codes);
+      const promosData: Promo[] = codes.map((c: any) => ({
+        id: c.id,
+        code: c.code,
+        discount: c.discount,
+        expiresAt: c.expiresAt,
+        conditions: c.conditions,
+        maxUses: c.maxUses,
+        usedCount: c.usedCount,
+        branchIds: c.branches.map((b: Branch) => b.id),
+      }));
+      setPromos(promosData);
       setBranches(brs);
     } catch (err) {
       console.error("Failed to load promo codes", err);
@@ -61,7 +71,7 @@ export default function PromoCodesAdmin() {
         expiresAt: p.expiresAt,
         conditions: p.conditions ?? null,
         maxUses: p.maxUses ?? null,
-        branchId: p.branchId ?? null,
+        branchIds: p.branchIds,
       }),
     });
     load();
@@ -82,10 +92,10 @@ export default function PromoCodesAdmin() {
         discount: Number(form.discount),
         expiresAt: form.expiresAt,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
-        branchId: form.branchId || null,
+        branchIds: form.branchIds,
       }),
     });
-    setForm({ code: "", discount: 0, expiresAt: "", maxUses: "", branchId: "" });
+    setForm({ code: "", discount: 0, expiresAt: "", maxUses: "", branchIds: [] });
     load();
   };
 
@@ -99,7 +109,7 @@ export default function PromoCodesAdmin() {
             <th>Скидка %</th>
             <th>Действует до</th>
             <th>Макс. использований</th>
-            <th>Филиал</th>
+            <th>Филиалы</th>
             <th>Использовано</th>
             <th></th>
           </tr>
@@ -137,10 +147,16 @@ export default function PromoCodesAdmin() {
               </td>
               <td>
                 <select
-                  value={p.branchId ?? ""}
-                  onChange={(e) => change(p.id, "branchId", e.target.value || null)}
+                  multiple
+                  value={p.branchIds}
+                  onChange={(e) =>
+                    change(
+                      p.id,
+                      "branchIds",
+                      Array.from(e.target.selectedOptions).map((o) => o.value)
+                    )
+                  }
                 >
-                  <option value="">— любой —</option>
                   {branches.map((b) => (
                     <option key={b.id} value={b.id}>
                       {b.name}
@@ -185,10 +201,15 @@ export default function PromoCodesAdmin() {
           style={{ width: 80 }}
         />
         <select
-          value={form.branchId}
-          onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+          multiple
+          value={form.branchIds}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              branchIds: Array.from(e.target.selectedOptions).map((o) => o.value),
+            })
+          }
         >
-          <option value="">— любой —</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}

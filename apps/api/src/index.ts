@@ -219,12 +219,15 @@ app.get(`${BASE}/health`, (_: Request, res: Response) => res.json({ ok: true, ts
 app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
   const parsed = PromoCodeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const promo = await prisma.promoCode.findUnique({ where: { code: parsed.data.code } });
+  const promo = await prisma.promoCode.findUnique({
+    where: { code: parsed.data.code },
+    include: { branches: true },
+  });
   if (
     !promo ||
     promo.expiresAt < new Date() ||
     (promo.maxUses !== null && promo.usedCount >= (promo.maxUses ?? 0)) ||
-    (promo.branchId && promo.branchId !== parsed.data.branchId)
+    (promo.branches.length > 0 && (!parsed.data.branchId || !promo.branches.some((b: any) => b.id === parsed.data.branchId)))
   ) {
     return res.status(404).json({ error: "Invalid code" });
   }
@@ -238,7 +241,7 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
 
 // --- Admin promo codes CRUD ---
 app.get(`${BASE}/admin/promo-codes`, async (_req: Request, res: Response) => {
-  const codes = await prisma.promoCode.findMany({ include: { branch: true } });
+  const codes = await prisma.promoCode.findMany({ include: { branches: true } });
   res.json(codes);
 });
 
@@ -253,8 +256,11 @@ app.post(`${BASE}/admin/promo-codes`, async (req: Request, res: Response) => {
       expiresAt: data.expiresAt,
       conditions: data.conditions ?? null,
       maxUses: data.maxUses ?? null,
-      branchId: data.branchId ?? null,
+      ...(data.branchIds.length
+        ? { branches: { connect: data.branchIds.map((id) => ({ id })) } }
+        : {}),
     },
+    include: { branches: true },
   });
   res.json(promo);
 });
@@ -271,8 +277,9 @@ app.put(`${BASE}/admin/promo-codes/:id`, async (req: Request, res: Response) => 
       expiresAt: data.expiresAt,
       conditions: data.conditions ?? null,
       maxUses: data.maxUses ?? null,
-      branchId: data.branchId ?? null,
+      branches: { set: data.branchIds.map((id) => ({ id })) },
     },
+    include: { branches: true },
   });
   res.json(promo);
 });
@@ -758,7 +765,7 @@ const PromoCodeUpsertSchema = z.object({
   expiresAt: z.coerce.date(),
   conditions: z.string().optional().nullable(),
   maxUses: z.number().int().optional().nullable(),
-  branchId: z.string().optional().nullable(),
+  branchIds: z.array(z.string()).optional().default([]),
 });
 
 app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
@@ -854,12 +861,15 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   }
 
   if (data.promoCode) {
-    const promo = await prisma.promoCode.findUnique({ where: { code: data.promoCode } });
+    const promo = await prisma.promoCode.findUnique({
+      where: { code: data.promoCode },
+      include: { branches: true },
+    });
     if (
       promo &&
       promo.expiresAt >= new Date() &&
       (promo.maxUses === null || promo.usedCount < (promo.maxUses ?? 0)) &&
-      (!promo.branchId || promo.branchId === branchId)
+      (promo.branches.length === 0 || promo.branches.some((b: any) => b.id === branchId))
     ) {
       discount = Math.round((subtotal * promo.discount) / 100);
       promoCodeId = promo.id;
