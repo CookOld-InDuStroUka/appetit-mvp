@@ -283,53 +283,74 @@ export default function Header() {
   );
 }
 
-/* ================== Бренд ================== */
+/* ===== Бренд: капсула слева + двухстрочный слоган справа (bulletproof) ===== */
 function Brand() {
   return (
-    <Link href="/" className="brand" aria-label="APPETIT — вкусная шаурма">
-      {/* Лого-«пилюля» */}
-      <span className="brand-pill">
-        <img src="/logo-appetit.svg" alt="APPETIT" />
+    <Link
+      href="/"
+      data-app-brand
+      aria-label="APPETIT — вкусная шаурма"
+      style={{
+        display: "flex",
+        alignItems: "center",     // вообще не даст встать столбиком
+        gap: 8,                   // расстояние между капсулой и слоганом
+        whiteSpace: "nowrap",     // запрет переносов между капсулой и слоганом
+        textDecoration: "none",
+        color: "inherit",
+        minWidth: 200,            // чтобы колонка грида не «ломала» бренд
+      }}
+    >
+      {/* Капсула */}
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 14,
+          background: "#fff",
+          border: "1px solid rgba(0,0,0,.06)",
+          boxShadow: "0 1px 2px rgba(0,0,0,.06)",
+          lineHeight: 1,
+        }}
+      >
+        <strong
+          style={{
+            fontSize: 19,
+            fontWeight: 800,
+            letterSpacing: 0.6,
+            color: "#EF4444",
+            lineHeight: 1,
+          }}
+        >
+          APPETIT
+        </strong>
       </span>
-      {/* Серый слоган, прижат вверх */}
-      <span className="brand-tag">вкусная шаурма</span>
 
-      <style jsx>{`
-        .brand {
-          display: inline-flex;
-          align-items: flex-start; /* чтобы слоган реально можно было прижать вверх */
-          gap: 10px;
-          text-decoration: none !important;
-          color: inherit;
-          white-space: nowrap;
-        }
-        .brand-pill {
-          display: inline-flex;
-          align-items: center;
-          background: #ffffff;
-          border-radius: 12px;
-          padding: 3px 10px; /* «пилюля» как в рефе */
-        }
-        .brand-pill img {
-          height: 22px; /* компактнее и аккуратнее */
-          width: auto;
-          display: block;
-        }
-        .brand-tag {
-          color: rgba(255, 255, 255, 0.75);
-          font-size: 12px;
-          line-height: 1;
-          transform: translateY(-6px); /* ключ: визуально прижимаем вверх */
-        }
-        @media (max-width: 820px) {
-          .brand-tag {
-            display: none; /* на мобилке скрываем слоган */
-          }
-        }
-      `}</style>
+      {/* Двухстрочный слоган справа */}
+      <span
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center", // выравниваем по высоте капсулы
+          lineHeight: 1.15,
+          fontSize: 13,
+          fontWeight: 700,
+          color: "rgba(255,255,255,.92)",
+        }}
+      >
+        <span>вкусная</span>
+        <span>шаурма</span>
+      </span>
     </Link>
   );
 }
+
+
+
+
+
 
 /* ================== Иконки ================== */
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
