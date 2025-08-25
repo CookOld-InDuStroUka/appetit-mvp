@@ -169,16 +169,13 @@ export default function Header() {
               <span>RU</span>
               <ChevronDown />
             </button>
-            <Link href="/promos" className="link">
-              Акции
-            </Link>
             <Link href="/contacts" className="link">
               Контакты
             </Link>
 
             {user ? (
               <Link href="/profile" className="link">
-                {user.phone || user.email}
+                {user.name || user.email || user.phone}
               </Link>
             ) : (
               <button onClick={openAuth} className="link">

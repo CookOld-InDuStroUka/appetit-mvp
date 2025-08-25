@@ -37,6 +37,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [showUserInfo, setShowUserInfo] = useState(false);
 
   const applyPromo = async (code: string) => {
+    if (!branch) return;
     try {
       const r = await fetch(`${API_BASE}/promo-codes/check`, {
         method: "POST",
@@ -59,9 +60,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     if (initialPromo) {
       const upper = initialPromo.toUpperCase();
       setPromo(upper);
-      applyPromo(upper);
     }
   }, [initialPromo]);
+
+  useEffect(() => {
+    if (promo && branch) {
+      applyPromo(promo);
+    }
+  }, [promo, branch]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round((total * discount) / 100);
