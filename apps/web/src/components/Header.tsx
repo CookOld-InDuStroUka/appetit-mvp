@@ -12,8 +12,7 @@ const fmtKZT = new Intl.NumberFormat("ru-KZ", {
 });
 
 export default function Header() {
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
@@ -23,10 +22,7 @@ export default function Header() {
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
 
-  // подсказки поиска
-  const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
@@ -35,7 +31,6 @@ export default function Header() {
       setSuggestions([]);
       return;
     }
-
     const ac = new AbortController();
     const t = setTimeout(async () => {
       try {
@@ -44,13 +39,11 @@ export default function Header() {
           { signal: ac.signal }
         );
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const data = await r.json();
-        setSuggestions(data);
+        setSuggestions(await r.json());
       } catch {
         setSuggestions([]);
       }
     }, 200);
-
     return () => {
       ac.abort();
       clearTimeout(t);
@@ -123,13 +116,11 @@ export default function Header() {
     <>
       <header className="hdr">
         <div className="row">
-          {/* ЛОГО + слоган (положи файл в public/logo-appetit.svg) */}
           <Link href="/" className="logo">
             <img src="/logo-appetit.svg" alt="APPETIT" />
             <span className="tagline">вкусная шаурма</span>
           </Link>
 
-          {/* ПОИСК по центру */}
           <div ref={searchRef} className="search">
             <input
               className="search__input"
@@ -143,27 +134,26 @@ export default function Header() {
             </button>
           </div>
 
-          {/* ПРАВАЯ ПАНЕЛЬ */}
           <nav className="right">
-            <button className="link" type="button">
+            {/* эти две ссылки скроем на мобилке */}
+            <button className="link link--hide-sm" type="button">
               <span>RU</span>
               <ChevronDown />
             </button>
-
-            <Link href="/contacts" className="link">
+            <Link href="/contacts" className="link link--hide-sm">
               Контакты
             </Link>
 
             {user ? (
-              <span className="link muted">{user.phone || user.email}</span>
+              <span className="link muted link--auth">{user.phone || user.email}</span>
             ) : (
-              <button onClick={openAuth} className="link">
+              <button onClick={openAuth} className="link link--auth">
                 <UserIcon />
                 <span>Войти</span>
               </button>
             )}
 
-            <button onClick={() => setCartOpen(true)} className="link">
+            <button onClick={() => setCartOpen(true)} className="link link--cart">
               <CartIcon />
               <span>{cartLabel}</span>
             </button>
@@ -177,45 +167,50 @@ export default function Header() {
             z-index: 50;
             background: #0f1b2a;
             color: #cbd5e1;
-            border-bottom: 1px solid rgba(255,255,255,.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
           }
           .row {
             max-width: 1280px;
             margin: 0 auto;
-            height: 60px;
-            padding: 0 16px;
+            /* ключ: авто-высота, чтобы не наезжать на баннер */
+            height: auto;
+            min-height: 60px;
+            padding: 8px 16px; /* вместо фиксированной высоты */
             display: grid;
             grid-template-columns: 1fr minmax(280px, 520px) 1fr;
             align-items: center;
             gap: 16px;
           }
+
           .logo {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            text-decoration: none;
-            color: inherit;
+            text-decoration: none !important;
+            color: #e2e8f0 !important;
+            white-space: nowrap;
           }
           .logo img {
             height: 28px;
             width: auto;
             display: block;
-            background: #fff;
             border-radius: 8px;
+            background: #fff;
             padding: 2px 6px;
           }
           .tagline {
             font-size: 12px;
-            color: #9fb3c8;
             line-height: 1;
+            color: #9fb3c8;
             margin-top: 2px;
+            text-decoration: none !important;
           }
 
           .search {
             display: flex;
             align-items: center;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 10px;
             padding: 2px;
             height: 36px;
@@ -228,7 +223,9 @@ export default function Header() {
             color: #e2e8f0;
             padding: 0 12px;
           }
-          .search__input::placeholder { color: rgba(255,255,255,.6); }
+          .search__input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+          }
           .search__btn {
             width: 36px;
             height: 32px;
@@ -240,7 +237,10 @@ export default function Header() {
             border-radius: 8px;
             cursor: pointer;
           }
-          .search__btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+          .search__btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+          }
 
           .right {
             display: flex;
@@ -261,14 +261,26 @@ export default function Header() {
             text-decoration: none;
             font-weight: 600;
           }
-          .link:hover { color: #fff; background: rgba(255,255,255,.08); }
+          .link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+          }
           .muted { color: #9fb3c8; font-weight: 500; }
           :global(svg) { width: 20px; height: 20px; stroke-width: 1.6; color: currentColor; }
 
+          /* мобильная версия */
           @media (max-width: 820px) {
-            .row { grid-template-columns: 1fr 1fr; gap: 10px; height: 56px; }
-            .search { grid-column: 1 / -1; }
+            .row {
+              grid-template-columns: 1fr 1fr; /* логотип + правая панель сверху */
+              gap: 10px;
+            }
+            .search {
+              grid-column: 1 / -1; /* поиск отдельной строкой */
+            }
             .tagline { display: none; }
+            /* прячем RU и Контакты, оставляем Войти и Корзину */
+            .link--hide-sm { display: none; }
+            .right { gap: 8px; }
           }
         `}</style>
       </header>
@@ -288,7 +300,7 @@ export default function Header() {
   );
 }
 
-/* Иконки — тонкие, как в референсе */
+/* Иконки */
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -308,16 +320,16 @@ function UserIcon(props: React.SVGProps<SVGSVGElement>) {
 function CartIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor"/>
-      <circle cx="10" cy="20" r="1.5" stroke="currentColor"/>
-      <circle cx="18" cy="20" r="1.5" stroke="currentColor"/>
+      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor" />
+      <circle cx="10" cy="20" r="1.5" stroke="currentColor" />
+      <circle cx="18" cy="20" r="1.5" stroke="currentColor" />
     </svg>
   );
 }
 function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M6 9l6 6 6-6" stroke="currentColor"/>
+      <path d="M6 9l6 6 6-6" stroke="currentColor" />
     </svg>
   );
 }
