@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clean previous examples to avoid leftover branches
+  await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.dishAvailability.deleteMany();
   await prisma.zone.deleteMany();
