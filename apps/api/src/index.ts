@@ -13,6 +13,13 @@ const prisma = new PrismaClient();
 const logDir = path.join(__dirname, "../../logs");
 fs.mkdirSync(logDir, { recursive: true });
 const logFile = path.join(logDir, "api.log");
+const ordersLogFile = path.join(logDir, "orders.jsonl");
+
+function logOrder(order: unknown) {
+  fs.promises
+    .appendFile(ordersLogFile, JSON.stringify(order) + "\n")
+    .catch((err) => console.error("Failed to write order log", err));
+}
 
 function logToFile(message: string, err: unknown) {
   const payload =
@@ -840,8 +847,11 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
           };
         })
       }
-    }
+    },
+    include: { items: true }
   });
+
+  logOrder(order);
 
   if (promoCodeId) {
     await prisma.promoCode.update({
