@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
+import { useDelivery } from "./DeliveryContext";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -20,19 +21,21 @@ export default function Header() {
   const [pendingPromo, setPendingPromo] = useState<string | null>(null);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
+  const { setBranch } = useDelivery();
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { promo?: string } | undefined;
+      const detail = (e as CustomEvent).detail as { promo?: string; branchId?: string } | undefined;
       if (detail?.promo) setPendingPromo(detail.promo);
+      if (detail?.branchId) setBranch(detail.branchId);
       setCartOpen(true);
     };
     document.addEventListener("open-cart", handler);
     return () => document.removeEventListener("open-cart", handler);
-  }, []);
+  }, [setBranch]);
 
   // подсказки поиска
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(

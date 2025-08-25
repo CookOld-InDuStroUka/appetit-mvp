@@ -3,6 +3,7 @@ export interface PromoModal {
   text: string;
   promoCode?: string;
   shareText?: string;
+  branchId?: string;
 }
 
 export interface PromoSlide {

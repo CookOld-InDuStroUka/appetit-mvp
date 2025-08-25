@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../../components/AdminLayout";
 import { PromoSlide } from "../../../types/promo";
+import { Branch } from "../../../components/PickupMap";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -10,6 +11,7 @@ export default function SliderAdmin() {
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState<PromoSlide>({ image: "" });
   const [uploading, setUploading] = useState(false);
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("promoSlides") : null;
@@ -20,6 +22,15 @@ export default function SliderAdmin() {
         setSlides([]);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/branches`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setBranches(data);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -141,6 +152,25 @@ export default function SliderAdmin() {
                 })
               }
             />
+            <select
+              value={form.modal.branchId || ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  modal: {
+                    ...form.modal!,
+                    branchId: e.target.value || undefined,
+                  },
+                })
+              }
+            >
+              <option value="">Все филиалы</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Текст для поделиться"
@@ -164,7 +194,16 @@ export default function SliderAdmin() {
           <li key={i} style={{ marginBottom: 12 }}>
             <img src={s.image} alt="" style={{ maxWidth: 200, display: "block" }} />
             {s.link && <div>{s.link}</div>}
-            {s.modal && <div>Модальное окно: {s.modal.title || "(без названия)"}</div>}
+            {s.modal && (
+              <div>
+                Модальное окно: {s.modal.title || "(без названия)"}
+                {s.modal.branchId && (
+                  <div>
+                    Филиал: {branches.find((b) => b.id === s.modal!.branchId)?.name || s.modal.branchId}
+                  </div>
+                )}
+              </div>
+            )}
             <button onClick={() => startEdit(i)} style={{ marginRight: 8 }}>
               Редактировать
             </button>

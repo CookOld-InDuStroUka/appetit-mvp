@@ -187,7 +187,7 @@ export default function PromoSlider({
                   onClick={() => {
                     document.dispatchEvent(
                       new CustomEvent("open-cart", {
-                        detail: { promo: modal.promoCode },
+                        detail: { promo: modal.promoCode, branchId: modal.branchId },
                       })
                     );
                     setModal(null);
