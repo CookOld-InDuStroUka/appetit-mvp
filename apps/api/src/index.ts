@@ -9,12 +9,25 @@ import path from "path";
 const app = express();
 const prisma = new PrismaClient();
 
+// log errors to file under project root /logs
+const logDir = path.join(__dirname, "../../logs");
+fs.mkdirSync(logDir, { recursive: true });
+const logFile = path.join(logDir, "api.log");
+
+function logToFile(message: string, err: unknown) {
+  const payload =
+    err instanceof Error ? err.stack || err.message : JSON.stringify(err);
+  const line = `[${new Date().toISOString()}] ${message} ${payload}\n`;
+  fs.appendFileSync(logFile, line);
+  console.error(message, err);
+}
+
 process.on("unhandledRejection", (reason: unknown) => {
-  console.error("Unhandled rejection", reason);
+  logToFile("Unhandled rejection", reason);
 });
 
 process.on("uncaughtException", (err: unknown) => {
-  console.error("Uncaught exception", err);
+  logToFile("Uncaught exception", err);
 });
 
 const DEFAULT_EXCLUSIONS = [
