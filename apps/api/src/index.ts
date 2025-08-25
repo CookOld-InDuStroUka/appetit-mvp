@@ -9,6 +9,14 @@ import path from "path";
 const app = express();
 const prisma = new PrismaClient();
 
+process.on("unhandledRejection", (reason: unknown) => {
+  console.error("Unhandled rejection", reason);
+});
+
+process.on("uncaughtException", (err: unknown) => {
+  console.error("Uncaught exception", err);
+});
+
 const DEFAULT_EXCLUSIONS = [
   "Без кетчупа",
   "Без фри",
