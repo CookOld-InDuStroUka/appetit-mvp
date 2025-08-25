@@ -8,7 +8,7 @@ type PromoSliderProps = {
   height?: number;
 };
 
-const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.jpg", "/promo3.jpg"];
+const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.jpg"];
 
 export default function PromoSlider({
   slides = DEFAULT_SLIDES,

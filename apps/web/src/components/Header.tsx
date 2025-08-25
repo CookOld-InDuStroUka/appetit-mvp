@@ -116,10 +116,8 @@ export default function Header() {
     <>
       <header className="hdr">
         <div className="row">
-          <Link href="/" className="logo">
-            <img src="/logo-appetit.svg" alt="APPETIT" />
-            <span className="tagline">вкусная шаурма</span>
-          </Link>
+          {/* Бренд как на макете: пилюля + серый слоган */}
+          <Brand />
 
           <div ref={searchRef} className="search">
             <input
@@ -135,7 +133,7 @@ export default function Header() {
           </div>
 
           <nav className="right">
-            {/* эти две ссылки скроем на мобилке */}
+            {/* скрываются на мобилке */}
             <button className="link link--hide-sm" type="button">
               <span>RU</span>
               <ChevronDown />
@@ -172,38 +170,13 @@ export default function Header() {
           .row {
             max-width: 1280px;
             margin: 0 auto;
-            /* ключ: авто-высота, чтобы не наезжать на баннер */
             height: auto;
             min-height: 60px;
-            padding: 8px 16px; /* вместо фиксированной высоты */
+            padding: 8px 16px;
             display: grid;
             grid-template-columns: 1fr minmax(280px, 520px) 1fr;
             align-items: center;
             gap: 16px;
-          }
-
-          .logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none !important;
-            color: #e2e8f0 !important;
-            white-space: nowrap;
-          }
-          .logo img {
-            height: 28px;
-            width: auto;
-            display: block;
-            border-radius: 8px;
-            background: #fff;
-            padding: 2px 6px;
-          }
-          .tagline {
-            font-size: 12px;
-            line-height: 1;
-            color: #9fb3c8;
-            margin-top: 2px;
-            text-decoration: none !important;
           }
 
           .search {
@@ -265,22 +238,32 @@ export default function Header() {
             color: #fff;
             background: rgba(255, 255, 255, 0.08);
           }
-          .muted { color: #9fb3c8; font-weight: 500; }
-          :global(svg) { width: 20px; height: 20px; stroke-width: 1.6; color: currentColor; }
+          .muted {
+            color: #9fb3c8;
+            font-weight: 500;
+          }
+          :global(svg) {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.6;
+            color: currentColor;
+          }
 
           /* мобильная версия */
           @media (max-width: 820px) {
             .row {
-              grid-template-columns: 1fr 1fr; /* логотип + правая панель сверху */
+              grid-template-columns: 1fr 1fr;
               gap: 10px;
             }
             .search {
-              grid-column: 1 / -1; /* поиск отдельной строкой */
+              grid-column: 1 / -1;
             }
-            .tagline { display: none; }
-            /* прячем RU и Контакты, оставляем Войти и Корзину */
-            .link--hide-sm { display: none; }
-            .right { gap: 8px; }
+            .link--hide-sm {
+              display: none;
+            }
+            .right {
+              gap: 8px;
+            }
           }
         `}</style>
       </header>
@@ -300,7 +283,55 @@ export default function Header() {
   );
 }
 
-/* Иконки */
+/* ================== Бренд ================== */
+function Brand() {
+  return (
+    <Link href="/" className="brand" aria-label="APPETIT — вкусная шаурма">
+      {/* Лого-«пилюля» */}
+      <span className="brand-pill">
+        <img src="/logo-appetit.svg" alt="APPETIT" />
+      </span>
+      {/* Серый слоган, прижат вверх */}
+      <span className="brand-tag">вкусная шаурма</span>
+
+      <style jsx>{`
+        .brand {
+          display: inline-flex;
+          align-items: flex-start; /* чтобы слоган реально можно было прижать вверх */
+          gap: 10px;
+          text-decoration: none !important;
+          color: inherit;
+          white-space: nowrap;
+        }
+        .brand-pill {
+          display: inline-flex;
+          align-items: center;
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 3px 10px; /* «пилюля» как в рефе */
+        }
+        .brand-pill img {
+          height: 22px; /* компактнее и аккуратнее */
+          width: auto;
+          display: block;
+        }
+        .brand-tag {
+          color: rgba(255, 255, 255, 0.75);
+          font-size: 12px;
+          line-height: 1;
+          transform: translateY(-6px); /* ключ: визуально прижимаем вверх */
+        }
+        @media (max-width: 820px) {
+          .brand-tag {
+            display: none; /* на мобилке скрываем слоган */
+          }
+        }
+      `}</style>
+    </Link>
+  );
+}
+
+/* ================== Иконки ================== */
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
