@@ -57,17 +57,41 @@ export default function DeliveryModal() {
 
   const currentBranch = branches.find((b) => b.id === branch);
   const { open: openTime, close: closeTime, overnight } = parseHours(currentBranch?.hours);
-  const handleTimeChange = (val: string) => {
+
+  const formatTime = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 4);
+    let res = digits;
+    if (digits.length >= 3) {
+      res = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+    }
+    if (digits.length >= 1 && digits.length <= 2) {
+      res = digits;
+    }
+    if (res.length === 5) {
+      const h = parseInt(res.slice(0, 2), 10);
+      const m = parseInt(res.slice(3, 5), 10);
+      if (h > 23) res = `23:${res.slice(3, 5)}`;
+      if (m > 59) res = `${res.slice(0, 3)}59`;
+    }
+    return res;
+  };
+
+  const handleTimeInput = (val: string) => {
+    setPickupTime(formatTime(val));
+  };
+
+  const handleTimeBlur = (val: string) => {
+    const formatted = formatTime(val);
     const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
-    if (!/^\d{2}:\d{2}$/.test(val)) {
+    if (!/^\d{2}:\d{2}$/.test(formatted)) {
       setPickupTime("");
       return;
     }
-    const sel = toMin(val);
+    const sel = toMin(formatted);
     const start = toMin(openTime);
     const end = toMin(closeTime);
     const valid = overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
-    setPickupTime(valid ? val : "");
+    setPickupTime(valid ? formatted : "");
   };
 
   if (mobile) {
@@ -126,9 +150,10 @@ export default function DeliveryModal() {
                 type="text"
                 inputMode="numeric"
                 placeholder="00:00"
+                maxLength={5}
                 value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
-                onBlur={(e) => handleTimeChange(e.target.value)}
+                onChange={(e) => handleTimeInput(e.target.value)}
+                onBlur={(e) => handleTimeBlur(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
@@ -315,9 +340,10 @@ export default function DeliveryModal() {
                 type="text"
                 inputMode="numeric"
                 placeholder="00:00"
+                maxLength={5}
                 value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
-                onBlur={(e) => handleTimeChange(e.target.value)}
+                onChange={(e) => handleTimeInput(e.target.value)}
+                onBlur={(e) => handleTimeBlur(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
