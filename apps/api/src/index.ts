@@ -830,5 +830,57 @@ app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
   res.json(o);
 });
 
+app.get(`${BASE}/admin/orders`, async (_req: Request, res: Response) => {
+  const orders = await prisma.order.findMany({
+    include: { items: true },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(
+    orders.map((o: any) => ({
+      id: o.id,
+      type: o.type,
+      status: o.status,
+      customerName: o.customerName,
+      customerPhone: o.customerPhone,
+      address: o.address,
+      zoneId: o.zoneId,
+      branchId: o.branchId,
+      subtotal: Number(o.subtotal),
+      deliveryFee: Number(o.deliveryFee),
+      discount: Number(o.discount),
+      total: Number(o.total),
+      bonusEarned: o.bonusEarned,
+      createdAt: o.createdAt,
+      items: o.items.map((i: any) => ({
+        id: i.id,
+        dishId: i.dishId,
+        variantId: i.variantId,
+        qty: i.qty,
+        unitPrice: Number(i.unitPrice),
+        total: Number(i.total),
+      })),
+    }))
+  );
+});
+
+const OrderStatusUpdateSchema = z.object({
+  status: z.nativeEnum(OrderStatus),
+});
+
+app.put(`${BASE}/admin/orders/:id/status`, async (req: Request, res: Response) => {
+  const parsed = OrderStatusUpdateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  try {
+    const o = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { status: parsed.data.status },
+      select: { id: true, status: true },
+    });
+    res.json(o);
+  } catch (err) {
+    res.status(404).json({ error: "Not found" });
+  }
+});
+
 const port = Number(process.env.API_PORT || 3001);
 app.listen(port, () => console.log(`API on http://localhost:${port}${BASE}`));
