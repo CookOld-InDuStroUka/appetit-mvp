@@ -14,6 +14,7 @@ type Props = {
   onSelect: (id: string) => void;
   height?: number | string;
   mobile?: boolean;
+  pickupTime?: string;
 };
 
 export default function PickupMap({
@@ -22,6 +23,7 @@ export default function PickupMap({
   onSelect,
   height = 300,
   mobile = false,
+  pickupTime,
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -80,6 +82,31 @@ export default function PickupMap({
     });
   }, [selected]);
 
+  const parseHours = (hours?: string) => {
+    if (!hours) return { open: "00:00", close: "23:59", overnight: false };
+    const lower = hours.toLowerCase();
+    if (lower.includes("круглосуточ")) return { open: "00:00", close: "23:59", overnight: false };
+    const m = hours.match(/(\d{2}:\d{2})\s*[–—−-]\s*(\d{2}:\d{2})/);
+    if (m) {
+      const open = m[1];
+      const close = m[2];
+      return { open, close, overnight: close < open };
+    }
+    return { open: "00:00", close: "23:59", overnight: false };
+  };
+
+  const toMin = (t: string) =>
+    parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+
+  const isTimeAllowed = (time: string, hours?: string) => {
+    if (!time) return true;
+    const { open, close, overnight } = parseHours(hours);
+    const sel = toMin(time);
+    const start = toMin(open);
+    const end = toMin(close);
+    return overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
+  };
+
   return (
     <div style={{ position: "relative", height }}>
       <div
@@ -104,37 +131,49 @@ export default function PickupMap({
             }}
           >
             <h3 style={{ margin: "0 0 8px" }}>Откуда хотите забрать</h3>
-            {branches.map((b) => (
-              <div
-                key={b.id}
-                style={{ display: "flex", alignItems: "center", marginBottom: 4 }}
-              >
-                <button
-                  onClick={() => onSelect(b.id)}
-                  style={{
-                    flex: 1,
-                    textAlign: "left",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: b.id === selected ? "var(--accent)" : "var(--text)",
-                    fontSize: 16,
-                  }}
+            {branches.map((b) => {
+              const status =
+                pickupTime && isTimeAllowed(pickupTime, b.hours)
+                  ? "открыт"
+                  : pickupTime
+                  ? "закрыт"
+                  : null;
+              return (
+                <div
+                  key={b.id}
+                  style={{ display: "flex", alignItems: "center", marginBottom: 4 }}
                 >
-                  {b.name}
-                  {b.hours && (
-                    <span style={{
-                      display: "block",
-                      fontSize: 12,
-                      color: "var(--muted-text)",
-                    }}>
-                      {b.hours}
-                    </span>
-                  )}
-                </button>
-              </div>
-            ))}
+                  <button
+                    onClick={() => onSelect(b.id)}
+                    style={{
+                      flex: 1,
+                      textAlign: "left",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: b.id === selected ? "var(--accent)" : "var(--text)",
+                      fontSize: 16,
+                    }}
+                  >
+                    {b.name}
+                    {b.hours && (
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: 12,
+                          color:
+                            status === "закрыт" ? "#d32f2f" : "var(--muted-text)",
+                        }}
+                      >
+                        {b.hours}
+                        {status && <span style={{ marginLeft: 4 }}>{status}</span>}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

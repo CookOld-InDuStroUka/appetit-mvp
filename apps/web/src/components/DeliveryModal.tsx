@@ -45,6 +45,7 @@ export default function DeliveryModal() {
   } = useDelivery();
 
   const [mobile, setMobile] = useState(false);
+  const [timeError, setTimeError] = useState("");
   useEffect(() => {
     const check = () => setMobile(window.innerWidth <= 600);
     check();
@@ -76,22 +77,34 @@ export default function DeliveryModal() {
     return res;
   };
 
+  const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+  const isTimeAllowed = (time: string, hours?: string) => {
+    const { open, close, overnight } = parseHours(hours);
+    const sel = toMin(time);
+    const start = toMin(open);
+    const end = toMin(close);
+    return overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
+  };
+
   const handleTimeInput = (val: string) => {
     setPickupTime(formatTime(val));
+    setTimeError("");
   };
 
   const handleTimeBlur = (val: string) => {
     const formatted = formatTime(val);
-    const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
     if (!/^\d{2}:\d{2}$/.test(formatted)) {
       setPickupTime("");
+      setTimeError("Введите время в формате ЧЧ:ММ");
       return;
     }
-    const sel = toMin(formatted);
-    const start = toMin(openTime);
-    const end = toMin(closeTime);
-    const valid = overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
-    setPickupTime(valid ? formatted : "");
+    if (!isTimeAllowed(formatted, currentBranch?.hours)) {
+      setPickupTime("");
+      setTimeError(`Филиал закрыт в это время (${openTime}–${closeTime})`);
+      return;
+    }
+    setPickupTime(formatted);
+    setTimeError("");
   };
 
   if (mobile) {
@@ -133,6 +146,7 @@ export default function DeliveryModal() {
               selected={branch}
               onSelect={setBranch}
               height="100%"
+              pickupTime={pickupTime}
             />
           )}
           {mode === "pickup" && (
@@ -156,6 +170,9 @@ export default function DeliveryModal() {
                 onBlur={(e) => handleTimeBlur(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
+              {timeError && (
+                <div style={{ color: "red", fontSize: 12, marginTop: 4 }}>{timeError}</div>
+              )}
             </div>
           )}
           <div
@@ -195,7 +212,15 @@ export default function DeliveryModal() {
           </button>
           <button
             onClick={() => {
-              if (mode === "delivery") addHistory(address);
+              if (mode === "delivery") {
+                addHistory(address);
+                close();
+                return;
+              }
+              if (!pickupTime || !isTimeAllowed(pickupTime, currentBranch?.hours)) {
+                setTimeError(`Филиал закрыт в это время (${openTime}–${closeTime})`);
+                return;
+              }
               close();
             }}
             style={{
@@ -303,27 +328,46 @@ export default function DeliveryModal() {
           <>
             <div style={{ marginBottom: 8 }}>
               <h3 style={{ margin: "0 0 8px" }}>Откуда хотите забрать</h3>
-              {branches.map((b) => (
-                <label
-                  key={b.id}
-                  style={{ display: "block", marginBottom: 8, cursor: "pointer" }}
-                >
-                  <input
-                    type="radio"
-                    name="branch"
-                    value={b.id}
-                    checked={branch === b.id}
-                    onChange={() => setBranch(b.id)}
-                    style={{ marginRight: 8 }}
-                  />
-                  {b.name}
-                  {b.hours && (
-                    <span style={{ fontSize: 12, color: "var(--muted-text)", display: "block", marginLeft: 24 }}>
-                      {b.hours}
-                    </span>
-                  )}
-                </label>
-              ))}
+              {branches.map((b) => {
+                const status =
+                  pickupTime && isTimeAllowed(pickupTime, b.hours)
+                    ? "открыт"
+                    : pickupTime
+                    ? "закрыт"
+                    : null;
+                return (
+                  <label
+                    key={b.id}
+                    style={{ display: "block", marginBottom: 8, cursor: "pointer" }}
+                  >
+                    <input
+                      type="radio"
+                      name="branch"
+                      value={b.id}
+                      checked={branch === b.id}
+                      onChange={() => setBranch(b.id)}
+                      style={{ marginRight: 8 }}
+                    />
+                    {b.name}
+                    {b.hours && (
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color:
+                            status === "закрыт" ? "#d32f2f" : "var(--muted-text)",
+                          display: "block",
+                          marginLeft: 24,
+                        }}
+                      >
+                        {b.hours}
+                        {status && (
+                          <span style={{ marginLeft: 4 }}>{status}</span>
+                        )}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
               <p style={{ fontSize: 14, color: "var(--muted-text)" }}>
                 Ассортимент филиалов может отличаться.
               </p>
@@ -333,6 +377,7 @@ export default function DeliveryModal() {
               selected={branch}
               onSelect={setBranch}
               height={300}
+              pickupTime={pickupTime}
             />
             <div style={{ marginTop: 16 }}>
               <h3 style={{ margin: "0 0 8px" }}>Желаемое время самовывоза</h3>
@@ -346,9 +391,18 @@ export default function DeliveryModal() {
                 onBlur={(e) => handleTimeBlur(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
+              {timeError && (
+                <div style={{ color: "red", fontSize: 12, marginTop: 4 }}>{timeError}</div>
+              )}
             </div>
             <button
-              onClick={close}
+              onClick={() => {
+                if (!pickupTime || !isTimeAllowed(pickupTime, currentBranch?.hours)) {
+                  setTimeError(`Филиал закрыт в это время (${openTime}–${closeTime})`);
+                  return;
+                }
+                close();
+              }}
               style={{
                 marginTop: 16,
                 width: "100%",

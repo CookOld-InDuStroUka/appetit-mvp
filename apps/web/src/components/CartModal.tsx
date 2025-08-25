@@ -87,6 +87,16 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     return { open: "00:00", close: "23:59", overnight: false };
   };
 
+  const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+
+  const isTimeAllowed = (time: string, hours?: string) => {
+    const { open, close, overnight } = parseHours(hours);
+    const sel = toMin(time);
+    const start = toMin(open);
+    const end = toMin(close);
+    return overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
+  };
+
   const toAstanaISO = (time: string, branchId: string) => {
     const tz = "Asia/Almaty";
     const now = new Date();
@@ -151,6 +161,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       alert("Укажите желаемое время самовывоза");
       openDelivery();
       return;
+    }
+    if (mode === "pickup") {
+      const branchInfo = branches.find((b) => b.id === branch);
+      if (branchInfo && !isTimeAllowed(pickupTime, branchInfo.hours)) {
+        alert(`Филиал закрыт в это время (${branchInfo.hours})`);
+        openDelivery();
+        return;
+      }
     }
     const addr = [address, apt && `кв. ${apt}`, entrance && `подъезд ${entrance}`, floor && `этаж ${floor}`, comment]
       .filter(Boolean)
