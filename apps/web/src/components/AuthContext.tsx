@@ -4,10 +4,11 @@ import AuthModal from "./AuthModal";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-export type User = { id: string; phone?: string; email?: string; bonus: number };
+export type User = { id: string; phone?: string | null; email?: string | null; name?: string | null; bonus: number };
 
 type AuthCtx = {
   user: User | null;
+  setUser: (u: User | null) => void;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => setUser(null);
 
   return (
-    <Ctx.Provider value={{ user, isOpen, open, close, requestCode, verifyCode, registerEmail, loginEmail, logout }}>
+    <Ctx.Provider value={{ user, setUser, isOpen, open, close, requestCode, verifyCode, registerEmail, loginEmail, logout }}>
       {children}
       {isOpen && <AuthModal />}
     </Ctx.Provider>

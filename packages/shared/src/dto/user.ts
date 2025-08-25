@@ -4,6 +4,7 @@ export type UserDTO = {
   id: string;
   phone?: string | null;
   email?: string | null;
+  name?: string | null;
   bonus: number;
 };
 

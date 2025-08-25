@@ -5,7 +5,7 @@ export type OrderItemInput = {
 };
 
 export type CreateOrderInput = {
-  customer: { phone: string; name?: string | null };
+  customer: { phone?: string | null; name?: string | null };
   type: "delivery" | "pickup";
   zoneId?: string | null;
   address?: string | null;
@@ -13,6 +13,8 @@ export type CreateOrderInput = {
   items: OrderItemInput[];
   paymentMethod: "cash" | "card";
   promoCode?: string | null;
+  userId?: string;
+  bonusToUse?: number;
 };
 
 export type OrderStatus =
@@ -57,6 +59,7 @@ export type OrderDTO = {
   discount: number;
   total: number;
   bonusEarned: number;
+  bonusUsed: number;
   createdAt: string;
   items: OrderItemDTO[];
 };

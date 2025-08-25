@@ -127,6 +127,7 @@ model Order {
   discount      Decimal     @default(0) @db.Decimal(10, 2)
   total         Decimal     @db.Decimal(10, 2)
   bonusEarned   Int         @default(0)
+  bonusUsed     Int         @default(0)
   promoCodeId   String?
   promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
   userId        String?
@@ -160,6 +161,7 @@ model User {
   phone     String?  @unique
   email     String?  @unique
   password  String?
+  name      String?
   bonus     Int      @default(0)
   orders    Order[]
   createdAt DateTime @default(now())

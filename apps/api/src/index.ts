@@ -156,7 +156,7 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 
   await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
 
-  res.json({ user: { id: user.id, phone: user.phone, bonus: user.bonus } });
+  res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
@@ -169,7 +169,7 @@ app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
     create: { email: parsed.data.email, password: parsed.data.password }
   });
 
-  res.json({ user: { id: user.id, email: user.email, bonus: user.bonus } });
+  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
@@ -181,7 +181,7 @@ app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
-  res.json({ user: { id: user.id, email: user.email, bonus: user.bonus } });
+  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/admin/register`, async (req: Request, res: Response) => {
@@ -722,7 +722,7 @@ app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
 
 const OrderSchema = z.object({
   customer: z.object({
-    phone: z.string().min(5),
+    phone: z.string().min(5).optional().nullable(),
     name: z.string().optional().nullable()
   }),
   type: z.enum(["delivery", "pickup"]),
@@ -739,7 +739,9 @@ const OrderSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .transform((s) => (s ? s.toUpperCase() : s))
+    .transform((s) => (s ? s.toUpperCase() : s)),
+  userId: z.string().optional(),
+  bonusToUse: z.number().int().optional()
 });
 
 const PromoCodeSchema = z.object({
@@ -818,22 +820,51 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     }
   }
 
-  const total = subtotal + deliveryFee - discount;
+  let user = null as any;
+  if (data.userId) {
+    user = await prisma.user.findUnique({ where: { id: data.userId } });
+    if (!user) return res.status(400).json({ error: "user not found" });
+    if (data.customer.phone && !user.phone) {
+      user = await prisma.user.update({ where: { id: user.id }, data: { phone: data.customer.phone } });
+    }
+    if (data.customer.name && !user.name) {
+      user = await prisma.user.update({ where: { id: user.id }, data: { name: data.customer.name } });
+    }
+  } else if (data.customer.phone) {
+    user = await prisma.user.upsert({
+      where: { phone: data.customer.phone },
+      create: { phone: data.customer.phone, name: data.customer.name ?? null },
+      update: { name: data.customer.name ?? undefined },
+    });
+  } else {
+    return res.status(400).json({ error: "userId or customer.phone required" });
+  }
+
+  const availableBonus = user?.bonus ?? 0;
+  const bonusUsed = Math.min(data.bonusToUse ?? 0, availableBonus, subtotal + deliveryFee - discount);
+  const total = subtotal + deliveryFee - discount - bonusUsed;
 
   const bonusEarned = Math.floor((subtotal - discount) * 0.1);
+  const bonusDelta = bonusEarned - bonusUsed;
 
-  const user = await prisma.user.upsert({
-    where: { phone: data.customer.phone },
-    create: { phone: data.customer.phone, bonus: bonusEarned },
-    update: { bonus: { increment: bonusEarned } }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      bonus: { increment: bonusDelta },
+      name: data.customer.name ?? undefined,
+      phone: data.customer.phone ?? undefined,
+    },
   });
+
+  const customerPhone = data.customer.phone ?? user.phone;
+  if (!customerPhone) return res.status(400).json({ error: "phone required" });
 
   const order = await prisma.order.create({
     data: {
       type: data.type === "delivery" ? OrderType.delivery : OrderType.pickup,
       status: OrderStatus.created,
-      customerName: data.customer.name ?? null,
-      customerPhone: data.customer.phone,
+      customerName: data.customer.name ?? user.name ?? null,
+      customerPhone,
       address: data.address ?? null,
       zoneId: zoneId ?? null,
       branchId: branchId ?? null,
@@ -842,6 +873,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       discount,
       total,
       bonusEarned,
+      bonusUsed,
       promoCodeId: promoCodeId ?? null,
       userId: user.id,
       items: {
@@ -872,7 +904,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     });
   }
 
-  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, discount, total, bonusEarned, createdAt: order.createdAt });
+  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, discount, total, bonusEarned, bonusUsed, createdAt: order.createdAt });
 });
 
 app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
@@ -901,6 +933,7 @@ app.get(`${BASE}/admin/orders`, async (_req: Request, res: Response) => {
       discount: Number(o.discount),
       total: Number(o.total),
       bonusEarned: o.bonusEarned,
+      bonusUsed: o.bonusUsed,
       createdAt: o.createdAt,
       items: o.items.map((i: any) => ({
         id: i.id,
@@ -930,6 +963,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
     id: user.id,
     phone: user.phone,
     email: user.email,
+    name: user.name,
     bonus: user.bonus,
     orders: user.orders.map((o: any) => ({
       id: o.id,
@@ -945,6 +979,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
       discount: Number(o.discount),
       total: Number(o.total),
       bonusEarned: o.bonusEarned,
+      bonusUsed: o.bonusUsed,
       createdAt: o.createdAt,
       items: o.items.map((i: any) => ({
         id: i.id,
@@ -958,6 +993,20 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
       })),
     })),
   });
+});
+
+const UserUpdateSchema = z.object({
+  name: z.string().min(1).optional(),
+  phone: z.string().min(5).optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(6).optional(),
+});
+
+app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
+  const parsed = UserUpdateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const user = await prisma.user.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json({ id: user.id, phone: user.phone, email: user.email, name: user.name, bonus: user.bonus });
 });
 
 const OrderStatusUpdateSchema = z.object({

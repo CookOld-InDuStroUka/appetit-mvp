@@ -27,21 +27,28 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<"cash" | "card">("cash");
+  const [useBonus, setUseBonus] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { user, open: openAuth } = useAuth();
+  const { user, open: openAuth, setUser } = useAuth();
   const { mode, address, apt, entrance, floor, comment, branch, branches, open: openDelivery } = useDelivery();
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const discountAmount = Math.round(total * discount / 100);
+  const discountAmount = Math.round((total * discount) / 100);
   const totalAfterDiscount = total - discountAmount;
-  const bonuses = Math.floor(totalAfterDiscount * 0.1);
+  const bonusEarned = Math.floor(totalAfterDiscount * 0.1);
+  const availableBonus = user?.bonus ?? 0;
+  const bonusToApply = useBonus ? Math.min(availableBonus, totalAfterDiscount) : 0;
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
   const submit = async () => {
-    if (!user?.phone) {
+    if (!user) {
       openAuth();
+      return;
+    }
+    if (!user.phone) {
+      alert("Добавьте телефон в профиле");
       return;
     }
     if (items.length === 0) {
@@ -61,7 +68,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       .filter(Boolean)
       .join(", ");
     const payload = {
-      customer: { phone: user.phone, name: null },
+      customer: { phone: user.phone, name: user.name ?? null },
       type: mode,
       zoneId: null,
       address: mode === "delivery" ? addr : null,
@@ -69,6 +76,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       items: items.map((i) => ({ dishId: i.id, variantId: null, qty: i.qty })),
       paymentMethod: payment,
       promoCode: promo || null,
+      userId: user.id,
+      bonusToUse: bonusToApply,
     };
     try {
       setLoading(true);
@@ -81,6 +90,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       if (res.ok) {
         onClear();
         onClose();
+        setUser({ ...user, bonus: (user.bonus ?? 0) - data.bonusUsed + data.bonusEarned });
         alert(`Заказ создан #${data.id}`);
       } else {
         alert(data.error || "Ошибка при создании заказа");
@@ -283,6 +293,17 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               </button>
             </div>
 
+            {user && availableBonus > 0 && (
+              <label style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={useBonus}
+                  onChange={(e) => setUseBonus(e.target.checked)}
+                />
+                Списать бонусы (доступно {availableBonus} ₸)
+              </label>
+            )}
+
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <span>Итого</span>
@@ -294,13 +315,19 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   <span>-{discountAmount} ₸</span>
                 </div>
               )}
+              {bonusToApply > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span>Списано бонусов</span>
+                  <span>-{bonusToApply} ₸</span>
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14 }}>
-                <span>Бонусы</span>
-                <span>{bonuses} ₸</span>
+                <span>Начислим бонусов</span>
+                <span>{bonusEarned} ₸</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
                 <span>К оплате</span>
-                <span>{totalAfterDiscount - bonuses} ₸</span>
+                <span>{totalAfterDiscount - bonusToApply} ₸</span>
               </div>
             </div>
 
