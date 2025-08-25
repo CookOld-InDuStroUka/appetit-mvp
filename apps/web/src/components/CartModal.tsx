@@ -32,15 +32,16 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [useBonus, setUseBonus] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, open: openAuth, setUser } = useAuth();
-  const { mode, address, apt, entrance, floor, comment, branch, branches, open: openDelivery } = useDelivery();
+  const { mode, address, apt, entrance, floor, comment, branch, branches, pickupTime, open: openDelivery } = useDelivery();
   const [showUserInfo, setShowUserInfo] = useState(false);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round((total * discount) / 100);
   const totalAfterDiscount = total - discountAmount;
-  const bonusEarned = Math.floor(totalAfterDiscount * 0.1);
   const availableBonus = user?.bonus ?? 0;
-  const bonusToApply = useBonus ? Math.min(availableBonus, totalAfterDiscount) : 0;
+  const maxBonus = Math.max(totalAfterDiscount - 10, 0);
+  const bonusToApply = useBonus ? Math.min(availableBonus, maxBonus) : 0;
+  const bonusEarned = Math.floor((totalAfterDiscount - bonusToApply) * 0.1);
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
@@ -76,6 +77,10 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       zoneId: null,
       address: mode === "delivery" ? addr : null,
       branchId: branch,
+      pickupTime:
+        mode === "pickup" && pickupTime
+          ? new Date(`${new Date().toISOString().slice(0, 10)}T${pickupTime}:00`).toISOString()
+          : null,
       items: items.map((i) => ({
         dishId: i.dishId,
         variantId: null,

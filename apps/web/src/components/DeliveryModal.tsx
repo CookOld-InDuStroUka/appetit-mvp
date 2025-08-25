@@ -20,6 +20,8 @@ export default function DeliveryModal() {
     setComment,
     branch,
     setBranch,
+    pickupTime,
+    setPickupTime,
     branches,
     history,
     addHistory,
@@ -78,6 +80,24 @@ export default function DeliveryModal() {
               onSelect={setBranch}
               height="100%"
             />
+          )}
+          {mode === "pickup" && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: 72,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "calc(100% - 32px)",
+              }}
+            >
+              <input
+                type="time"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
+            </div>
           )}
           <div
             style={{
@@ -255,6 +275,14 @@ export default function DeliveryModal() {
               onSelect={setBranch}
               height={300}
             />
+            <div style={{ marginTop: 16 }}>
+              <input
+                type="time"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
+            </div>
             <button
               onClick={close}
               style={{

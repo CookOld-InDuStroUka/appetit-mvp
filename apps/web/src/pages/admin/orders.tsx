@@ -27,6 +27,7 @@ type Order = {
   customerPhone: string;
   status: OrderStatus;
   total: number;
+  pickupTime?: string | null;
   createdAt: string;
 };
 
@@ -74,6 +75,7 @@ export default function OrdersAdmin() {
             <th>Клиент</th>
             <th>Телефон</th>
             <th>Сумма</th>
+            <th>Самовывоз</th>
             <th>Статус</th>
             <th>Создан</th>
           </tr>
@@ -85,6 +87,7 @@ export default function OrdersAdmin() {
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>
+              <td>{o.pickupTime ? new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</td>
               <td>
                 <select
                   value={o.status}

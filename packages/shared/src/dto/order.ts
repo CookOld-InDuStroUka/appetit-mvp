@@ -12,6 +12,7 @@ export type CreateOrderInput = {
   zoneId?: string | null;
   address?: string | null;
   branchId?: string | null;
+  pickupTime?: string | null;
   items: OrderItemInput[];
   paymentMethod: "cash" | "card";
   promoCode?: string | null;
@@ -58,6 +59,7 @@ export type OrderDTO = {
   address?: string | null;
   zoneId?: string | null;
   branchId?: string | null;
+  pickupTime?: string | null;
   subtotal: number;
   deliveryFee: number;
   discount: number;

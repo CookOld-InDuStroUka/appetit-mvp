@@ -53,6 +53,7 @@ type Ctx = {
   floor: string;
   comment: string;
   branch: string;
+  pickupTime: string;
   branches: Branch[];
   history: string[];
   isOpen: boolean;
@@ -65,6 +66,7 @@ type Ctx = {
    setFloor: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
+  setPickupTime: (v: string) => void;
   addHistory: (addr: string) => void;
   removeHistory: (addr: string) => void;
 };
@@ -80,6 +82,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [comment, setComment] = useState("");
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [branch, setBranch] = useState(DEFAULT_BRANCHES[0].id);
+  const [pickupTime, setPickupTime] = useState("");
   const [isOpen, setOpen] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
 
@@ -147,6 +150,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         floor,
         comment,
         branch,
+        pickupTime,
         branches,
         history,
         isOpen,
@@ -159,6 +163,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         setFloor,
         setComment,
         setBranch,
+        setPickupTime,
         addHistory,
         removeHistory,
       }}

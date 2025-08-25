@@ -729,6 +729,7 @@ const OrderSchema = z.object({
   zoneId: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   branchId: z.string().optional().nullable(),
+  pickupTime: z.string().optional().nullable(),
   items: z.array(z.object({
     dishId: z.string(),
     variantId: z.string().optional().nullable(),
@@ -825,6 +826,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   let branchId: string | undefined;
   let discount = 0;
   let promoCodeId: string | undefined;
+  let pickupTime: Date | null = null;
 
   if (data.type === "delivery") {
     if (!data.address) return res.status(400).json({ error: "address required for delivery" });
@@ -846,6 +848,9 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
     if (!branch) return res.status(400).json({ error: "branch not found" });
     branchId = branch.id;
+    if (data.pickupTime) {
+      pickupTime = new Date(data.pickupTime);
+    }
   }
 
   if (data.promoCode) {
@@ -882,10 +887,11 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   }
 
   const availableBonus = user?.bonus ?? 0;
-  const bonusUsed = Math.min(data.bonusToUse ?? 0, availableBonus, subtotal + deliveryFee - discount);
+  const maxBonus = Math.max(subtotal + deliveryFee - discount - 10, 0);
+  const bonusUsed = Math.min(data.bonusToUse ?? 0, availableBonus, maxBonus);
   const total = subtotal + deliveryFee - discount - bonusUsed;
 
-  const bonusEarned = Math.floor((subtotal - discount) * 0.1);
+  const bonusEarned = Math.floor((subtotal - discount - bonusUsed) * 0.1);
   const bonusDelta = bonusEarned - bonusUsed;
 
   await prisma.user.update({
@@ -917,6 +923,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       bonusUsed,
       promoCodeId: promoCodeId ?? null,
       userId: user.id,
+      pickupTime,
       items: {
         create: prepared.map((p) => ({
           dishId: p.item.dishId,
@@ -965,6 +972,7 @@ app.get(`${BASE}/admin/orders`, async (_req: Request, res: Response) => {
       address: o.address,
       zoneId: o.zoneId,
       branchId: o.branchId,
+      pickupTime: o.pickupTime,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
       discount: Number(o.discount),

@@ -122,6 +122,7 @@ model Order {
   zone          Zone?       @relation(fields: [zoneId], references: [id])
   branchId      String?
   branch        Branch?     @relation(fields: [branchId], references: [id])
+  pickupTime    DateTime?
   subtotal      Decimal     @db.Decimal(10, 2)
   deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
   discount      Decimal     @default(0) @db.Decimal(10, 2)
