@@ -36,6 +36,7 @@ export default function DishFormModal({
   const [basePrice, setBasePrice] = useState(dish?.basePrice ?? 0);
   const [description, setDescription] = useState(dish?.description ?? "");
   const [imageUrl, setImageUrl] = useState(dish?.imageUrl ?? "");
+  const [uploading, setUploading] = useState(false);
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -57,6 +58,26 @@ export default function DishFormModal({
       }
     );
     onSaved();
+  };
+
+  const uploadImage = async (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = (reader.result as string).split(",")[1];
+      setUploading(true);
+      try {
+        const res = await fetch(`${API_BASE}/admin/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: base64 }),
+        });
+        const data = await res.json();
+        if (data.url) setImageUrl(data.url);
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -95,12 +116,29 @@ export default function DishFormModal({
             required
             style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
           />
-          <input
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="Ссылка на изображение"
-            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
-          />
+          <div>
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="preview"
+                style={{ maxWidth: "100%", marginBottom: 8, borderRadius: 8 }}
+              />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadImage(file);
+              }}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--border)",
+              }}
+            />
+            {uploading && <p>Загрузка...</p>}
+          </div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

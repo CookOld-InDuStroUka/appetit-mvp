@@ -3,13 +3,29 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const prisma = new PrismaClient();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+
+const uploadDir = path.join(__dirname, "../uploads");
+fs.mkdirSync(uploadDir, { recursive: true });
+app.use("/uploads", express.static(uploadDir));
 
 const BASE = "/api/v1";
+
+app.post(`${BASE}/admin/upload`, (req: Request, res: Response) => {
+  const image: string | undefined = (req.body as any)?.image;
+  if (!image) return res.status(400).json({ error: "No image" });
+  const buffer = Buffer.from(image, "base64");
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
+  fs.writeFileSync(path.join(uploadDir, filename), buffer);
+  const url = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
+  res.json({ url });
+});
 
 // simple auth via SMS codes
 const AuthRequestSchema = z.object({ phone: z.string().min(5) });
@@ -244,6 +260,8 @@ app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
       name: d.name,
       categoryId: d.categoryId,
       basePrice: Number(d.basePrice),
+      description: d.description ?? null,
+      imageUrl: d.imageUrl ?? null,
     })),
   }));
   res.json(result);
