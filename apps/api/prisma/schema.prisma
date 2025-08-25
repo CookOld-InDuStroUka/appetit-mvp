@@ -114,8 +114,11 @@ model Order {
   branch        Branch?     @relation(fields: [branchId], references: [id])
   subtotal      Decimal     @db.Decimal(10, 2)
   deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
+  discount      Decimal     @default(0) @db.Decimal(10, 2)
   total         Decimal     @db.Decimal(10, 2)
   bonusEarned   Int         @default(0)
+  promoCodeId   String?
+  promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
   userId        String?
   user          User?       @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())
@@ -157,6 +160,15 @@ model Admin {
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
+}
+
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  discount    Int
+  expiresAt   DateTime
+  conditions  String?
+  orders      Order[]
 }
 
 model AuthCode {

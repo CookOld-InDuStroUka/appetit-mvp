@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
 export type CartItem = {
   id: string;
   name: string;
@@ -21,10 +24,13 @@ type Props = {
 
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const [promo, setPromo] = useState("");
+  const [discount, setDiscount] = useState(0);
   const { mode, address, branch, branches, open: openDelivery } = useDelivery();
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const bonuses = Math.floor(total * 0.1);
+  const discountAmount = Math.round(total * discount / 100);
+  const totalAfterDiscount = total - discountAmount;
+  const bonuses = Math.floor(totalAfterDiscount * 0.1);
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
@@ -190,6 +196,24 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 }}
               />
               <button
+                onClick={async () => {
+                  try {
+                    const r = await fetch(`${API_BASE}/promo-codes/check`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ code: promo }),
+                    });
+                    if (r.ok) {
+                      const data = await r.json();
+                      setDiscount(data.discount);
+                    } else {
+                      setDiscount(0);
+                      alert("Промокод не найден");
+                    }
+                  } catch {
+                    setDiscount(0);
+                  }
+                }}
                 style={{
                   padding: "8px 12px",
                   borderRadius: 8,
@@ -207,13 +231,19 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 <span>Итого</span>
                 <span>{total} ₸</span>
               </div>
+              {discountAmount > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span>Скидка</span>
+                  <span>-{discountAmount} ₸</span>
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14 }}>
                 <span>Бонусы</span>
                 <span>{bonuses} ₸</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
                 <span>К оплате</span>
-                <span>{total - bonuses} ₸</span>
+                <span>{totalAfterDiscount - bonuses} ₸</span>
               </div>
             </div>
 

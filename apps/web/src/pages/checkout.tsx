@@ -12,6 +12,10 @@ export default function Checkout() {
     zoneId: "",
     items: []
   });
+  const [promo, setPromo] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(0);
 
   useEffect(() => {
     fetch(`${API_BASE}/zones`)
@@ -19,6 +23,43 @@ export default function Checkout() {
       .then(setZones)
       .catch(() => setZones([]));
   }, []);
+
+  useEffect(() => {
+    if (form.dishId) {
+      fetch(`${API_BASE}/dishes/${form.dishId}`)
+        .then((r) => r.json())
+        .then((d) => setSubtotal(d.basePrice || 0))
+        .catch(() => setSubtotal(0));
+    }
+  }, [form.dishId]);
+
+  useEffect(() => {
+    const z = zones.find((z) => z.id === form.zoneId);
+    if (z) setDeliveryFee(Number(z.deliveryFee));
+    else setDeliveryFee(0);
+  }, [form.zoneId, zones]);
+
+  const applyPromo = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/promo-codes/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promo })
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setDiscount(data.discount);
+      } else {
+        setDiscount(0);
+        alert("Промокод не найден");
+      }
+    } catch {
+      setDiscount(0);
+    }
+  };
+
+  const discountAmount = Math.round(subtotal * discount / 100);
+  const total = subtotal + (form.type === "delivery" ? deliveryFee : 0) - discountAmount;
 
   const submit = async () => {
     const payload = {
@@ -28,7 +69,8 @@ export default function Checkout() {
       address: form.type === "delivery" ? form.address : null,
       branchId: null,
       items: form.items.length ? form.items : [{ dishId: form.dishId, variantId: null, qty: 1 }],
-      paymentMethod: "cash"
+      paymentMethod: "cash",
+      promoCode: promo || null
     };
     try {
       const r = await fetch(`${API_BASE}/orders`, {
@@ -63,6 +105,16 @@ export default function Checkout() {
           </label>
         </>}
         <label>ID блюда для теста (из /dishes) <input value={form.dishId || ""} onChange={e => setForm({ ...form, dishId: e.target.value })} /></label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={promo} onChange={e => setPromo(e.target.value)} placeholder="Промокод" />
+          <button onClick={applyPromo}>Применить</button>
+        </div>
+        <div>
+          <div>Сумма: {subtotal} ₸</div>
+          {discountAmount > 0 && <div>Скидка: -{discountAmount} ₸</div>}
+          {form.type === "delivery" && <div>Доставка: {deliveryFee} ₸</div>}
+          <div>Итого: {total} ₸</div>
+        </div>
         <button onClick={submit}>Создать заказ</button>
       </div>
     </main>

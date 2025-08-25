@@ -98,6 +98,14 @@ app.get(BASE, (_: Request, res: Response) => {
 
 app.get(`${BASE}/health`, (_: Request, res: Response) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
+  const parsed = PromoCodeSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const promo = await prisma.promoCode.findUnique({ where: { code: parsed.data.code } });
+  if (!promo || promo.expiresAt < new Date()) return res.status(404).json({ error: "Invalid code" });
+  res.json({ code: promo.code, discount: promo.discount, expiresAt: promo.expiresAt, conditions: promo.conditions });
+});
+
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
   const page = await prisma.cmsPage.findUnique({ where: { slug: req.params.slug } });
   if (!page || !page.isActive) return res.status(404).json({ error: "Not found" });
@@ -294,8 +302,11 @@ const OrderSchema = z.object({
     variantId: z.string().optional().nullable(),
     qty: z.number().int().positive()
   })).min(1),
-  paymentMethod: z.enum(["cash", "card"])
+  paymentMethod: z.enum(["cash", "card"]),
+  promoCode: z.string().optional().nullable()
 });
+
+const PromoCodeSchema = z.object({ code: z.string() });
 
 app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   const parsed = OrderSchema.safeParse(req.body);
@@ -321,6 +332,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   let deliveryFee = 0;
   let zoneId: string | undefined;
   let branchId: string | undefined;
+  let discount = 0;
+  let promoCodeId: string | undefined;
 
   if (data.type === "delivery") {
     if (!data.zoneId || !data.address) return res.status(400).json({ error: "zoneId and address required for delivery" });
@@ -335,9 +348,17 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     branchId = branch.id;
   }
 
-  const total = subtotal + deliveryFee;
+  if (data.promoCode) {
+    const promo = await prisma.promoCode.findUnique({ where: { code: data.promoCode } });
+    if (promo && promo.expiresAt >= new Date()) {
+      discount = Math.round(subtotal * promo.discount / 100);
+      promoCodeId = promo.id;
+    }
+  }
 
-  const bonusEarned = Math.floor(subtotal * 0.1);
+  const total = subtotal + deliveryFee - discount;
+
+  const bonusEarned = Math.floor((subtotal - discount) * 0.1);
 
   const user = await prisma.user.upsert({
     where: { phone: data.customer.phone },
@@ -356,8 +377,10 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       branchId: branchId ?? null,
       subtotal,
       deliveryFee,
+      discount,
       total,
       bonusEarned,
+      promoCodeId: promoCodeId ?? null,
       userId: user.id,
       items: {
         create: data.items.map(item => {
@@ -377,7 +400,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     }
   });
 
-  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, total, bonusEarned, createdAt: order.createdAt });
+  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, discount, total, bonusEarned, createdAt: order.createdAt });
 });
 
 app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
