@@ -85,43 +85,52 @@ export default function Home() {
       </div>
       <Footer />
 
-      <style jsx>{`
-        /* -------- настраиваемые переменные -------- */
-        :global(:root) {
-          --card-min: 280px;  /* минимальная ширина карточки (уменьшишь — поместится больше) */
-          --gap-x: 12px;      /* горизонтальный зазор между карточками */
-          --gap-y: 20px;      /* вертикальный зазор между рядами */
-        }
-        /* ----------------------------------------- */
+// ...твоя страница как есть сверху...
 
-        .section { margin-bottom: 28px; }
-        .section-title {
-          margin: 0 0 12px;
-          font-size: 26px;
-          font-weight: 800;
-          color: #0f172a;
-        }
+<style jsx>{`
+  /* -------- настраиваемые переменные -------- */
+  :global(:root) {
+    --card-min: 220px;  /* ширина одной карточки (сделай 240/280 по вкусу) */
+    --gap-x: 10px;      /* горизонтальный зазор */
+    --gap-y: 18px;      /* вертикальный зазор */
+  }
+  /* ----------------------------------------- */
 
-        /* Карточки равномерно занимают строку: 3 колонки минимум, без «пропасти» справа.
-           minmax(...) не позволяет ужимать менее --card-min, зато растягивает до 1fr. */
-        .cards-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(var(--card-min), 1fr));
-          column-gap: var(--gap-x);
-          row-gap: var(--gap-y);
-          align-items: start;
-        }
+  .section { margin-bottom: 28px; }
+  .section-title {
+    margin: 0 0 12px;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+  }
 
-        /* На средних экранах — 2 колонки */
-        @media (max-width: 1200px) {
-          .cards-grid { grid-template-columns: repeat(2, minmax(var(--card-min), 1fr)); }
-        }
+  /* ВАЖНО: вместо grid используем flex-wrap с фиксированной шириной ячеек.
+     Карточки НЕ растягиваются, остаётся свободное место справа. */
+  .cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-y) var(--gap-x);
+    align-items: stretch;
+    justify-content: flex-start;   /* ничего не растягиваем */
+  }
 
-        /* На мобиле — одна колонка */
-        @media (max-width: 700px) {
-          .cards-grid { grid-template-columns: 1fr; }
-        }
-      `}</style>
+  /* фиксируем ширину карточки внутри контейнера, не трогая сам компонент */
+  .cards-grid :global(.card) {
+    flex: 0 0 var(--card-min);     /* ширина дорожки = --card-min */
+    width: var(--card-min);
+  }
+
+  /* На мобилке — одна колонка (карточка всё равно фикс. ширины, так что делаем 100%) */
+  @media (max-width: 700px) {
+    .cards-grid { gap: 14px; }
+    .cards-grid :global(.card) {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+  }
+`}</style>
+
+
     </>
   );
 }

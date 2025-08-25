@@ -80,7 +80,7 @@ export default function Header() {
               top: suggestPos.top,
               left: suggestPos.left,
               width: suggestPos.width,
-              background: "#122234",
+              background: "#0F1B2A",
               border: "1px solid rgba(255,255,255,.08)",
               borderTop: "none",
               maxHeight: 220,
@@ -99,7 +99,7 @@ export default function Header() {
                     display: "block",
                     padding: "8px 12px",
                     textDecoration: "none",
-                    color: "#e2e8f0",
+                    color: "#E2E8F0",
                   }}
                   onClick={() => setSuggestions([])}
                 >
@@ -116,9 +116,10 @@ export default function Header() {
     <>
       <header className="hdr">
         <div className="row">
-          {/* Бренд как на макете: пилюля + серый слоган */}
+          {/* Бренд оставляем как есть */}
           <Brand />
 
+          {/* Поиск — серый прямоугольник c иконкой справа */}
           <div ref={searchRef} className="search">
             <input
               className="search__input"
@@ -132,12 +133,13 @@ export default function Header() {
             </button>
           </div>
 
+          {/* Правый блок */}
           <nav className="right">
-            {/* скрываются на мобилке */}
-            <button className="link link--hide-sm" type="button">
+            <button className="link link--hide-sm" type="button" aria-label="Выбор языка">
               <span>RU</span>
               <ChevronDown />
             </button>
+
             <Link href="/contacts" className="link link--hide-sm">
               Контакты
             </Link>
@@ -151,9 +153,9 @@ export default function Header() {
               </button>
             )}
 
-            <button onClick={() => setCartOpen(true)} className="link link--cart">
+            <button onClick={() => setCartOpen(true)} className="link link--cart" aria-label="Корзина">
               <CartIcon />
-              <span>{cartLabel}</span>
+              <span className="price">{cartLabel}</span>
             </button>
           </nav>
         </div>
@@ -163,30 +165,31 @@ export default function Header() {
             position: sticky;
             top: 0;
             z-index: 50;
-            background: #0f1b2a;
+            background: #0f1b2a; /* как на референсе */
             color: #cbd5e1;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           }
+
           .row {
             max-width: 1280px;
             margin: 0 auto;
-            height: auto;
-            min-height: 60px;
-            padding: 8px 16px;
+            height: 56px;              /* компактная высота как на макете */
+            padding: 0 16px;
             display: grid;
-            grid-template-columns: 1fr minmax(280px, 520px) 1fr;
+            grid-template-columns: 1fr minmax(420px, 560px) 1fr;
             align-items: center;
             gap: 16px;
           }
 
+          /* === Поиск: «холодный серый» прямоугольник === */
           .search {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 10px;
-            padding: 2px;
-            height: 36px;
+            height: 34px;
+            padding: 0 2px 0 10px;
+            border-radius: 8px;
+            background: #5a6773;            /* глухой серый как на скрине */
+            border: 1px solid #6a7783;      /* лёгкий кант */
           }
           .search__input {
             flex: 1;
@@ -194,54 +197,63 @@ export default function Header() {
             outline: none;
             background: transparent;
             color: #e2e8f0;
-            padding: 0 12px;
+            font-weight: 500;
           }
           .search__input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.8);
           }
           .search__btn {
             width: 36px;
-            height: 32px;
+            height: 30px;
             display: grid;
             place-items: center;
             border: 0;
             background: transparent;
-            color: #cbd5e1;
-            border-radius: 8px;
+            color: #e2e8f0;
+            border-radius: 6px;
             cursor: pointer;
           }
           .search__btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
+            background: rgba(0, 0, 0, 0.1);
           }
 
+          /* === Правый блок === */
           .right {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 16px;
+            gap: 18px; /* как на референсе — не слишком широко */
           }
           .link {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: #cbd5e1;
             background: transparent;
             border: 0;
-            padding: 6px 8px;
-            border-radius: 8px;
+            padding: 6px 6px;
+            border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500; /* убрали жирность, чтобы выглядело тоньше */
+            line-height: 1;
           }
           .link:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.06);
+          }
+          .link--auth :global(svg) {
+            margin-right: 2px;
+          }
+          .link--cart .price {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.2px;
           }
           .muted {
             color: #9fb3c8;
             font-weight: 500;
           }
+
           :global(svg) {
             width: 20px;
             height: 20px;
@@ -249,20 +261,23 @@ export default function Header() {
             color: currentColor;
           }
 
-          /* мобильная версия */
+          /* Мобилка */
           @media (max-width: 820px) {
             .row {
               grid-template-columns: 1fr 1fr;
               gap: 10px;
+              height: auto;
+              padding: 8px 12px;
             }
             .search {
               grid-column: 1 / -1;
+              height: 36px;
             }
             .link--hide-sm {
               display: none;
             }
             .right {
-              gap: 8px;
+              gap: 10px;
             }
           }
         `}</style>
@@ -283,7 +298,7 @@ export default function Header() {
   );
 }
 
-/* ===== Бренд: капсула слева + двухстрочный слоган справа (bulletproof) ===== */
+/* ===== Бренд: (не меняем) ===== */
 function Brand() {
   return (
     <Link
@@ -292,15 +307,14 @@ function Brand() {
       aria-label="APPETIT — вкусная шаурма"
       style={{
         display: "flex",
-        alignItems: "center",     // вообще не даст встать столбиком
-        gap: 8,                   // расстояние между капсулой и слоганом
-        whiteSpace: "nowrap",     // запрет переносов между капсулой и слоганом
+        alignItems: "center",
+        gap: 8,
+        whiteSpace: "nowrap",
         textDecoration: "none",
         color: "inherit",
-        minWidth: 200,            // чтобы колонка грида не «ломала» бренд
+        minWidth: 200,
       }}
     >
-      {/* Капсула */}
       <span
         style={{
           display: "inline-flex",
@@ -328,12 +342,11 @@ function Brand() {
         </strong>
       </span>
 
-      {/* Двухстрочный слоган справа */}
       <span
         style={{
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center", // выравниваем по высоте капсулы
+          justifyContent: "center",
           lineHeight: 1.15,
           fontSize: 13,
           fontWeight: 700,
@@ -347,12 +360,7 @@ function Brand() {
   );
 }
 
-
-
-
-
-
-/* ================== Иконки ================== */
+/* ===== Иконки ===== */
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>

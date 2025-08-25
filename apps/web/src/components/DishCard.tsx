@@ -16,6 +16,7 @@ type Dish = {
 type Props = { dish: Dish; onClick: () => void };
 
 const NAME_TO_ID: Record<string, string> = {
+  // ==== уже были ====
   "комбо для одного": "combo-dlya-odnogo",
   "комбо для двоих": "combo-dlya-dvoih",
   "комбо для компании": "combo-dlya-kompanii",
@@ -25,7 +26,47 @@ const NAME_TO_ID: Record<string, string> = {
   "классическая большая шаурма": "klassicheskaya-bolshaya-shaurma",
   "донер с курицей": "doner-s-kuricej",
   "хот-дог": "hot-dog",
+
+  // ==== новые (горячие блюда) ====
+  "донер с говядиной": "doner-s-govyadinoj",
+  "куриная большая шаурма": "kurinaya-bolshaya-shaurma",
+  "мраморная большая шаурма": "mramornaya-bolshaya-shaurma",
+
+  // ==== снеки ====
+  "наггетсы": "naggetsy",
+  "фри": "fri",
+  "чебурек": "cheburek",
+  "шекер": "sheker",
+  "дольки": "dolki",
+
+  // ==== соусы ====
+  "перчик острый 15г": "perchik-ostryj-15g",
+  "соус барбекю 30г": "sous-barbekyu-30g",
+  "соус горчичный 30г": "sous-gorchichnyj-30g",
+  "соус острый 30г": "sous-ostryj-30g",
+  "соус сырный 30г": "sous-syrnyj-30g",
+  "соус томатный 30г": "sous-tomatnyj-30g",
+  "соус чесночный 30г": "sous-chesnochnyj-30g",
+
+  // ==== напитки (нормализация запятой!) ====
+  "айран тет": "ajran-tet",
+  "асу 05л": "asu-0-5l",
+  "асу 1л": "asu-1l",
+  "горилла 05л": "gorilla-0-5l",
+  "дада 1л": "dada-1l",
+  "лавина 05л": "lavina-0-5l",
+  "липтон чай 05л": "lipton-chaj-0-5l",
+  "липтон чай 1л": "lipton-chaj-1l",
+  "морс смородина 03л": "mors-smorodina-0-3l",
+  "морс смородина 05л": "mors-smorodina-0-5l",
+  "пепси 05л": "pepsi-0-5l",
+  "пепси 15л": "pepsi-1-5l",
+  "пепси 1л": "pepsi-1l",
+  "сок дадо 02л": "sok-dado-0-2l",
+  "сок лимонный 03л": "sok-limonnyj-0-3l",
+  "сок лимонный 10л": "sok-limonnyj-1-0l",
 };
+
 
 const normalize = (s: string) =>
   s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{Letter}\p{Number}\s-]+/gu, "").replace(/\s+/g, " ").trim();
