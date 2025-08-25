@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="32" viewBox="0 0 160 32">
+  <rect x="0" y="4" rx="8" ry="8" width="110" height="24" fill="#fff"/>
+  <text x="55" y="21" text-anchor="middle"
+        font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800"
+        fill="#E53935">APPETIT</text>
+</svg>

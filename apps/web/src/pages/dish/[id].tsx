@@ -1,4 +1,3 @@
-// pages/dish/[id].tsx
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
@@ -18,6 +17,17 @@ type Dish = {
   variants?: Variant[];
 };
 
+// встроенная заглушка
+const FALLBACK = `data:image/svg+xml;utf8,${
+  encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
+       <rect width='100%' height='100%' fill='#e5e5e5'/>
+       <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
+             fill='#777' font-size='48' font-family='system-ui'>Нет фото</text>
+     </svg>`
+  )
+}`;
+
 const fmt = new Intl.NumberFormat("ru-RU");
 
 export default function DishPage() {
@@ -30,7 +40,6 @@ export default function DishPage() {
   const [err, setErr] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
-  // загрузка блюда
   useEffect(() => {
     if (!router.isReady || !dishId) return;
     const ac = new AbortController();
@@ -58,18 +67,11 @@ export default function DishPage() {
     return () => ac.abort();
   }, [router.isReady, dishId]);
 
-  // встроенная заглушка на случай битой картинки
-  const FALLBACK = useMemo(
-    () =>
-      `data:image/svg+xml;utf8,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
-           <rect width='100%' height='100%' fill='#e5e5e5'/>
-           <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-                 fill='#777' font-size='48' font-family='system-ui'>Нет фото</text>
-         </svg>`
-      )}`,
-    []
-  );
+  // убираем placehold.co до передачи в <Image />
+  const finalSrc = useMemo(() => {
+    const s = imgSrc ?? FALLBACK;
+    return /^https?:\/\/placehold\.co/i.test(s) ? FALLBACK : s;
+  }, [imgSrc]);
 
   return (
     <>
@@ -85,7 +87,7 @@ export default function DishPage() {
               style={{
                 position: "relative",
                 width: "100%",
-                aspectRatio: "3 / 2", // 1200x800 условно; меняй при желании
+                aspectRatio: "3 / 2",
                 borderRadius: 8,
                 overflow: "hidden",
                 background: "#eee",
@@ -93,7 +95,7 @@ export default function DishPage() {
               }}
             >
               <Image
-                src={imgSrc ?? FALLBACK}
+                src={finalSrc}
                 alt={dish.name}
                 fill
                 sizes="(max-width: 800px) 100vw, 800px"
@@ -107,7 +109,9 @@ export default function DishPage() {
               <p style={{ marginTop: 16 }}>{dish.description}</p>
             )}
 
-            <h3 style={{ marginTop: 24 }}>Цена: {fmt.format(dish.basePrice)} ₸</h3>
+            <h3 style={{ marginTop: 24 }}>
+              Цена: {fmt.format(dish.basePrice)} ₸
+            </h3>
 
             {dish.variants?.length ? (
               <ul style={{ marginTop: 8 }}>

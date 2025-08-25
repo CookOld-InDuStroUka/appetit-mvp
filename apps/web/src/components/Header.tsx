@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
-import { useTheme } from "./ThemeContext";
-import { useDelivery } from "./DeliveryContext";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -18,8 +16,14 @@ export default function Header() {
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
   const [q, setQ] = useState("");
-  const [isSmall, setIsSmall] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [isCartOpen, setCartOpen] = useState(false);
+  const { items: cartItems, updateQty, clear, removeItem } = useCart();
+  const { user, open: openAuth } = useAuth();
+
+  const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const cartLabel = fmtKZT.format(cartAmount);
+
+  // подсказки поиска
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(
     []
   );
@@ -27,41 +31,34 @@ export default function Header() {
   const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
   useEffect(() => {
-    const check = () => {
-      const small = window.innerWidth < 600;
-      setIsSmall(small);
-      if (!small) setSearchOpen(false);
-    };
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const [isCartOpen, setCartOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-  const { items: cartItems, updateQty, clear, removeItem } = useCart();
-  const { user, open: openAuth } = useAuth();
-  const { mode, open: openDelivery } = useDelivery();
-
-  const cartAmount = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const cartLabel = fmtKZT.format(cartAmount);
-
-  useEffect(() => {
     if (!q.trim()) {
       setSuggestions([]);
       return;
     }
-    const t = setTimeout(() => {
-      fetch(`${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}`)
-        .then((r) => r.json())
-        .then((d) => setSuggestions(d))
-        .catch(() => setSuggestions([]));
+
+    const ac = new AbortController();
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(
+          `${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}`,
+          { signal: ac.signal }
+        );
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        setSuggestions(data);
+      } catch {
+        setSuggestions([]);
+      }
     }, 200);
-    return () => clearTimeout(t);
+
+    return () => {
+      ac.abort();
+      clearTimeout(t);
+    };
   }, [q, API_BASE]);
 
   useEffect(() => {
-    if (suggestions.length === 0 || !searchRef.current) return;
+    if (!suggestions.length || !searchRef.current) return;
     const update = () => {
       const r = searchRef.current!.getBoundingClientRect();
       setSuggestPos({ left: r.left, top: r.bottom, width: r.width });
@@ -73,13 +70,12 @@ export default function Header() {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update);
     };
-  }, [suggestions.length, searchOpen, isSmall]);
+  }, [suggestions.length]);
 
   const searchSubmit = () => {
-    if (q.trim()) {
-      setSuggestions([]);
-      location.href = `/?q=${encodeURIComponent(q.trim())}`;
-    }
+    if (!q.trim()) return;
+    setSuggestions([]);
+    location.href = `/?q=${encodeURIComponent(q.trim())}`;
   };
 
   const suggestionPortal =
@@ -91,10 +87,10 @@ export default function Header() {
               top: suggestPos.top,
               left: suggestPos.left,
               width: suggestPos.width,
-              background: "var(--card-bg)",
-              border: "1px solid var(--border)",
+              background: "#122234",
+              border: "1px solid rgba(255,255,255,.08)",
               borderTop: "none",
-              maxHeight: 200,
+              maxHeight: 220,
               overflowY: "auto",
               zIndex: 1000,
               listStyle: "none",
@@ -110,9 +106,9 @@ export default function Header() {
                     display: "block",
                     padding: "8px 12px",
                     textDecoration: "none",
-                    color: "var(--text)",
+                    color: "#e2e8f0",
                   }}
-                  onClick={() => setSearchOpen(false)}
+                  onClick={() => setSuggestions([])}
                 >
                   {s.name}
                 </a>
@@ -125,220 +121,154 @@ export default function Header() {
 
   return (
     <>
-      <header
-        className="hdr"
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          width: "100%",
-          overflowX: "hidden",
-          overflowY: "visible",
-          // Цвета «как на первом скрине»
-          background: "#0f1b2a",
-          color: "#cbd5e1",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <div className="hdr__in">
-          {isSmall ? (
-            searchOpen ? (
-              <>
-                <button
-                  onClick={() => setSearchOpen(false)}
-                  aria-label="Назад"
-                  className="hdr__iconbtn"
-                >
-                  ←
-                </button>
+      <header className="hdr">
+        <div className="row">
+          {/* ЛОГО + слоган (положи файл в public/logo-appetit.svg) */}
+          <Link href="/" className="logo">
+            <img src="/logo-appetit.svg" alt="APPETIT" />
+            <span className="tagline">вкусная шаурма</span>
+          </Link>
 
-                <div ref={searchRef} className="hdr__search">
-                  <input
-                    name="search"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Найти блюдо…"
-                    className="hdr__input"
-                  />
-                  <button onClick={searchSubmit} className="hdr__btn">
-                    <SearchIcon />
-                  </button>
-                </div>
+          {/* ПОИСК по центру */}
+          <div ref={searchRef} className="search">
+            <input
+              className="search__input"
+              placeholder="Поиск"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
+            />
+            <button className="search__btn" onClick={searchSubmit} aria-label="Искать">
+              <SearchIcon />
+            </button>
+          </div>
 
-                <button onClick={() => setCartOpen(true)} className="cart-btn">
-                  <CartIcon />
-                  <span>{cartLabel}</span>
-                </button>
-              </>
+          {/* ПРАВАЯ ПАНЕЛЬ */}
+          <nav className="right">
+            <button className="link" type="button">
+              <span>RU</span>
+              <ChevronDown />
+            </button>
+
+            <Link href="/contacts" className="link">
+              Контакты
+            </Link>
+
+            {user ? (
+              <span className="link muted">{user.phone || user.email}</span>
             ) : (
-              <>
-                <Link href="/" className="hdr__logo">
-                  APPETIT
-                </Link>
+              <button onClick={openAuth} className="link">
+                <UserIcon />
+                <span>Войти</span>
+              </button>
+            )}
 
-                <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-                  <button
-                    onClick={openDelivery}
-                    aria-label="Способ доставки"
-                    className="hdr__iconbtn"
-                    title={mode === "delivery" ? "Доставка" : "Самовывоз"}
-                  >
-                    🚚
-                  </button>
-
-                  <button
-                    onClick={toggleTheme}
-                    aria-label="Переключить тему"
-                    className="hdr__iconbtn"
-                  >
-                    {theme === "light" ? "🌙" : "☀️"}
-                  </button>
-
-                  {user ? (
-                    <span className="hdr__text">
-                      {(user.phone || user.email)} · {user.bonus}₸
-                    </span>
-                  ) : (
-                    <button onClick={openAuth} className="nav-link">
-                      <UserIcon />
-                      <span>Войти</span>
-                    </button>
-                  )}
-
-                  <button onClick={() => setSearchOpen(true)} className="hdr__iconbtn" aria-label="Поиск">
-                    <SearchIcon />
-                  </button>
-
-                  <button onClick={() => setCartOpen(true)} className="cart-btn">
-                    <CartIcon />
-                    <span>{cartLabel}</span>
-                  </button>
-                </div>
-              </>
-            )
-          ) : (
-            <>
-              <Link href="/" className="hdr__logo">
-                APPETIT
-              </Link>
-
-              <div ref={searchRef} className="hdr__search hdr__search--desktop">
-                <input
-                  name="search"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Найти блюдо…"
-                  className="hdr__input"
-                />
-                <button onClick={searchSubmit} className="hdr__btn">
-                  Искать
-                </button>
-              </div>
-
-              <nav className="hdr__nav">
-                <button onClick={openDelivery} className="nav-link">
-                  <TruckIcon />
-                  <span>{mode === "delivery" ? "Доставка" : "Самовывоз"}</span>
-                </button>
-
-                <button onClick={toggleTheme} className="hdr__iconbtn" aria-label="Переключить тему">
-                  {theme === "light" ? "🌙" : "☀️"}
-                </button>
-
-                <a href="#" className="nav-link" aria-label="Язык">
-                  <span>RU ▾</span>
-                </a>
-
-                {user ? (
-                  <span className="hdr__text">
-                    {(user.phone || user.email)} · {user.bonus}₸
-                  </span>
-                ) : (
-                  <button onClick={openAuth} className="nav-link">
-                    <UserIcon />
-                    <span>Войти</span>
-                  </button>
-                )}
-
-                <button onClick={() => setCartOpen(true)} className="cart-btn">
-                  <CartIcon />
-                  <span>{cartLabel}</span>
-                </button>
-              </nav>
-            </>
-          )}
+            <button onClick={() => setCartOpen(true)} className="link">
+              <CartIcon />
+              <span>{cartLabel}</span>
+            </button>
+          </nav>
         </div>
 
-        {/* локальные стили под хедер */}
         <style jsx>{`
-          .hdr__in {
-            max-width: 1200px;
+          .hdr {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #0f1b2a;
+            color: #cbd5e1;
+            border-bottom: 1px solid rgba(255,255,255,.1);
+          }
+          .row {
+            max-width: 1280px;
             margin: 0 auto;
-            height: 56px;
+            height: 60px;
             padding: 0 16px;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr minmax(280px, 520px) 1fr;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
           }
-          .hdr__logo {
-            color: #e2e8f0;
-            font-weight: 700;
-            font-size: 20px;
-            letter-spacing: 0.4px;
+          .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
+            color: inherit;
           }
-          .hdr__search {
-            flex: 0 1 280px;
+          .logo img {
+            height: 28px;
+            width: auto;
+            display: block;
+            background: #fff;
+            border-radius: 8px;
+            padding: 2px 6px;
+          }
+          .tagline {
+            font-size: 12px;
+            color: #9fb3c8;
+            line-height: 1;
+            margin-top: 2px;
+          }
+
+          .search {
             display: flex;
             align-items: center;
-            gap: 8px;
-            position: relative;
-            min-width: 160px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 10px;
+            padding: 2px;
+            height: 36px;
           }
-          .hdr__search--desktop { margin-left: 12px; }
-          .hdr__input {
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(255,255,255,0.06);
-            color: #e2e8f0;
+          .search__input {
+            flex: 1;
+            border: 0;
             outline: none;
-          }
-          .hdr__input::placeholder { color: rgba(255,255,255,0.6); }
-          .hdr__btn {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(255,255,255,0.08);
+            background: transparent;
             color: #e2e8f0;
+            padding: 0 12px;
+          }
+          .search__input::placeholder { color: rgba(255,255,255,.6); }
+          .search__btn {
+            width: 36px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border: 0;
+            background: transparent;
+            color: #cbd5e1;
+            border-radius: 8px;
             cursor: pointer;
           }
-          .hdr__nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-          .hdr__iconbtn {
-            background: transparent; border: 0; color: #cbd5e1;
-            width: 32px; height: 32px; display: grid; place-items: center;
-            border-radius: 8px; cursor: pointer;
+          .search__btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+
+          .right {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 16px;
           }
-          .hdr__iconbtn:hover { background: rgba(255,255,255,0.08); color: #fff; }
-          .nav-link {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 6px 10px; color: #cbd5e1; background: transparent;
-            border: 0; border-radius: 8px; cursor: pointer; text-decoration: none;
+          .link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #cbd5e1;
+            background: transparent;
+            border: 0;
+            padding: 6px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
           }
-          .nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
-          .hdr__text { color: #cbd5e1; }
-          .cart-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 6px 12px; background: rgba(255,255,255,0.08);
-            border: 0; border-radius: 10px; color: #e2e8f0; cursor: pointer;
-            font-weight: 700;
-          }
-          .cart-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
-          .hdr :global(svg) { width: 20px; height: 20px; stroke-width: 1.6; color: currentColor; }
-          @media (max-width: 480px) {
-            .hdr__in { height: 52px; }
-            .hdr__logo { font-size: 18px; }
+          .link:hover { color: #fff; background: rgba(255,255,255,.08); }
+          .muted { color: #9fb3c8; font-weight: 500; }
+          :global(svg) { width: 20px; height: 20px; stroke-width: 1.6; color: currentColor; }
+
+          @media (max-width: 820px) {
+            .row { grid-template-columns: 1fr 1fr; gap: 10px; height: 56px; }
+            .search { grid-column: 1 / -1; }
+            .tagline { display: none; }
           }
         `}</style>
       </header>
@@ -358,7 +288,15 @@ export default function Header() {
   );
 }
 
-/* Иконки — тонкие, как на первом скрине */
+/* Иконки — тонкие, как в референсе */
+function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" {...props}>
+      <circle cx="11" cy="11" r="8" stroke="currentColor" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" />
+    </svg>
+  );
+}
 function UserIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -370,26 +308,16 @@ function UserIcon(props: React.SVGProps<SVGSVGElement>) {
 function CartIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor" />
-      <circle cx="10" cy="20" r="1.5" stroke="currentColor" />
-      <circle cx="18" cy="20" r="1.5" stroke="currentColor" />
+      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor"/>
+      <circle cx="10" cy="20" r="1.5" stroke="currentColor"/>
+      <circle cx="18" cy="20" r="1.5" stroke="currentColor"/>
     </svg>
   );
 }
-function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
+function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <circle cx="11" cy="11" r="8" stroke="currentColor" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" />
-    </svg>
-  );
-}
-function TruckIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M3 6h11v9H3zM14 10h4l3 3v2h-7z" stroke="currentColor" />
-      <circle cx="6.5" cy="18" r="1.5" stroke="currentColor" />
-      <circle cx="17.5" cy="18" r="1.5" stroke="currentColor" />
+      <path d="M6 9l6 6 6-6" stroke="currentColor"/>
     </svg>
   );
 }
