@@ -60,6 +60,7 @@ export default function DishCard({ dish, onClick }: Props) {
 
   return (
     <div
+      id={`dish-${dish.id}`}
       className="dish-card"
       onClick={onClick}
       onKeyDown={onKeyDown}

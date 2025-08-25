@@ -101,14 +101,23 @@ export default function Header() {
             {suggestions.map((s) => (
               <li key={s.id}>
                 <a
-                  href={`/dish/${s.id}`}
+                  href={`/#dish-${s.id}`}
                   style={{
                     display: "block",
                     padding: "8px 12px",
                     textDecoration: "none",
                     color: "#e2e8f0",
                   }}
-                  onClick={() => setSuggestions([])}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setSuggestions([]);
+                    const el = document.getElementById(`dish-${s.id}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth", block: "center" });
+                    } else {
+                      location.href = `/#dish-${s.id}`;
+                    }
+                  }}
                 >
                   {s.name}
                 </a>
