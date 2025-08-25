@@ -8,6 +8,21 @@ import path from "path";
 
 const app = express();
 const prisma = new PrismaClient();
+
+async function ensureDefaultCategories() {
+  const count = await prisma.category.count();
+  if (count === 0) {
+    const names = ["Шаурма", "Блюда", "Напитки", "Соусы"];
+    await prisma.$transaction(
+      names.map((name, idx) =>
+        prisma.category.create({ data: { name, sortOrder: idx } })
+      )
+    );
+  }
+}
+ensureDefaultCategories().catch((e) =>
+  console.error("Failed to ensure default categories", e)
+);
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
@@ -276,33 +291,43 @@ app.post(`${BASE}/admin/dishes`, async (req: Request, res: Response) => {
   const parsed = DishUpsertSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const data = parsed.data;
-  const dish = await prisma.dish.create({
-    data: {
-      name: data.name,
-      categoryId: data.categoryId,
-      basePrice: data.basePrice,
-      description: data.description ?? null,
-      imageUrl: data.imageUrl ?? null,
-    },
-  });
-  res.json(dish);
+  try {
+    const dish = await prisma.dish.create({
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        basePrice: data.basePrice,
+        description: data.description ?? null,
+        imageUrl: data.imageUrl ?? null,
+      },
+    });
+    res.json(dish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save dish" });
+  }
 });
 
 app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
   const parsed = DishUpsertSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const data = parsed.data;
-  const dish = await prisma.dish.update({
-    where: { id: req.params.id },
-    data: {
-      name: data.name,
-      categoryId: data.categoryId,
-      basePrice: data.basePrice,
-      description: data.description ?? null,
-      imageUrl: data.imageUrl ?? null,
-    },
-  });
-  res.json(dish);
+  try {
+    const dish = await prisma.dish.update({
+      where: { id: req.params.id },
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        basePrice: data.basePrice,
+        description: data.description ?? null,
+        imageUrl: data.imageUrl ?? null,
+      },
+    });
+    res.json(dish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save dish" });
+  }
 });
 
 app.delete(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {

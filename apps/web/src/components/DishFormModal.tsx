@@ -49,15 +49,20 @@ export default function DishFormModal({
       description: description || null,
       imageUrl: imageUrl || null,
     };
-    await fetch(
-      dish ? `${API_BASE}/admin/dishes/${dish.id}` : `${API_BASE}/admin/dishes`,
-      {
-        method: dish ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-    onSaved();
+    try {
+      const res = await fetch(
+        dish ? `${API_BASE}/admin/dishes/${dish.id}` : `${API_BASE}/admin/dishes`,
+        {
+          method: dish ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error("Failed");
+      onSaved();
+    } catch {
+      alert("Не удалось сохранить блюдо");
+    }
   };
 
   const uploadImage = async (file: File) => {
