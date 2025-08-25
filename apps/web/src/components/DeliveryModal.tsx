@@ -59,11 +59,15 @@ export default function DeliveryModal() {
   const { open: openTime, close: closeTime, overnight } = parseHours(currentBranch?.hours);
   const handleTimeChange = (val: string) => {
     const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+    if (!/^\d{2}:\d{2}$/.test(val)) {
+      setPickupTime("");
+      return;
+    }
     const sel = toMin(val);
     const start = toMin(openTime);
     const end = toMin(closeTime);
     const valid = overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
-    if (valid) setPickupTime(val);
+    setPickupTime(valid ? val : "");
   };
 
   if (mobile) {
@@ -119,12 +123,12 @@ export default function DeliveryModal() {
             >
               <div style={{ marginBottom: 4, fontSize: 12 }}>Желаемое время самовывоза</div>
               <input
-                type="time"
-                lang="ru"
+                type="text"
+                inputMode="numeric"
+                placeholder="00:00"
                 value={pickupTime}
-                min={openTime}
-                max={!overnight ? closeTime : undefined}
-                onChange={(e) => handleTimeChange(e.target.value)}
+                onChange={(e) => setPickupTime(e.target.value)}
+                onBlur={(e) => handleTimeChange(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
@@ -308,12 +312,12 @@ export default function DeliveryModal() {
             <div style={{ marginTop: 16 }}>
               <h3 style={{ margin: "0 0 8px" }}>Желаемое время самовывоза</h3>
               <input
-                type="time"
-                lang="ru"
+                type="text"
+                inputMode="numeric"
+                placeholder="00:00"
                 value={pickupTime}
-                min={openTime}
-                max={!overnight ? closeTime : undefined}
-                onChange={(e) => handleTimeChange(e.target.value)}
+                onChange={(e) => setPickupTime(e.target.value)}
+                onBlur={(e) => handleTimeChange(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
