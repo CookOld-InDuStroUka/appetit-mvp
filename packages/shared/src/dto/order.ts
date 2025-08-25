@@ -23,6 +23,15 @@ export type OrderStatus =
   | "done"
   | "canceled";
 
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  created: "Создан",
+  accepted: "Принят",
+  cooking: "Готовится",
+  delivering: "В пути",
+  done: "Завершён",
+  canceled: "Отменён",
+};
+
 export type OrderItemDTO = {
   id: string;
   dishId: string;

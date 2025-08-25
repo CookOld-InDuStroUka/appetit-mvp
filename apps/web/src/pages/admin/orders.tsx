@@ -12,6 +12,15 @@ type OrderStatus =
   | "done"
   | "canceled";
 
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  created: "Создан",
+  accepted: "Принят",
+  cooking: "Готовится",
+  delivering: "В пути",
+  done: "Завершён",
+  canceled: "Отменён",
+};
+
 type Order = {
   id: string;
   customerName?: string | null;
@@ -81,9 +90,9 @@ export default function OrdersAdmin() {
                   value={o.status}
                   onChange={(e) => update(o.id, e.target.value as OrderStatus)}
                 >
-                  {["created", "accepted", "cooking", "delivering", "done", "canceled"].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
                     </option>
                   ))}
                 </select>
