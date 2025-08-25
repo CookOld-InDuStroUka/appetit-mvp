@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import Header from "../../../components/Header";
-import Footer from "../../../components/Footer";
+import AdminLayout from "../../../components/AdminLayout";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -78,10 +77,8 @@ export default function BranchesAdmin() {
   };
 
   return (
-    <>
-      <Header />
-      <main style={{ maxWidth: "1280px", margin: "0 auto", padding: 24 }}>
-        <h1 style={{ marginBottom: 16 }}>Ассортимент филиалов</h1>
+    <AdminLayout>
+      <h1 style={{ marginBottom: 16 }}>Ассортимент филиалов</h1>
         <div style={{ marginBottom: 24 }}>
           <label>
             Филиал:
@@ -140,8 +137,6 @@ export default function BranchesAdmin() {
         >
           Подтвердить изменения
         </button>
-      </main>
-      <Footer />
-    </>
+    </AdminLayout>
   );
 }

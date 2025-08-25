@@ -98,6 +98,7 @@ app.get(BASE, (_: Request, res: Response) => {
 
 app.get(`${BASE}/health`, (_: Request, res: Response) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+
 app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
   const parsed = PromoCodeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });

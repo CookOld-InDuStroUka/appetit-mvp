@@ -22,7 +22,7 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 360 }} onClick={stop}>
         <div style={{ position: "relative", marginBottom: 16, textAlign: "center" }}>
-          <h2 style={{ margin: 0 }}>Админ вход</h2>
+          <h2 style={{ margin: 0, color: "var(--text)" }}>Админ вход</h2>
           <button onClick={onClose} style={{ position: "absolute", right: 0, top: 0, background: "transparent", border: "none", cursor: "pointer" }}>×</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -44,7 +44,17 @@ export default function AdminModal({ onClose }: { onClose: () => void }) {
           <button onClick={() => send("login")} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
             Войти
           </button>
-          <button onClick={() => send("register")} style={{ padding: "10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--card-bg)", cursor: "pointer" }}>
+          <button
+            onClick={() => send("register")}
+            style={{
+              padding: "10px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--card-bg)",
+              color: "var(--text)",
+              cursor: "pointer",
+            }}
+          >
             Зарегистрироваться
           </button>
         </div>

@@ -1,17 +1,13 @@
 import Link from "next/link";
+import AdminLayout from "../../components/AdminLayout";
 
 export default function AdminHome() {
   return (
-    <div style={{ padding: 24 }}>
+    <AdminLayout>
       <h1>Админпанель APPETIT</h1>
-      <p><Link href="/">На главную</Link></p>
-      <ul>
-        <li><Link href="/admin/branches">Филиалы</Link></li>
-        <li><Link href="/admin/menu">Меню</Link></li>
-        <li><Link href="/admin/orders">Заказы</Link></li>
-        <li><Link href="/admin/promos">Маркетинг</Link></li>
-        <li><Link href="/admin/analytics">Аналитика</Link></li>
-      </ul>
-    </div>
+      <p>
+        <Link href="/">На главную</Link>
+      </p>
+    </AdminLayout>
   );
 }

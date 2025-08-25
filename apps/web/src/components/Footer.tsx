@@ -42,6 +42,7 @@ export default function Footer() {
             <li><Link href="/bonus" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Бонусная программа</Link></li>
             <li><Link href="/vacancies" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Вакансии</Link></li>
             <li><Link href="/contacts" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Контакты</Link></li>
+            <li><Link href="/report-error" style={{ color: "var(--nav-link)", textDecoration: "none" }}>Сообщить об ошибке</Link></li>
           </ul>
           <div
             style={{

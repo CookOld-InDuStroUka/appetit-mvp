@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import AdminLayout from "../../../components/AdminLayout";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -90,8 +90,7 @@ export default function PromoCodesAdmin() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <p><Link href="/admin/promos">← Назад</Link></p>
+    <AdminLayout>
       <h1>Промокоды</h1>
       <table border={1} cellPadding={4} style={{ borderCollapse: "collapse" }}>
         <thead>
@@ -198,7 +197,7 @@ export default function PromoCodesAdmin() {
         </select>
         <button onClick={create}>Создать</button>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 
