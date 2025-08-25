@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { dishImageMap } from "../../config/imageMap";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type Variant = { id: string; name: string; price: number };
 type Dish = {
@@ -17,16 +17,23 @@ type Dish = {
   variants?: Variant[];
 };
 
-// встроенная заглушка
 const FALLBACK = `data:image/svg+xml;utf8,${
   encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
-       <rect width='100%' height='100%' fill='#e5e5e5'/>
+       <rect width='100%' height='100%' fill='#f1f5f9'/>
        <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-             fill='#777' font-size='48' font-family='system-ui'>Нет фото</text>
+             fill='#94a3b8' font-size='48' font-family='system-ui'>Нет фото</text>
      </svg>`
   )
 }`;
+const isPlaceholder = (u?: string) => !!u && /^https?:\/\/placehold\.co/i.test(u);
+const slugify = (s: string) =>
+  s.toLowerCase()
+   .replace(/ё/g, "e")
+   .replace(/[^a-z0-9а-я\- ]/g, "")
+   .replace(/\s+/g, "-")
+   .replace(/-+/g, "-")
+   .replace(/^-|-$/g, "");
 
 const fmt = new Intl.NumberFormat("ru-RU");
 
@@ -38,7 +45,7 @@ export default function DishPage() {
   const [dish, setDish] = useState<Dish | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [imgIdx, setImgIdx] = useState(0);
 
   useEffect(() => {
     if (!router.isReady || !dishId) return;
@@ -52,12 +59,11 @@ export default function DishPage() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data: Dish = await r.json();
         setDish(data);
-        setImgSrc(data.imageUrl ?? `/dishes/${data.id}.jpg`);
+        setImgIdx(0);
       } catch (e: any) {
         if (e.name !== "AbortError") {
           setErr("Не удалось загрузить блюдо.");
           setDish(null);
-          setImgSrc(null);
         }
       } finally {
         setLoading(false);
@@ -67,11 +73,18 @@ export default function DishPage() {
     return () => ac.abort();
   }, [router.isReady, dishId]);
 
-  // убираем placehold.co до передачи в <Image />
-  const finalSrc = useMemo(() => {
-    const s = imgSrc ?? FALLBACK;
-    return /^https?:\/\/placehold\.co/i.test(s) ? FALLBACK : s;
-  }, [imgSrc]);
+  const candidates = useMemo(() => {
+    if (!dish) return [FALLBACK];
+    const arr: string[] = [];
+    if (dish.imageUrl && !isPlaceholder(dish.imageUrl)) arr.push(dish.imageUrl);
+    if (dishImageMap[dish.id]) arr.push(dishImageMap[dish.id]); // карта по id
+    arr.push(`/dishes/${dish.id}.jpg`);
+    arr.push(`/dishes/${slugify(dish.name)}.jpg`);
+    arr.push(FALLBACK);
+    return arr;
+  }, [dish]);
+
+  const src = candidates[Math.min(imgIdx, candidates.length - 1)];
 
   return (
     <>
@@ -79,6 +92,7 @@ export default function DishPage() {
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
         {loading && <p>Загружаем…</p>}
         {err && <p style={{ color: "crimson" }}>{err}</p>}
+
         {!loading && !err && dish && (
           <>
             <h1>{dish.name}</h1>
@@ -87,31 +101,27 @@ export default function DishPage() {
               style={{
                 position: "relative",
                 width: "100%",
-                aspectRatio: "3 / 2",
-                borderRadius: 8,
+                aspectRatio: "3/2",
+                borderRadius: 12,
                 overflow: "hidden",
                 background: "#eee",
                 marginTop: 12,
               }}
             >
               <Image
-                src={finalSrc}
+                src={src}
                 alt={dish.name}
                 fill
                 sizes="(max-width: 800px) 100vw, 800px"
-                style={{ objectFit: "cover" }}
-                onError={() => setImgSrc(FALLBACK)}
+                style={{ objectFit: "contain" }}
+                onError={() => setImgIdx((i) => Math.min(i + 1, candidates.length - 1))}
                 priority
               />
             </div>
 
-            {dish.description && (
-              <p style={{ marginTop: 16 }}>{dish.description}</p>
-            )}
+            {dish.description && <p style={{ marginTop: 16 }}>{dish.description}</p>}
 
-            <h3 style={{ marginTop: 24 }}>
-              Цена: {fmt.format(dish.basePrice)} ₸
-            </h3>
+            <h3 style={{ marginTop: 24 }}>Цена: {fmt.format(dish.basePrice)} ₸</h3>
 
             {dish.variants?.length ? (
               <ul style={{ marginTop: 8 }}>
