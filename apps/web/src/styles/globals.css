@@ -103,6 +103,23 @@ button,
   color: var(--accent);
 }
 
+.sidebar-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-btn:hover {
+  background: var(--hover-bg);
+  color: var(--accent);
+}
+
 .dish-card {
   border: 1px solid var(--card-border);
   border-radius: 8px;

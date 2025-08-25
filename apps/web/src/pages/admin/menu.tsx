@@ -1,11 +1,14 @@
 import AdminLayout from "../../components/AdminLayout";
 import { useEffect, useState } from "react";
+import DishFormModal from "../../components/DishFormModal";
 
 interface Dish {
   id: string;
   name: string;
   categoryId: string;
   basePrice: number;
+  description?: string | null;
+  imageUrl?: string | null;
 }
 
 interface Category {
@@ -18,6 +21,10 @@ export default function MenuAdmin() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
   const [cats, setCats] = useState<Category[]>([]);
+  const [editor, setEditor] = useState<{
+    dish?: Dish;
+    initialCategoryId?: string;
+  } | null>(null);
 
   const load = async () => {
     try {
@@ -32,35 +39,11 @@ export default function MenuAdmin() {
     load();
   }, [API_BASE]);
 
-  const addDish = async (categoryId: string) => {
-    const name = prompt("Название блюда");
-    if (!name) return;
-    const priceStr = prompt("Цена, ₸");
-    const price = Number(priceStr);
-    if (!price) return;
-    await fetch(`${API_BASE}/admin/dishes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, categoryId, basePrice: price }),
-    });
-    load();
-  };
-
-  const editDish = async (dish: Dish) => {
-    const name = prompt("Название блюда", dish.name);
-    if (!name) return;
-    const priceStr = prompt("Цена, ₸", String(dish.basePrice));
-    const price = Number(priceStr);
-    if (!price) return;
-    await fetch(`${API_BASE}/admin/dishes/${dish.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        categoryId: dish.categoryId,
-        basePrice: price,
-      }),
-    });
+  const openAdd = (categoryId: string) => setEditor({ initialCategoryId: categoryId });
+  const openEdit = (dish: Dish) => setEditor({ dish });
+  const closeEditor = () => setEditor(null);
+  const saved = () => {
+    setEditor(null);
     load();
   };
 
@@ -91,7 +74,7 @@ export default function MenuAdmin() {
                   {d.name} — {d.basePrice}₸
                 </span>
                 <button
-                  onClick={() => editDish(d)}
+                  onClick={() => openEdit(d)}
                   className="admin-nav-btn"
                 >
                   Редактировать
@@ -105,14 +88,20 @@ export default function MenuAdmin() {
               </li>
             ))}
           </ul>
-          <button
-            onClick={() => addDish(cat.id)}
-            className="add-btn"
-          >
+          <button onClick={() => openAdd(cat.id)} className="add-btn">
             Добавить блюдо
           </button>
         </section>
       ))}
+      {editor && (
+        <DishFormModal
+          categories={cats.map(({ id, name }) => ({ id, name }))}
+          dish={editor.dish}
+          initialCategoryId={editor.initialCategoryId}
+          onClose={closeEditor}
+          onSaved={saved}
+        />
+      )}
     </AdminLayout>
   );
 }

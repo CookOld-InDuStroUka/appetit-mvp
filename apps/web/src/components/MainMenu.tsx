@@ -9,6 +9,11 @@ export const MENU_ITEMS = [
 ];
 
 export default function MainMenu() {
+  const scrollTo = (hash: string) => {
+    const id = hash.startsWith("#") ? hash.slice(1) : hash;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <aside className="main-sidebar">
       <nav>
@@ -24,9 +29,12 @@ export default function MainMenu() {
         >
           {MENU_ITEMS.map((item) => (
             <li key={item.title}>
-              <a href={item.href} className="sidebar-link">
+              <button
+                className="sidebar-btn"
+                onClick={() => scrollTo(item.href)}
+              >
                 {item.title}
-              </a>
+              </button>
             </li>
           ))}
         </ul>
