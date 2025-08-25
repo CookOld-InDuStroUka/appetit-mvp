@@ -247,6 +247,11 @@ const DishUpsertSchema = z.object({
   imageUrl: z.string().optional().nullable(),
 });
 
+const CategoryUpsertSchema = z.object({
+  name: z.string().min(1),
+  sortOrder: z.number().int().optional(),
+});
+
 app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
   const categories = await prisma.category.findMany({
     orderBy: { sortOrder: "asc" },
@@ -302,6 +307,37 @@ app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
 
 app.delete(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
   await prisma.dish.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/categories`, async (_req: Request, res: Response) => {
+  const cats = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+  res.json(cats);
+});
+
+app.post(`${BASE}/admin/categories`, async (req: Request, res: Response) => {
+  const parsed = CategoryUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const count = await prisma.category.count();
+  const cat = await prisma.category.create({
+    data: { name: data.name, sortOrder: data.sortOrder ?? count },
+  });
+  res.json(cat);
+});
+
+app.put(`${BASE}/admin/categories/:id`, async (req: Request, res: Response) => {
+  const parsed = CategoryUpsertSchema.partial().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const cat = await prisma.category.update({
+    where: { id: req.params.id },
+    data: parsed.data,
+  });
+  res.json(cat);
+});
+
+app.delete(`${BASE}/admin/categories/:id`, async (req: Request, res: Response) => {
+  await prisma.category.delete({ where: { id: req.params.id } });
   res.json({ ok: true });
 });
 

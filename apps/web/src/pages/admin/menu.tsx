@@ -1,6 +1,7 @@
 import AdminLayout from "../../components/AdminLayout";
 import { useEffect, useState } from "react";
 import DishFormModal from "../../components/DishFormModal";
+import CategoryManagerModal from "../../components/CategoryManagerModal";
 
 interface Dish {
   id: string;
@@ -25,6 +26,7 @@ export default function MenuAdmin() {
     dish?: Dish;
     initialCategoryId?: string;
   } | null>(null);
+  const [manageCats, setManageCats] = useState(false);
 
   const load = async () => {
     try {
@@ -56,6 +58,13 @@ export default function MenuAdmin() {
   return (
     <AdminLayout>
       <h1>Меню и ассортимент</h1>
+      <button
+        onClick={() => setManageCats(true)}
+        className="admin-nav-btn"
+        style={{ marginBottom: 24 }}
+      >
+        Управление типами блюд
+      </button>
       {cats.map((cat) => (
         <section key={cat.id} style={{ marginBottom: 24 }}>
           <h2>{cat.name}</h2>
@@ -100,6 +109,15 @@ export default function MenuAdmin() {
           initialCategoryId={editor.initialCategoryId}
           onClose={closeEditor}
           onSaved={saved}
+        />
+      )}
+      {manageCats && (
+        <CategoryManagerModal
+          onClose={() => setManageCats(false)}
+          onSaved={() => {
+            setManageCats(false);
+            load();
+          }}
         />
       )}
     </AdminLayout>
