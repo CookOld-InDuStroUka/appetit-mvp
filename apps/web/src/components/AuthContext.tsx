@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import AuthModal from "./AuthModal";
 
 const API_BASE =
@@ -14,13 +14,30 @@ type AuthCtx = {
   requestCode: (phone: string) => Promise<void>;
   verifyCode: (phone: string, code: string) => Promise<void>;
   registerEmail: (email: string, password: string) => Promise<void>;
+  loginEmail: (email: string, password: string) => Promise<void>;
+  logout: () => void;
 };
 
 const Ctx = createContext<AuthCtx | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
   const [isOpen, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("user");
+      if (raw) setUserState(JSON.parse(raw));
+    }
+  }, []);
+
+  const setUser = (u: User | null) => {
+    setUserState(u);
+    if (typeof window !== "undefined") {
+      if (u) localStorage.setItem("user", JSON.stringify(u));
+      else localStorage.removeItem("user");
+    }
+  };
 
   const open = () => setOpen(true);
   const close = () => setOpen(false);
@@ -59,8 +76,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginEmail = async (email: string, password: string) => {
+    const res = await fetch(`${API_BASE}/auth/login-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setUser(data.user);
+      close();
+    }
+  };
+
+  const logout = () => setUser(null);
+
   return (
-    <Ctx.Provider value={{ user, isOpen, open, close, requestCode, verifyCode, registerEmail }}>
+    <Ctx.Provider value={{ user, isOpen, open, close, requestCode, verifyCode, registerEmail, loginEmail, logout }}>
       {children}
       {isOpen && <AuthModal />}
     </Ctx.Provider>

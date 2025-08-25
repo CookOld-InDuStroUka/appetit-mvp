@@ -39,6 +39,8 @@ export type OrderItemDTO = {
   qty: number;
   unitPrice: number;
   total: number;
+  dishName?: string;
+  dishImageUrl?: string | null;
 };
 
 export type OrderDTO = {

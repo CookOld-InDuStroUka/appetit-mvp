@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useAuth } from "./AuthContext";
 
 export default function AuthModal() {
-  const { close, requestCode, verifyCode, registerEmail } = useAuth();
+  const { close, requestCode, verifyCode, registerEmail, loginEmail } = useAuth();
   const [mode, setMode] = useState<"phone" | "email">("phone");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("+7");
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailMode, setEmailMode] = useState<"login" | "register">("login");
 
   const start = async () => {
     await requestCode(phone);
@@ -87,26 +88,45 @@ export default function AuthModal() {
             </div>
           )
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <input
-              name="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
-              placeholder="Email"
-            />
-            <input
-              name="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
-              placeholder="Пароль"
-            />
-            <button onClick={() => registerEmail(email, password)} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
-              Зарегистрироваться
-            </button>
-          </div>
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <button
+                onClick={() => setEmailMode("login")}
+                style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid var(--border)", background: emailMode === "login" ? "var(--accent)" : "var(--card-bg)", color: emailMode === "login" ? "#fff" : "var(--text)", cursor: "pointer" }}
+              >
+                Вход
+              </button>
+              <button
+                onClick={() => setEmailMode("register")}
+                style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid var(--border)", background: emailMode === "register" ? "var(--accent)" : "var(--card-bg)", color: emailMode === "register" ? "#fff" : "var(--text)", cursor: "pointer" }}
+              >
+                Регистрация
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <input
+                name="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+                placeholder="Email"
+              />
+              <input
+                name="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+                placeholder="Пароль"
+              />
+              <button
+                onClick={() => (emailMode === "login" ? loginEmail(email, password) : registerEmail(email, password))}
+                style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}
+              >
+                {emailMode === "login" ? "Войти" : "Зарегистрироваться"}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

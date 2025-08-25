@@ -7,6 +7,7 @@ type CartContextValue = {
   updateQty: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
   clear: () => void;
+  setItems: (items: CartItem[]) => void;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -40,8 +41,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clear = () => setItems([]);
 
+  const setItemsDirect = (items: CartItem[]) => setItems(items);
+
   return (
-    <CartContext.Provider value={{ items, addItem, updateQty, removeItem, clear }}>
+    <CartContext.Provider value={{ items, addItem, updateQty, removeItem, clear, setItems: setItemsDirect }}>
       {children}
     </CartContext.Provider>
   );
