@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import AdminLayout from "../../../components/AdminLayout";
 import { PromoSlide } from "../../../types/promo";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+
 export default function SliderAdmin() {
   const [slides, setSlides] = useState<PromoSlide[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState<PromoSlide>({ image: "" });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("promoSlides") : null;
@@ -46,16 +50,48 @@ export default function SliderAdmin() {
     if (editing === idx) clearForm();
   };
 
+  const uploadImage = async (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = (reader.result as string).split(",")[1];
+      setUploading(true);
+      try {
+        const res = await fetch(`${API_BASE}/admin/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: base64 }),
+        });
+        const data = await res.json();
+        if (data.url) setForm({ ...form, image: data.url });
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <AdminLayout>
       <h1>Слайдер</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 500 }}>
-        <input
-          type="text"
-          placeholder="URL изображения"
-          value={form.image}
-          onChange={(e) => setForm({ ...form, image: e.target.value })}
-        />
+        <div>
+          {form.image && (
+            <img
+              src={form.image}
+              alt="preview"
+              style={{ maxWidth: "100%", display: "block", marginBottom: 8 }}
+            />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadImage(file);
+            }}
+          />
+          {uploading && <div>Загрузка...</div>}
+        </div>
         <input
           type="text"
           placeholder="Ссылка"

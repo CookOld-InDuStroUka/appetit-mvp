@@ -119,6 +119,11 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       openDelivery();
       return;
     }
+    if (mode === "pickup" && !pickupTime) {
+      alert("Укажите желаемое время самовывоза");
+      openDelivery();
+      return;
+    }
     const addr = [address, apt && `кв. ${apt}`, entrance && `подъезд ${entrance}`, floor && `этаж ${floor}`, comment]
       .filter(Boolean)
       .join(", ");
@@ -240,7 +245,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               >
                 {mode === "delivery"
                   ? `Доставка: ${address || "указать адрес"}`
-                  : `Самовывоз: ${branches.find((b) => b.id === branch)?.name || "выбрать филиал"}`}
+                  : `Самовывоз: ${
+                      branches.find((b) => b.id === branch)?.name || "выбрать филиал"
+                    }${pickupTime ? `, ${pickupTime}` : ""}`}
               </button>
             </div>
 
