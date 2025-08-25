@@ -87,7 +87,16 @@ export default function OrdersAdmin() {
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>
-              <td>{o.pickupTime ? new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "—"}</td>
+              <td>
+                {o.pickupTime
+                  ? new Date(o.pickupTime).toLocaleTimeString("ru-RU", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                      timeZone: "Asia/Almaty",
+                    })
+                  : "—"}
+              </td>
               <td>
                 <select
                   value={o.status}
