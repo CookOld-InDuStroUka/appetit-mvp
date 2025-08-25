@@ -20,6 +20,7 @@ type DishDTO = {
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
+  status?: { name: string; color: string };
 };
 
 export default function Home() {

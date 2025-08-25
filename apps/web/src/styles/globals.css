@@ -130,6 +130,17 @@ button,
   color: var(--card-text);
 }
 
+.dish-status {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
 .dish-card:hover {
   transform: scale(1.03);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -200,6 +211,17 @@ button,
 .admin-home-btn:hover {
   background: var(--hover-bg);
   color: var(--accent);
+}
+
+.admin-dish-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 @media (max-width: 600px) {

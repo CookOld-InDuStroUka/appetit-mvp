@@ -25,11 +25,20 @@ model Dish {
   basePrice    Decimal            @db.Decimal(10, 2)
   imageUrl     String?
   isActive     Boolean            @default(true)
+  statusId     String?
   category     Category           @relation(fields: [categoryId], references: [id])
+  status       DishStatus?        @relation(fields: [statusId], references: [id])
   variants     DishVariant[]
   modifiers    DishModifier[]
   availability DishAvailability[]
   OrderItem    OrderItem[]
+}
+
+model DishStatus {
+  id     String @id @default(cuid())
+  name   String
+  color  String @default("#FFB700")
+  dishes Dish[]
 }
 
 model DishVariant {

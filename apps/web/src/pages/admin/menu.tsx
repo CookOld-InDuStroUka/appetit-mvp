@@ -1,6 +1,8 @@
 import AdminLayout from "../../components/AdminLayout";
 import { useEffect, useState } from "react";
 import DishFormModal from "../../components/DishFormModal";
+import CategoryManagerModal from "../../components/CategoryManagerModal";
+import ModifierManagerModal from "../../components/ModifierManagerModal";
 
 interface Dish {
   id: string;
@@ -25,6 +27,8 @@ export default function MenuAdmin() {
     dish?: Dish;
     initialCategoryId?: string;
   } | null>(null);
+  const [manageCats, setManageCats] = useState(false);
+  const [modDish, setModDish] = useState<Dish | null>(null);
 
   const load = async () => {
     try {
@@ -56,23 +60,28 @@ export default function MenuAdmin() {
   return (
     <AdminLayout>
       <h1>Меню и ассортимент</h1>
+      <button
+        onClick={() => setManageCats(true)}
+        className="admin-nav-btn"
+        style={{ marginBottom: 24 }}
+      >
+        Управление типами блюд
+      </button>
       {cats.map((cat) => (
         <section key={cat.id} style={{ marginBottom: 24 }}>
           <h2>{cat.name}</h2>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {cat.dishes.map((d) => (
-              <li
-                key={d.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 8,
-                }}
-              >
+              <li key={d.id} className="admin-dish-item">
                 <span style={{ flex: 1 }}>
                   {d.name} — {d.basePrice}₸
                 </span>
+                <button
+                  onClick={() => setModDish(d)}
+                  className="admin-nav-btn"
+                >
+                  Топпинги
+                </button>
                 <button
                   onClick={() => openEdit(d)}
                   className="admin-nav-btn"
@@ -100,6 +109,21 @@ export default function MenuAdmin() {
           initialCategoryId={editor.initialCategoryId}
           onClose={closeEditor}
           onSaved={saved}
+        />
+      )}
+      {manageCats && (
+        <CategoryManagerModal
+          onClose={() => setManageCats(false)}
+          onSaved={() => {
+            setManageCats(false);
+            load();
+          }}
+        />
+      )}
+      {modDish && (
+        <ModifierManagerModal
+          dish={modDish}
+          onClose={() => setModDish(null)}
         />
       )}
     </AdminLayout>

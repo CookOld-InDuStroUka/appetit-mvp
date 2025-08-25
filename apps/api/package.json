@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "pnpm run db:push && pnpm run db:seed && tsx src/index.ts",
     "build": "tsc",
     "prisma": "prisma",
     "generate": "prisma generate",

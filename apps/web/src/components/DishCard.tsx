@@ -9,6 +9,7 @@ type Dish = {
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
+  status?: { name: string; color: string };
 };
 
 type Props = {
@@ -60,6 +61,7 @@ export default function DishCard({ dish, onClick }: Props) {
 
   return (
     <div
+      id={`dish-${dish.id}`}
       className="dish-card"
       onClick={onClick}
       onKeyDown={onKeyDown}
@@ -77,6 +79,14 @@ export default function DishCard({ dish, onClick }: Props) {
           background: "#eee",
         }}
       >
+        {dish.status && (
+          <span
+            className="dish-status"
+            style={{ background: dish.status.color }}
+          >
+            {dish.status.name}
+          </span>
+        )}
         <Image
           src={src}
           alt={dish.name}

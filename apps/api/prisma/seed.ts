@@ -137,6 +137,19 @@ async function main() {
     },
   });
 
+  // --- Dish statuses ---
+  const hit = await prisma.dishStatus.upsert({
+    where: { id: "status-hit" },
+    update: { name: "Хит", color: "#ff9800" },
+    create: { id: "status-hit", name: "Хит", color: "#ff9800" },
+  });
+
+  const newStatus = await prisma.dishStatus.upsert({
+    where: { id: "status-new" },
+    update: { name: "Новинка", color: "#a855f7" },
+    create: { id: "status-new", name: "Новинка", color: "#a855f7" },
+  });
+
   // --- Dishes ---
   await prisma.dish.createMany({
     data: [
@@ -328,6 +341,16 @@ async function main() {
       { id: "drink-asu-1l", categoryId: drinksCat.id, name: "Асу 1л", slug: "asu-1l", basePrice: 490, imageUrl: "https://placehold.co/600x200?text=Asu1", isActive: true }
     ],
     skipDuplicates: true
+  });
+
+  // Assign sample statuses
+  await prisma.dish.update({
+    where: { id: "dish-firm-big" },
+    data: { statusId: newStatus.id },
+  });
+  await prisma.dish.update({
+    where: { id: "dish-classic-big" },
+    data: { statusId: hit.id },
   });
 
   // --- Modifiers for dishes ---

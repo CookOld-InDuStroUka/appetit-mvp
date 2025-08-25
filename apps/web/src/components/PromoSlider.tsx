@@ -8,7 +8,8 @@ type PromoSliderProps = {
   height?: number;
 };
 
-const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.jpg", "/promo3.jpg"];
+// Слайды по умолчанию соответствуют файлам в public/
+const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.svg", "/promo3.svg"];
 
 export default function PromoSlider({
   slides = DEFAULT_SLIDES,

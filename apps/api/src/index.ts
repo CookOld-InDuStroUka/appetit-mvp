@@ -8,6 +8,67 @@ import path from "path";
 
 const app = express();
 const prisma = new PrismaClient();
+
+const DEFAULT_EXCLUSIONS = [
+  "Без кетчупа",
+  "Без фри",
+  "Без мяса",
+  "Без лука",
+  "Без майонеза",
+  "Без помидор",
+];
+
+const DEFAULT_ADDONS = [
+  { name: "соус Горчичный во внутрь", price: 240 },
+  { name: "соус Барбекю во внутрь", price: 240 },
+  { name: "соус Сырный во внутрь", price: 240 },
+  { name: "перчики острые во внутрь", price: 240 },
+  { name: "соус Томатный во внутрь", price: 240 },
+  { name: "соус Острый во внутрь", price: 240 },
+  { name: "соус Чесночный во внутрь", price: 240 },
+];
+
+async function ensureDefaultCategories() {
+  const count = await prisma.category.count();
+  if (count === 0) {
+    const names = ["Шаурма", "Блюда", "Напитки", "Соусы"];
+    await prisma.$transaction(
+      names.map((name, idx) =>
+        prisma.category.create({ data: { name, sortOrder: idx } })
+      )
+    );
+  }
+}
+ensureDefaultCategories().catch((e) =>
+  console.error("Failed to ensure default categories", e)
+);
+
+async function ensureDefaultModifiers() {
+  const dishes = await prisma.dish.findMany({ include: { modifiers: true } });
+  for (const dish of dishes) {
+    if (dish.modifiers.length === 0) {
+      await prisma.dishModifier.createMany({
+        data: [
+          ...DEFAULT_EXCLUSIONS.map((name) => ({
+            dishId: dish.id,
+            name,
+            type: "exclusion" as const,
+            price: 0,
+          })),
+          ...DEFAULT_ADDONS.map((a) => ({
+            dishId: dish.id,
+            name: a.name,
+            type: "addon" as const,
+            price: a.price,
+          })),
+        ],
+      });
+    }
+  }
+}
+ensureDefaultModifiers().catch((e) =>
+  console.error("Failed to ensure default modifiers", e)
+);
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
@@ -247,10 +308,69 @@ const DishUpsertSchema = z.object({
   imageUrl: z.string().optional().nullable(),
 });
 
+const CategoryUpsertSchema = z.object({
+  name: z.string().min(1),
+  sortOrder: z.number().int().optional(),
+});
+
+const ModifierUpsertSchema = z.object({
+  name: z.string().min(1),
+  type: z.enum(["addon", "exclusion"]),
+  price: z
+    .preprocess(
+      (v) => (v === undefined || v === null || v === "" ? 0 : v),
+      z.coerce.number().nonnegative()
+    )
+    .optional(),
+});
+
+const StatusUpsertSchema = z.object({
+  name: z.string().min(1),
+  color: z.string().min(1),
+});
+
+const DishStatusSchema = z.object({
+  statusId: z.string().optional().nullable(),
+});
+
+app.get(`${BASE}/admin/statuses`, async (_req: Request, res: Response) => {
+  const statuses = await prisma.dishStatus.findMany({ orderBy: { name: "asc" } });
+  res.json(statuses);
+});
+
+app.post(`${BASE}/admin/statuses`, async (req: Request, res: Response) => {
+  const parsed = StatusUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const st = await prisma.dishStatus.create({ data: parsed.data });
+  res.json(st);
+});
+
+app.put(`${BASE}/admin/statuses/:id`, async (req: Request, res: Response) => {
+  const parsed = StatusUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const st = await prisma.dishStatus.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json(st);
+});
+
+app.delete(`${BASE}/admin/statuses/:id`, async (req: Request, res: Response) => {
+  await prisma.dishStatus.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.put(`${BASE}/admin/dishes/:id/status`, async (req: Request, res: Response) => {
+  const parsed = DishStatusSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const dish = await prisma.dish.update({
+    where: { id: req.params.id },
+    data: { statusId: parsed.data.statusId ?? null },
+  });
+  res.json({ id: dish.id, statusId: dish.statusId });
+});
+
 app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
   const categories = await prisma.category.findMany({
     orderBy: { sortOrder: "asc" },
-    include: { dishes: { orderBy: { name: "asc" } } },
+    include: { dishes: { orderBy: { name: "asc" }, include: { status: true } } },
   });
   const result = categories.map((c: any) => ({
     id: c.id,
@@ -262,6 +382,10 @@ app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
       basePrice: Number(d.basePrice),
       description: d.description ?? null,
       imageUrl: d.imageUrl ?? null,
+      statusId: d.statusId ?? null,
+      status: d.status
+        ? { id: d.status.id, name: d.status.name, color: d.status.color }
+        : null,
     })),
   }));
   res.json(result);
@@ -271,37 +395,160 @@ app.post(`${BASE}/admin/dishes`, async (req: Request, res: Response) => {
   const parsed = DishUpsertSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const data = parsed.data;
-  const dish = await prisma.dish.create({
-    data: {
-      name: data.name,
-      categoryId: data.categoryId,
-      basePrice: data.basePrice,
-      description: data.description ?? null,
-      imageUrl: data.imageUrl ?? null,
-    },
-  });
-  res.json(dish);
+  try {
+    const dish = await prisma.dish.create({
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        basePrice: data.basePrice,
+        description: data.description ?? null,
+        imageUrl: data.imageUrl ?? null,
+      },
+    });
+    await prisma.dishModifier.createMany({
+      data: [
+        ...DEFAULT_EXCLUSIONS.map((name) => ({
+          dishId: dish.id,
+          name,
+          type: "exclusion" as const,
+          price: 0,
+        })),
+        ...DEFAULT_ADDONS.map((a) => ({
+          dishId: dish.id,
+          name: a.name,
+          type: "addon" as const,
+          price: a.price,
+        })),
+      ],
+    });
+    res.json(dish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save dish" });
+  }
 });
 
 app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
   const parsed = DishUpsertSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const data = parsed.data;
-  const dish = await prisma.dish.update({
-    where: { id: req.params.id },
-    data: {
-      name: data.name,
-      categoryId: data.categoryId,
-      basePrice: data.basePrice,
-      description: data.description ?? null,
-      imageUrl: data.imageUrl ?? null,
-    },
-  });
-  res.json(dish);
+  try {
+    const dish = await prisma.dish.update({
+      where: { id: req.params.id },
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        basePrice: data.basePrice,
+        description: data.description ?? null,
+        imageUrl: data.imageUrl ?? null,
+      },
+    });
+    res.json(dish);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save dish" });
+  }
 });
 
 app.delete(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
   await prisma.dish.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response) => {
+  const mods = await prisma.dishModifier.findMany({
+    where: { dishId: req.params.id },
+    orderBy: { name: "asc" },
+  });
+  res.json(mods.map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    type: m.type,
+    price: Number(m.price),
+  })));
+});
+
+app.post(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response) => {
+  const parsed = ModifierUpsertSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+  const data = parsed.data;
+  try {
+    const mod = await prisma.dishModifier.create({
+      data: {
+        dishId: req.params.id,
+        name: data.name,
+        type: data.type,
+        price: data.type === "addon" ? data.price ?? 0 : 0,
+      },
+    });
+    res.json({ ...mod, price: Number(mod.price) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save modifier" });
+  }
+});
+
+app.put(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
+  const parsed = ModifierUpsertSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
+  const data = parsed.data;
+  try {
+    const mod = await prisma.dishModifier.update({
+      where: { id: req.params.modId },
+      data: {
+        name: data.name,
+        type: data.type,
+        price: data.type === "addon" ? data.price ?? 0 : 0,
+      },
+    });
+    res.json({ ...mod, price: Number(mod.price) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save modifier" });
+  }
+});
+
+app.delete(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
+  await prisma.dishModifier.delete({ where: { id: req.params.modId } });
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/categories`, async (_req: Request, res: Response) => {
+  const cats = await prisma.category.findMany({ orderBy: { sortOrder: "asc" } });
+  res.json(cats);
+});
+
+app.post(`${BASE}/admin/categories`, async (req: Request, res: Response) => {
+  const parsed = CategoryUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const count = await prisma.category.count();
+  const cat = await prisma.category.create({
+    data: { name: data.name, sortOrder: data.sortOrder ?? count },
+  });
+  res.json(cat);
+});
+
+app.put(`${BASE}/admin/categories/:id`, async (req: Request, res: Response) => {
+  const parsed = CategoryUpsertSchema.partial().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const cat = await prisma.category.update({
+    where: { id: req.params.id },
+    data: parsed.data,
+  });
+  res.json(cat);
+});
+
+app.delete(`${BASE}/admin/categories/:id`, async (req: Request, res: Response) => {
+  await prisma.category.delete({ where: { id: req.params.id } });
   res.json({ ok: true });
 });
 
@@ -348,7 +595,7 @@ app.get(`${BASE}/dishes`, async (req: Request, res: Response) => {
           ? { availability: { some: { zoneId: { in: zoneIds } } } }
           : {}),
       },
-      include: { variants: true },
+      include: { variants: true, status: true },
       orderBy: { name: "asc" }
     });
 
@@ -365,6 +612,9 @@ app.get(`${BASE}/dishes`, async (req: Request, res: Response) => {
         imageUrl: d.imageUrl ?? undefined,
         basePrice: base,
         minPrice: min,
+        status: d.status
+          ? { name: d.status.name, color: d.status.color }
+          : undefined,
       };
     });
 
@@ -396,7 +646,7 @@ app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
 app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
   const d = await prisma.dish.findUnique({
     where: { id: req.params.id },
-    include: { variants: true, modifiers: true },
+    include: { variants: true, modifiers: true, status: true },
   });
   if (!d || !d.isActive) return res.status(404).json({ error: "Not found" });
 
@@ -426,6 +676,7 @@ app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {
     variants,
     addons,
     exclusions,
+    status: d.status ? { name: d.status.name, color: d.status.color } : undefined,
   });
 });
 
