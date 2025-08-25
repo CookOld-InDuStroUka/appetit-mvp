@@ -744,12 +744,20 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   let promoCodeId: string | undefined;
 
   if (data.type === "delivery") {
-    if (!data.zoneId || !data.address) return res.status(400).json({ error: "zoneId and address required for delivery" });
-    const zone = await prisma.zone.findUnique({ where: { id: data.zoneId } });
-    if (!zone) return res.status(400).json({ error: "zone not found" });
-    deliveryFee = Number(zone.deliveryFee);
-    zoneId = zone.id;
-    branchId = zone.branchId;
+    if (!data.address) return res.status(400).json({ error: "address required for delivery" });
+    if (data.zoneId) {
+      const zone = await prisma.zone.findUnique({ where: { id: data.zoneId } });
+      if (!zone) return res.status(400).json({ error: "zone not found" });
+      deliveryFee = Number(zone.deliveryFee);
+      zoneId = zone.id;
+      branchId = zone.branchId;
+    } else if (data.branchId) {
+      const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
+      if (!branch) return res.status(400).json({ error: "branch not found" });
+      branchId = branch.id;
+    } else {
+      return res.status(400).json({ error: "zoneId or branchId required for delivery" });
+    }
   } else {
     if (!data.branchId) return res.status(400).json({ error: "branchId required for pickup" });
     const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });

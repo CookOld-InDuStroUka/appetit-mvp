@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDelivery } from "./DeliveryContext";
+import { useAuth } from "./AuthContext";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -25,7 +26,10 @@ type Props = {
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
-  const { mode, address, branch, branches, open: openDelivery } = useDelivery();
+  const [payment, setPayment] = useState<"cash" | "card">("cash");
+  const [loading, setLoading] = useState(false);
+  const { user, open: openAuth } = useAuth();
+  const { mode, address, apt, entrance, floor, comment, branch, branches, open: openDelivery } = useDelivery();
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round(total * discount / 100);
@@ -34,6 +38,46 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
+
+  const submit = async () => {
+    if (!user?.phone) {
+      openAuth();
+      return;
+    }
+    const addr = [address, apt && `кв. ${apt}`, entrance && `подъезд ${entrance}`, floor && `этаж ${floor}`, comment]
+      .filter(Boolean)
+      .join(", ");
+    const payload = {
+      customer: { phone: user.phone, name: null },
+      type: mode,
+      zoneId: null,
+      address: mode === "delivery" ? addr : null,
+      branchId: branch,
+      items: items.map((i) => ({ dishId: i.id, variantId: null, qty: i.qty })),
+      paymentMethod: payment,
+      promoCode: promo || null,
+    };
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onClear();
+        onClose();
+        alert(`Заказ создан #${data.id}`);
+      } else {
+        alert(data.error || "Ошибка при создании заказа");
+      }
+    } catch (e) {
+      alert("Ошибка при создании заказа");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="modal-backdrop" onClick={handleBackdrop}>
@@ -247,7 +291,30 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               </div>
             </div>
 
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={payment === "cash"}
+                  onChange={() => setPayment("cash")}
+                />
+                Наличными
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={payment === "card"}
+                  onChange={() => setPayment("card")}
+                />
+                Картой
+              </label>
+            </div>
+
             <button
+              onClick={submit}
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "12px 0",
@@ -259,7 +326,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 fontWeight: 600,
               }}
             >
-              Оформить заказ
+              {loading ? "Отправка..." : "Оформить заказ"}
             </button>
           </>
         )}

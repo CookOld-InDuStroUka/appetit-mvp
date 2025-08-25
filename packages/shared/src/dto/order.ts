@@ -12,6 +12,7 @@ export type CreateOrderInput = {
   branchId?: string | null;
   items: OrderItemInput[];
   paymentMethod: "cash" | "card";
+  promoCode?: string | null;
 };
 
 export type OrderStatus =
