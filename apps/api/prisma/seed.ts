@@ -404,7 +404,6 @@ async function main() {
       expiresAt: new Date("2099-12-31"),
       conditions: "Тестовый промокод",
       maxUses: null,
-      branchId: null,
     },
   });
 
