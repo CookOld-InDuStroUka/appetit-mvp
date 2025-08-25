@@ -141,7 +141,12 @@ export default function OrdersAdmin() {
                   ))}
                 </select>
               </td>
-              <td>{new Date(o.createdAt).toLocaleString('ru-RU', { hour12: false })}</td>
+              <td>
+                {new Date(o.createdAt).toLocaleString('ru-RU', {
+                  hour12: false,
+                  timeZone: 'Asia/Almaty',
+                })}
+              </td>
             </tr>
           ))}
         </tbody>

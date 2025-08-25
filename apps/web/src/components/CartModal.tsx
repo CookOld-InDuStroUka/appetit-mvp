@@ -37,19 +37,25 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [showUserInfo, setShowUserInfo] = useState(false);
 
   const applyPromo = async (code: string) => {
-    if (!branch) return;
     try {
+      const payload: any = { code };
+      if (branch) payload.branchId = branch;
       const r = await fetch(`${API_BASE}/promo-codes/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, branchId: branch }),
+        body: JSON.stringify(payload),
       });
       if (r.ok) {
         const data = await r.json();
         setDiscount(data.discount);
       } else {
         setDiscount(0);
-        alert("Промокод не найден");
+        const err = await r.json().catch(() => null);
+        alert(
+          err?.error === "Invalid code" && branch
+            ? "Промокод недействителен для выбранного филиала"
+            : "Промокод не найден"
+        );
       }
     } catch {
       setDiscount(0);
@@ -64,7 +70,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   }, [initialPromo]);
 
   useEffect(() => {
-    if (promo && branch) {
+    if (promo) {
       applyPromo(promo);
     }
   }, [promo, branch]);
@@ -104,48 +110,27 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   };
 
   const toAstanaISO = (time: string, branchId: string) => {
-    const tz = "Asia/Almaty";
-    const now = new Date();
-    const fmt = new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    const parts = fmt.formatToParts(now);
-    const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
-    let dateStr = `${get("year")}-${get("month")}-${get("day")}`;
+    const [h, m] = time.split(":").map((n) => parseInt(n, 10));
     const branchInfo = branches.find((b) => b.id === branchId);
     const { open, overnight } = parseHours(branchInfo?.hours);
-    const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
     const sel = toMin(time);
     const start = toMin(open);
-    const timeFmt = new Intl.DateTimeFormat("en-GB", {
-      timeZone: tz,
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    }).formatToParts(now);
-    const cur =
-      parseInt(timeFmt.find((p) => p.type === "hour")?.value || "0") * 60 +
-      parseInt(timeFmt.find((p) => p.type === "minute")?.value || "0");
-    if (overnight && sel < start) {
-      const tomorrow = new Date(now.getTime() + 86400000);
-      const tp = fmt.formatToParts(tomorrow);
-      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
-    } else if (sel < cur) {
-      const tomorrow = new Date(now.getTime() + 86400000);
-      const tp = fmt.formatToParts(tomorrow);
-      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
+    const astanaNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Almaty" })
+    );
+    const cur = astanaNow.getHours() * 60 + astanaNow.getMinutes();
+    let date = astanaNow;
+    if ((overnight && sel < start) || sel < cur) {
+      date = new Date(date.getTime() + 86400000);
     }
-    const local = new Date(`${dateStr}T${time}:00`);
-    const tzDate = new Date(local.toLocaleString("en-US", { timeZone: tz }));
-    const offsetMin = (tzDate.getTime() - local.getTime()) / 60000;
-    const sign = offsetMin >= 0 ? "+" : "-";
-    const abs = Math.abs(offsetMin);
-    const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-    const mm = String(abs % 60).padStart(2, "0");
-    return `${dateStr}T${time}:00${sign}${hh}:${mm}`;
+    const utc = Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      h - 6,
+      m
+    );
+    return new Date(utc).toISOString().replace("Z", "+06:00");
   };
 
   const submit = async () => {

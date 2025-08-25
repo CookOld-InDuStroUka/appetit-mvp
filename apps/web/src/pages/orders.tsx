@@ -67,9 +67,27 @@ export default function OrdersPage() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <span>#{o.id.slice(0, 8)}</span>
-                  <span>{new Date(o.createdAt).toLocaleString("ru-RU", { hour12: false })}</span>
+                  <span>
+                    {new Date(o.createdAt).toLocaleString("ru-RU", {
+                      hour12: false,
+                      timeZone: "Asia/Almaty",
+                    })}
+                  </span>
                 </div>
                 <div>Статус: {ORDER_STATUS_LABELS[o.status]}</div>
+                <div>Тип: {o.type === "delivery" ? "Доставка" : "Самовывоз"}</div>
+                {o.type === "delivery" ? (
+                  <div>Примерное время прибытия: —</div>
+                ) : (
+                  <div>
+                    Самовывоз: {o.pickupTime
+                      ? new Date(o.pickupTime).toLocaleTimeString("ru-RU", {
+                          hour12: false,
+                          timeZone: "Asia/Almaty",
+                        })
+                      : "—"}
+                  </div>
+                )}
                 <div>Сумма: {o.total} ₸</div>
               </li>
             ))}

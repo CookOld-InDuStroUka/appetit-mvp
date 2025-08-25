@@ -146,23 +146,27 @@ export default function PromoCodesAdmin() {
                 />
               </td>
               <td>
-                <select
-                  multiple
-                  value={p.branchIds}
-                  onChange={(e) =>
-                    change(
-                      p.id,
-                      "branchIds",
-                      Array.from(e.target.selectedOptions).map((o) => o.value)
-                    )
-                  }
-                >
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
+                    <label key={b.id}>
+                      <input
+                        type="checkbox"
+                        checked={p.branchIds.includes(b.id)}
+                        onChange={(e) =>
+                          change(
+                            p.id,
+                            "branchIds",
+                            e.target.checked
+                              ? [...p.branchIds, b.id]
+                              : p.branchIds.filter((id) => id !== b.id)
+                          )
+                        }
+                      />
+                      {" "}
                       {b.name}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
               </td>
               <td>{p.usedCount}</td>
               <td>
@@ -200,22 +204,26 @@ export default function PromoCodesAdmin() {
           onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
           style={{ width: 80 }}
         />
-        <select
-          multiple
-          value={form.branchIds}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              branchIds: Array.from(e.target.selectedOptions).map((o) => o.value),
-            })
-          }
-        >
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {branches.map((b) => (
-            <option key={b.id} value={b.id}>
+            <label key={b.id}>
+              <input
+                type="checkbox"
+                checked={form.branchIds.includes(b.id)}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    branchIds: e.target.checked
+                      ? [...form.branchIds, b.id]
+                      : form.branchIds.filter((id) => id !== b.id),
+                  })
+                }
+              />
+              {" "}
               {b.name}
-            </option>
+            </label>
           ))}
-        </select>
+        </div>
         <button onClick={create}>Создать</button>
       </div>
     </AdminLayout>
