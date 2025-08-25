@@ -267,6 +267,12 @@ const CategoryUpsertSchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
+const ModifierUpsertSchema = z.object({
+  name: z.string().min(1),
+  type: z.enum(["addon", "exclusion"]),
+  price: z.coerce.number().nonnegative().default(0),
+});
+
 app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
   const categories = await prisma.category.findMany({
     orderBy: { sortOrder: "asc" },
@@ -332,6 +338,54 @@ app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
 
 app.delete(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
   await prisma.dish.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response) => {
+  const mods = await prisma.dishModifier.findMany({
+    where: { dishId: req.params.id },
+    orderBy: { name: "asc" },
+  });
+  res.json(mods.map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    type: m.type,
+    price: Number(m.price),
+  })));
+});
+
+app.post(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response) => {
+  const parsed = ModifierUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const mod = await prisma.dishModifier.create({
+    data: {
+      dishId: req.params.id,
+      name: data.name,
+      type: data.type,
+      price: data.type === "addon" ? data.price : 0,
+    },
+  });
+  res.json(mod);
+});
+
+app.put(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
+  const parsed = ModifierUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const mod = await prisma.dishModifier.update({
+    where: { id: req.params.modId },
+    data: {
+      name: data.name,
+      type: data.type,
+      price: data.type === "addon" ? data.price : 0,
+    },
+  });
+  res.json(mod);
+});
+
+app.delete(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
+  await prisma.dishModifier.delete({ where: { id: req.params.modId } });
   res.json({ ok: true });
 });
 

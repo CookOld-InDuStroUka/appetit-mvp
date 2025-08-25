@@ -2,6 +2,7 @@ import AdminLayout from "../../components/AdminLayout";
 import { useEffect, useState } from "react";
 import DishFormModal from "../../components/DishFormModal";
 import CategoryManagerModal from "../../components/CategoryManagerModal";
+import ModifierManagerModal from "../../components/ModifierManagerModal";
 
 interface Dish {
   id: string;
@@ -27,6 +28,7 @@ export default function MenuAdmin() {
     initialCategoryId?: string;
   } | null>(null);
   const [manageCats, setManageCats] = useState(false);
+  const [modDish, setModDish] = useState<Dish | null>(null);
 
   const load = async () => {
     try {
@@ -75,6 +77,12 @@ export default function MenuAdmin() {
                   {d.name} — {d.basePrice}₸
                 </span>
                 <button
+                  onClick={() => setModDish(d)}
+                  className="admin-nav-btn"
+                >
+                  Топпинги
+                </button>
+                <button
                   onClick={() => openEdit(d)}
                   className="admin-nav-btn"
                 >
@@ -110,6 +118,12 @@ export default function MenuAdmin() {
             setManageCats(false);
             load();
           }}
+        />
+      )}
+      {modDish && (
+        <ModifierManagerModal
+          dish={modDish}
+          onClose={() => setModDish(null)}
         />
       )}
     </AdminLayout>
