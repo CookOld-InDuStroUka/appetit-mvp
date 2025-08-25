@@ -36,37 +36,72 @@ export default function DishStatusesPage() {
 
   const addStatus = async () => {
     if (!newStatus.name) return;
-    await fetch(`${API_BASE}/admin/statuses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newStatus),
-    });
-    setNewStatus({ name: "", color: "#ff9800" });
-    load();
+    try {
+      const res = await fetch(`${API_BASE}/admin/statuses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newStatus),
+      });
+      if (res.ok) {
+        alert("Статус добавлен");
+        setNewStatus({ name: "", color: "#ff9800" });
+        load();
+      } else {
+        alert("Не удалось добавить статус");
+      }
+    } catch {
+      alert("Не удалось добавить статус");
+    }
   };
 
   const saveStatus = async (st: Status) => {
-    await fetch(`${API_BASE}/admin/statuses/${st.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: st.name, color: st.color }),
-    });
-    load();
+    try {
+      const res = await fetch(`${API_BASE}/admin/statuses/${st.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: st.name, color: st.color }),
+      });
+      if (res.ok) {
+        alert("Сохранено");
+        load();
+      } else {
+        alert("Не удалось сохранить");
+      }
+    } catch {
+      alert("Не удалось сохранить");
+    }
   };
 
   const deleteStatus = async (id: string) => {
     if (!confirm("Удалить статус?")) return;
-    await fetch(`${API_BASE}/admin/statuses/${id}`, { method: "DELETE" });
-    load();
+    try {
+      const res = await fetch(`${API_BASE}/admin/statuses/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        alert("Удалено");
+        load();
+      } else {
+        alert("Не удалось удалить");
+      }
+    } catch {
+      alert("Не удалось удалить");
+    }
   };
-
-  const setDishStatus = async (dishId: string, statusId: string | null) => {
-    await fetch(`${API_BASE}/admin/dishes/${dishId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ statusId }),
-    });
-    load();
+  const saveDishStatus = async (dish: Dish) => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/dishes/${dish.id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statusId: dish.statusId ?? null }),
+      });
+      if (res.ok) {
+        alert("Сохранено");
+        load();
+      } else {
+        alert("Не удалось сохранить");
+      }
+    } catch {
+      alert("Не удалось сохранить");
+    }
   };
 
   return (
@@ -130,7 +165,11 @@ export default function DishStatusesPage() {
               <select
                 value={d.statusId ?? ""}
                 onChange={(e) =>
-                  setDishStatus(d.id, e.target.value || null)
+                  setDishes((prev) =>
+                    prev.map((p) =>
+                      p.id === d.id ? { ...p, statusId: e.target.value || null } : p
+                    )
+                  )
                 }
               >
                 <option value="">—</option>
@@ -140,6 +179,12 @@ export default function DishStatusesPage() {
                   </option>
                 ))}
               </select>
+              <button
+                onClick={() => saveDishStatus(d)}
+                className="admin-nav-btn"
+              >
+                Сохранить
+              </button>
             </li>
           ))}
         </ul>
