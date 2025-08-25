@@ -967,8 +967,12 @@ app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
   res.json(o);
 });
 
-app.get(`${BASE}/admin/orders`, async (_req: Request, res: Response) => {
+app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
+  const where = req.query.branchId
+    ? { branchId: String(req.query.branchId) }
+    : undefined;
   const orders = await prisma.order.findMany({
+    where,
     include: { items: true },
     orderBy: { createdAt: "desc" },
   });

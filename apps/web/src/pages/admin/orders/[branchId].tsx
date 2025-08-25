@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "../../components/AdminLayout";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import AdminLayout from "../../../components/AdminLayout";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -32,12 +34,17 @@ type Order = {
 };
 
 export default function OrdersAdmin() {
+  const router = useRouter();
+  const { branchId } = router.query as { branchId?: string };
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [branchName, setBranchName] = useState<string>("");
 
   const load = async () => {
+    if (!branchId) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/orders`);
+      const res = await fetch(`${API_BASE}/admin/orders?branchId=${branchId}`);
       if (!res.ok) throw new Error("failed");
       const list = await res.json();
       setOrders(list);
@@ -50,8 +57,22 @@ export default function OrdersAdmin() {
   };
 
   useEffect(() => {
+    if (!branchId) return;
     load();
-  }, []);
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [branchId]);
+
+  useEffect(() => {
+    if (!branchId) return;
+    fetch(`${API_BASE}/branches`)
+      .then((r) => r.json())
+      .then((list) => {
+        const b = list.find((x: any) => x.id === branchId);
+        setBranchName(b?.name || "");
+      })
+      .catch(() => {});
+  }, [branchId]);
 
   const update = async (id: string, status: OrderStatus) => {
     await fetch(`${API_BASE}/admin/orders/${id}/status`, {
@@ -64,7 +85,10 @@ export default function OrdersAdmin() {
 
   return (
     <AdminLayout>
-      <h1>Заказы</h1>
+      <h1>Заказы {branchName && `– ${branchName}`}</h1>
+      <p>
+        <Link href="/admin/orders">Вернуться к списку филиалов</Link>
+      </p>
       {error && (
         <p style={{ color: "red" }}>{error}</p>
       )}
@@ -83,7 +107,15 @@ export default function OrdersAdmin() {
         <tbody>
           {orders.map((o) => (
             <tr key={o.id}>
-              <td>{o.id.slice(0, 8)}</td>
+              <td>
+                {o.id.slice(0, 8)}
+                <button
+                  style={{ marginLeft: 4 }}
+                  onClick={() => navigator.clipboard.writeText(o.id)}
+                >
+                  📋
+                </button>
+              </td>
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>

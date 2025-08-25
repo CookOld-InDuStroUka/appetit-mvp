@@ -175,6 +175,11 @@ export default function Header() {
             <Link href="/contacts" className="link">
               Контакты
             </Link>
+            {user && (
+              <Link href="/orders" className="link">
+                Заказы
+              </Link>
+            )}
 
             {user ? (
               <Link href="/profile" className="link">

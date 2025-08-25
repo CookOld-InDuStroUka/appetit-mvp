@@ -138,7 +138,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       const tp = fmt.formatToParts(tomorrow);
       dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
     }
-    return `${dateStr}T${time}:00+06:00`;
+    const local = new Date(`${dateStr}T${time}:00`);
+    const tzDate = new Date(local.toLocaleString("en-US", { timeZone: tz }));
+    const offsetMin = (tzDate.getTime() - local.getTime()) / 60000;
+    const sign = offsetMin >= 0 ? "+" : "-";
+    const abs = Math.abs(offsetMin);
+    const hh = String(Math.floor(abs / 60)).padStart(2, "0");
+    const mm = String(abs % 60).padStart(2, "0");
+    return `${dateStr}T${time}:00${sign}${hh}:${mm}`;
   };
 
   const submit = async () => {
