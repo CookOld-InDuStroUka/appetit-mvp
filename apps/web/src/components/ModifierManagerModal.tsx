@@ -17,66 +17,58 @@ interface Props {
 
 export default function ModifierManagerModal({ dish, onClose }: Props) {
   const [mods, setMods] = useState<Modifier[]>([]);
-
-  const load = async () => {
-    try {
-      const data = await fetch(
-        `${API_BASE}/admin/dishes/${dish.id}/modifiers`
-      ).then((r) => r.json());
-      setMods(data);
-    } catch {
-      setMods([]);
-    }
-  };
+  const [removed, setRemoved] = useState<string[]>([]);
 
   useEffect(() => {
-    load();
+    fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers`)
+      .then((r) => r.json())
+      .then((d) => setMods(d))
+      .catch(() => setMods([]));
   }, [dish.id]);
 
-  const add = async (type: "addon" | "exclusion") => {
-    const name = prompt("Название");
-    if (!name) return;
-    let price = 0;
-    if (type === "addon") {
-      const p = prompt("Цена", "0");
-      if (p === null) return;
-      price = Number(p);
-    }
-    await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, type, price }),
-    });
-    load();
+  const add = (type: "addon" | "exclusion") => {
+    setMods([
+      ...mods,
+      { id: `new-${Date.now()}`, name: "", price: 0, type },
+    ]);
   };
 
-  const edit = async (m: Modifier) => {
-    const name = prompt("Название", m.name);
-    if (!name) return;
-    let price = m.price;
-    if (m.type === "addon") {
-      const p = prompt("Цена", m.price.toString());
-      if (p === null) return;
-      price = Number(p);
-    }
-    await fetch(
-      `${API_BASE}/admin/dishes/${dish.id}/modifiers/${m.id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type: m.type, price }),
+  const update = (id: string, field: "name" | "price", value: string) => {
+    setMods(
+      mods.map((m) =>
+        m.id === id ? { ...m, [field]: field === "price" ? Number(value) : value } : m
+      )
+    );
+  };
+
+  const remove = (id: string) => {
+    if (!id.startsWith("new-")) setRemoved([...removed, id]);
+    setMods(mods.filter((m) => m.id !== id));
+  };
+
+  const save = async () => {
+    for (const m of mods) {
+      const payload = { name: m.name, type: m.type, price: m.price };
+      if (m.id.startsWith("new-")) {
+        await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers/${m.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
       }
-    );
-    load();
-  };
-
-  const remove = async (id: string) => {
-    if (!confirm("Удалить?")) return;
-    await fetch(
-      `${API_BASE}/admin/dishes/${dish.id}/modifiers/${id}`,
-      { method: "DELETE" }
-    );
-    load();
+    }
+    for (const id of removed) {
+      await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers/${id}`, {
+        method: "DELETE",
+      });
+    }
+    onClose();
   };
 
   const addons = mods.filter((m) => m.type === "addon");
@@ -84,50 +76,65 @@ export default function ModifierManagerModal({ dish, onClose }: Props) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+      <div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 400 }}
+      >
         <h2 style={{ marginTop: 0 }}>Топпинги: {dish.name}</h2>
 
         <h3>Добавки</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {addons.map((m) => (
-            <li key={m.id} className="admin-dish-item">
-              <span style={{ flex: 1 }}>
-                {m.name} — {m.price}₸
-              </span>
-              <button onClick={() => edit(m)} className="admin-nav-btn">
-                Изм.
-              </button>
+            <div key={m.id} style={{ display: "flex", gap: 4 }}>
+              <input
+                value={m.name}
+                onChange={(e) => update(m.id, "name", e.target.value)}
+                placeholder="Название"
+                style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
+              <input
+                type="number"
+                value={m.price}
+                onChange={(e) => update(m.id, "price", e.target.value)}
+                style={{ width: 70, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
               <button onClick={() => remove(m.id)} className="admin-nav-btn">
-                Удалить
+                ✕
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
-        <button onClick={() => add("addon")} className="add-btn">
-          Добавить добавку
-        </button>
+          <button onClick={() => add("addon")} className="add-btn">
+            Добавить добавку
+          </button>
+        </div>
 
         <h3 style={{ marginTop: 20 }}>Исключения</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {exclusions.map((m) => (
-            <li key={m.id} className="admin-dish-item">
-              <span style={{ flex: 1 }}>{m.name}</span>
-              <button onClick={() => edit(m)} className="admin-nav-btn">
-                Изм.
-              </button>
+            <div key={m.id} style={{ display: "flex", gap: 4 }}>
+              <input
+                value={m.name}
+                onChange={(e) => update(m.id, "name", e.target.value)}
+                placeholder="Название"
+                style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
               <button onClick={() => remove(m.id)} className="admin-nav-btn">
-                Удалить
+                ✕
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
-        <button onClick={() => add("exclusion")} className="add-btn">
-          Добавить исключение
-        </button>
+          <button onClick={() => add("exclusion")} className="add-btn">
+            Добавить исключение
+          </button>
+        </div>
 
-        <div style={{ marginTop: 20, textAlign: "right" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
           <button onClick={onClose} className="admin-nav-btn">
-            Закрыть
+            Отмена
+          </button>
+          <button onClick={save} className="add-btn">
+            Сохранить
           </button>
         </div>
       </div>

@@ -9,6 +9,25 @@ import path from "path";
 const app = express();
 const prisma = new PrismaClient();
 
+const DEFAULT_EXCLUSIONS = [
+  "Без кетчупа",
+  "Без фри",
+  "Без мяса",
+  "Без лука",
+  "Без майонеза",
+  "Без помидор",
+];
+
+const DEFAULT_ADDONS = [
+  { name: "соус Горчичный во внутрь", price: 240 },
+  { name: "соус Барбекю во внутрь", price: 240 },
+  { name: "соус Сырный во внутрь", price: 240 },
+  { name: "перчики острые во внутрь", price: 240 },
+  { name: "соус Томатный во внутрь", price: 240 },
+  { name: "соус Острый во внутрь", price: 240 },
+  { name: "соус Чесночный во внутрь", price: 240 },
+];
+
 async function ensureDefaultCategories() {
   const count = await prisma.category.count();
   if (count === 0) {
@@ -22,6 +41,33 @@ async function ensureDefaultCategories() {
 }
 ensureDefaultCategories().catch((e) =>
   console.error("Failed to ensure default categories", e)
+);
+
+async function ensureDefaultModifiers() {
+  const dishes = await prisma.dish.findMany({ include: { modifiers: true } });
+  for (const dish of dishes) {
+    if (dish.modifiers.length === 0) {
+      await prisma.dishModifier.createMany({
+        data: [
+          ...DEFAULT_EXCLUSIONS.map((name) => ({
+            dishId: dish.id,
+            name,
+            type: "exclusion" as const,
+            price: 0,
+          })),
+          ...DEFAULT_ADDONS.map((a) => ({
+            dishId: dish.id,
+            name: a.name,
+            type: "addon" as const,
+            price: a.price,
+          })),
+        ],
+      });
+    }
+  }
+}
+ensureDefaultModifiers().catch((e) =>
+  console.error("Failed to ensure default modifiers", e)
 );
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
@@ -306,6 +352,22 @@ app.post(`${BASE}/admin/dishes`, async (req: Request, res: Response) => {
         description: data.description ?? null,
         imageUrl: data.imageUrl ?? null,
       },
+    });
+    await prisma.dishModifier.createMany({
+      data: [
+        ...DEFAULT_EXCLUSIONS.map((name) => ({
+          dishId: dish.id,
+          name,
+          type: "exclusion" as const,
+          price: 0,
+        })),
+        ...DEFAULT_ADDONS.map((a) => ({
+          dishId: dish.id,
+          name: a.name,
+          type: "addon" as const,
+          price: a.price,
+        })),
+      ],
     });
     res.json(dish);
   } catch (err) {
