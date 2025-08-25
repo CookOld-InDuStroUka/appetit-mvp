@@ -32,15 +32,15 @@ export default function PickupMap({
 
     const initMap = async () => {
       const ymaps = await loadYmaps();
-      if (!ymaps || !mapRef.current) {
-        if (mapRef.current) {
-          mapRef.current.innerHTML =
-            '<div style="padding:8px">Карта недоступна: нет ключа Yandex Maps</div>';
-        }
+      const el = mapRef.current;
+      if (!ymaps || !el || typeof (ymaps as any).Map !== "function") {
+        el &&
+          (el.innerHTML =
+            '<div style="padding:8px">Карта недоступна: нет ключа Yandex Maps</div>');
         return;
       }
       const center: [number, number] = branches[0]?.coords || [49.9483, 82.6275];
-      const map = new ymaps.Map(mapRef.current, {
+      const map = new (ymaps.Map as any)(el, {
         center,
         zoom: 12,
         controls: [],
