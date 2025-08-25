@@ -38,6 +38,12 @@ const DEFAULT_BRANCHES: Branch[] = [
     hours: "10:00 – 00:00",
   },
   {
+    id: "kabanbay",
+    name: "ул. Кабанбай батыра, 148",
+    coords: [49.954, 82.620],
+    hours: "09:00 – 22:00",
+  },
+  {
     id: "nazarbaeva",
     name: "пр. Нурсултана Назарбаева, 28А",
     coords: [49.962379, 82.602893],

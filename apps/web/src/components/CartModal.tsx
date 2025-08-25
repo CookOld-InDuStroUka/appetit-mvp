@@ -46,6 +46,57 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
 
+  const parseHours = (hours?: string) => {
+    if (!hours) return { open: "00:00", close: "23:59", overnight: false };
+    const lower = hours.toLowerCase();
+    if (lower.includes("круглосуточ")) return { open: "00:00", close: "23:59", overnight: false };
+    const m = hours.match(/(\d{2}:\d{2})\s*[–—-]\s*(\d{2}:\d{2})/);
+    if (m) {
+      const open = m[1];
+      const close = m[2];
+      return { open, close, overnight: close < open };
+    }
+    return { open: "00:00", close: "23:59", overnight: false };
+  };
+
+  const toAstanaISO = (time: string, branchId: string) => {
+    const tz = "Asia/Almaty";
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = fmt.formatToParts(now);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+    let dateStr = `${get("year")}-${get("month")}-${get("day")}`;
+    const branchInfo = branches.find((b) => b.id === branchId);
+    const { open, overnight } = parseHours(branchInfo?.hours);
+    const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+    const sel = toMin(time);
+    const start = toMin(open);
+    const timeFmt = new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(now);
+    const cur =
+      parseInt(timeFmt.find((p) => p.type === "hour")?.value || "0") * 60 +
+      parseInt(timeFmt.find((p) => p.type === "minute")?.value || "0");
+    if (overnight && sel < start) {
+      const tomorrow = new Date(now.getTime() + 86400000);
+      const tp = fmt.formatToParts(tomorrow);
+      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
+    } else if (sel < cur) {
+      const tomorrow = new Date(now.getTime() + 86400000);
+      const tp = fmt.formatToParts(tomorrow);
+      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
+    }
+    return `${dateStr}T${time}:00+06:00`;
+  };
+
   const submit = async () => {
     if (!user) {
       openAuth();
@@ -79,7 +130,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       branchId: branch,
       pickupTime:
         mode === "pickup" && pickupTime
-          ? new Date(`${new Date().toISOString().slice(0, 10)}T${pickupTime}:00`).toISOString()
+          ? toAstanaISO(pickupTime, branch)
           : null,
       items: items.map((i) => ({
         dishId: i.dishId,

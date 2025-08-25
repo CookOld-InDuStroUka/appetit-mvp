@@ -4,6 +4,21 @@ import DeliveryMap from "./DeliveryMap";
 import PickupMap from "./PickupMap";
 import { useDelivery } from "./DeliveryContext";
 
+function parseHours(hours?: string) {
+  if (!hours) return { open: "00:00", close: "23:59", overnight: false };
+  const lower = hours.toLowerCase();
+  if (lower.includes("круглосуточ")) {
+    return { open: "00:00", close: "23:59", overnight: false };
+  }
+  const m = hours.match(/(\d{2}:\d{2})\s*[–—-]\s*(\d{2}:\d{2})/);
+  if (m) {
+    const open = m[1];
+    const close = m[2];
+    return { open, close, overnight: close < open };
+  }
+  return { open: "00:00", close: "23:59", overnight: false };
+}
+
 export default function DeliveryModal() {
   const {
     mode,
@@ -39,6 +54,17 @@ export default function DeliveryModal() {
 
   const handleBackdrop = () => close();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();
+
+  const currentBranch = branches.find((b) => b.id === branch);
+  const { open: openTime, close: closeTime, overnight } = parseHours(currentBranch?.hours);
+  const handleTimeChange = (val: string) => {
+    const toMin = (t: string) => parseInt(t.slice(0, 2)) * 60 + parseInt(t.slice(3, 5));
+    const sel = toMin(val);
+    const start = toMin(openTime);
+    const end = toMin(closeTime);
+    const valid = overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
+    if (valid) setPickupTime(val);
+  };
 
   if (mobile) {
     return (
@@ -91,10 +117,14 @@ export default function DeliveryModal() {
                 width: "calc(100% - 32px)",
               }}
             >
+              <div style={{ marginBottom: 4, fontSize: 12 }}>Желаемое время самовывоза (Астана)</div>
               <input
                 type="time"
+                lang="ru"
                 value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
+                min={openTime}
+                max={!overnight ? closeTime : undefined}
+                onChange={(e) => handleTimeChange(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
@@ -276,10 +306,14 @@ export default function DeliveryModal() {
               height={300}
             />
             <div style={{ marginTop: 16 }}>
+              <h3 style={{ margin: "0 0 8px" }}>Желаемое время самовывоза (Астана)</h3>
               <input
                 type="time"
+                lang="ru"
                 value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
+                min={openTime}
+                max={!overnight ? closeTime : undefined}
+                onChange={(e) => handleTimeChange(e.target.value)}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
             </div>
