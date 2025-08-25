@@ -172,7 +172,7 @@ export default function ProfilePage() {
                 style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 12 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span>{new Date(o.createdAt).toLocaleString("ru-RU")}</span>
+                  <span>{new Date(o.createdAt).toLocaleString("ru-RU", { hour12: false })}</span>
                   <span>{o.total} ₸</span>
                 </div>
                 <button

@@ -12,6 +12,9 @@ export default function PromosAdmin() {
         <li>
           <Link href="/admin/promos/statuses">Статусы блюд</Link>
         </li>
+        <li>
+          <Link href="/admin/promos/slider">Слайдер</Link>
+        </li>
       </ul>
     </AdminLayout>
   );

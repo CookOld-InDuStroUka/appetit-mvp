@@ -87,7 +87,7 @@ export default function OrdersAdmin() {
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>
-              <td>{o.pickupTime ? new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "—"}</td>
+              <td>{o.pickupTime ? new Date(o.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "—"}</td>
               <td>
                 <select
                   value={o.status}
@@ -100,7 +100,7 @@ export default function OrdersAdmin() {
                   ))}
                 </select>
               </td>
-              <td>{new Date(o.createdAt).toLocaleString()}</td>
+              <td>{new Date(o.createdAt).toLocaleString('ru-RU', { hour12: false })}</td>
             </tr>
           ))}
         </tbody>

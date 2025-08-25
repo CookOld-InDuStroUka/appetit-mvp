@@ -117,7 +117,7 @@ export default function DeliveryModal() {
                 width: "calc(100% - 32px)",
               }}
             >
-              <div style={{ marginBottom: 4, fontSize: 12 }}>Желаемое время самовывоза (Астана)</div>
+              <div style={{ marginBottom: 4, fontSize: 12 }}>Желаемое время самовывоза</div>
               <input
                 type="time"
                 lang="ru"
@@ -306,7 +306,7 @@ export default function DeliveryModal() {
               height={300}
             />
             <div style={{ marginTop: 16 }}>
-              <h3 style={{ margin: "0 0 8px" }}>Желаемое время самовывоза (Астана)</h3>
+              <h3 style={{ margin: "0 0 8px" }}>Желаемое время самовывоза</h3>
               <input
                 type="time"
                 lang="ru"
