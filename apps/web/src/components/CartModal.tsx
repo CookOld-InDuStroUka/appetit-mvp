@@ -201,7 +201,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                     const r = await fetch(`${API_BASE}/promo-codes/check`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ code: promo }),
+                      body: JSON.stringify({ code: promo, branchId: branch }),
                     });
                     if (r.ok) {
                       const data = await r.json();

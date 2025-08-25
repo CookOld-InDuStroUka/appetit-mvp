@@ -65,6 +65,7 @@ model Branch {
   phone   String?
   zones   Zone[]
   orders  Order[] //  обратная связь к Order.branch
+  promoCodes PromoCode[]
 }
 
 model Zone {
@@ -168,6 +169,10 @@ model PromoCode {
   discount    Int
   expiresAt   DateTime
   conditions  String?
+  maxUses     Int?
+  usedCount   Int      @default(0)
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
   orders      Order[]
 }
 

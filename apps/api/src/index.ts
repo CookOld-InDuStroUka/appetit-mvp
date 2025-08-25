@@ -102,8 +102,66 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
   const parsed = PromoCodeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   const promo = await prisma.promoCode.findUnique({ where: { code: parsed.data.code } });
-  if (!promo || promo.expiresAt < new Date()) return res.status(404).json({ error: "Invalid code" });
-  res.json({ code: promo.code, discount: promo.discount, expiresAt: promo.expiresAt, conditions: promo.conditions });
+  if (
+    !promo ||
+    promo.expiresAt < new Date() ||
+    (promo.maxUses !== null && promo.usedCount >= (promo.maxUses ?? 0)) ||
+    (promo.branchId && promo.branchId !== parsed.data.branchId)
+  ) {
+    return res.status(404).json({ error: "Invalid code" });
+  }
+  res.json({
+    code: promo.code,
+    discount: promo.discount,
+    expiresAt: promo.expiresAt,
+    conditions: promo.conditions,
+  });
+});
+
+// --- Admin promo codes CRUD ---
+app.get(`${BASE}/admin/promo-codes`, async (_req: Request, res: Response) => {
+  const codes = await prisma.promoCode.findMany({ include: { branch: true } });
+  res.json(codes);
+});
+
+app.post(`${BASE}/admin/promo-codes`, async (req: Request, res: Response) => {
+  const parsed = PromoCodeUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const promo = await prisma.promoCode.create({
+    data: {
+      code: data.code,
+      discount: data.discount,
+      expiresAt: data.expiresAt,
+      conditions: data.conditions ?? null,
+      maxUses: data.maxUses ?? null,
+      branchId: data.branchId ?? null,
+    },
+  });
+  res.json(promo);
+});
+
+app.put(`${BASE}/admin/promo-codes/:id`, async (req: Request, res: Response) => {
+  const parsed = PromoCodeUpsertSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const data = parsed.data;
+  const promo = await prisma.promoCode.update({
+    where: { id: req.params.id },
+    data: {
+      code: data.code,
+      discount: data.discount,
+      expiresAt: data.expiresAt,
+      conditions: data.conditions ?? null,
+      maxUses: data.maxUses ?? null,
+      branchId: data.branchId ?? null,
+    },
+  });
+  res.json(promo);
+});
+
+app.delete(`${BASE}/admin/promo-codes/:id`, async (req: Request, res: Response) => {
+  await prisma.promoCode.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
 });
 
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
@@ -306,7 +364,19 @@ const OrderSchema = z.object({
   promoCode: z.string().optional().nullable()
 });
 
-const PromoCodeSchema = z.object({ code: z.string() });
+const PromoCodeSchema = z.object({
+  code: z.string(),
+  branchId: z.string().optional().nullable(),
+});
+
+const PromoCodeUpsertSchema = z.object({
+  code: z.string(),
+  discount: z.number().int(),
+  expiresAt: z.coerce.date(),
+  conditions: z.string().optional().nullable(),
+  maxUses: z.number().int().optional().nullable(),
+  branchId: z.string().optional().nullable(),
+});
 
 app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   const parsed = OrderSchema.safeParse(req.body);
@@ -341,6 +411,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     if (!zone) return res.status(400).json({ error: "zone not found" });
     deliveryFee = Number(zone.deliveryFee);
     zoneId = zone.id;
+    branchId = zone.branchId;
   } else {
     if (!data.branchId) return res.status(400).json({ error: "branchId required for pickup" });
     const branch = await prisma.branch.findUnique({ where: { id: data.branchId } });
@@ -350,8 +421,13 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
 
   if (data.promoCode) {
     const promo = await prisma.promoCode.findUnique({ where: { code: data.promoCode } });
-    if (promo && promo.expiresAt >= new Date()) {
-      discount = Math.round(subtotal * promo.discount / 100);
+    if (
+      promo &&
+      promo.expiresAt >= new Date() &&
+      (promo.maxUses === null || promo.usedCount < (promo.maxUses ?? 0)) &&
+      (!promo.branchId || promo.branchId === branchId)
+    ) {
+      discount = Math.round((subtotal * promo.discount) / 100);
       promoCodeId = promo.id;
     }
   }
@@ -399,6 +475,13 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       }
     }
   });
+
+  if (promoCodeId) {
+    await prisma.promoCode.update({
+      where: { id: promoCodeId },
+      data: { usedCount: { increment: 1 } },
+    });
+  }
 
   res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, discount, total, bonusEarned, createdAt: order.createdAt });
 });

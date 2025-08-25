@@ -41,10 +41,11 @@ export default function Checkout() {
 
   const applyPromo = async () => {
     try {
+      const z = zones.find((z) => z.id === form.zoneId);
       const r = await fetch(`${API_BASE}/promo-codes/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: promo })
+        body: JSON.stringify({ code: promo, branchId: z?.branchId })
       });
       if (r.ok) {
         const data = await r.json();

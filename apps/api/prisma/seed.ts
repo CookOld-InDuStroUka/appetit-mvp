@@ -370,6 +370,20 @@ async function main() {
     skipDuplicates: true
   });
 
+  // --- Promo codes ---
+  await prisma.promoCode.upsert({
+    where: { code: "test10" },
+    update: {},
+    create: {
+      code: "test10",
+      discount: 10,
+      expiresAt: new Date("2099-12-31"),
+      conditions: "Тестовый промокод",
+      maxUses: null,
+      branchId: null,
+    },
+  });
+
   // --- CMS (upsert по slug) ---
   await prisma.cmsPage.upsert({
     where: { slug: "delivery-terms" },
