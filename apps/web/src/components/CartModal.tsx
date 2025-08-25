@@ -44,6 +44,19 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       openAuth();
       return;
     }
+    if (items.length === 0) {
+      return;
+    }
+    if (mode === "delivery" && !address) {
+      alert("Укажите адрес доставки");
+      openDelivery();
+      return;
+    }
+    if (!branch) {
+      alert("Выберите филиал");
+      openDelivery();
+      return;
+    }
     const addr = [address, apt && `кв. ${apt}`, entrance && `подъезд ${entrance}`, floor && `этаж ${floor}`, comment]
       .filter(Boolean)
       .join(", ");

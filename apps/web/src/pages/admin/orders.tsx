@@ -23,10 +23,20 @@ type Order = {
 
 export default function OrdersAdmin() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const list = await fetch(`${API_BASE}/admin/orders`).then((r) => r.json());
-    setOrders(list);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders`);
+      if (!res.ok) throw new Error("failed");
+      const list = await res.json();
+      setOrders(list);
+      setError(null);
+    } catch (e) {
+      console.error("Failed to fetch orders", e);
+      setOrders([]);
+      setError("Не удалось загрузить заказы");
+    }
   };
 
   useEffect(() => {
@@ -45,6 +55,9 @@ export default function OrdersAdmin() {
   return (
     <AdminLayout>
       <h1>Заказы</h1>
+      {error && (
+        <p style={{ color: "red" }}>{error}</p>
+      )}
       <table border={1} cellPadding={4} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr>
