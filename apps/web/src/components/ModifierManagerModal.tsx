@@ -47,28 +47,36 @@ export default function ModifierManagerModal({ dish, onClose }: Props) {
   };
 
   const save = async () => {
-    for (const m of mods) {
-      const payload = { name: m.name, type: m.type, price: m.price };
-      if (m.id.startsWith("new-")) {
-        await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers`, {
-          method: "POST",
+    try {
+      for (const m of mods) {
+        if (!m.name.trim()) continue;
+        const payload = {
+          name: m.name.trim(),
+          type: m.type,
+          price: Number.isFinite(m.price) ? m.price : 0,
+        };
+        const url = m.id.startsWith("new-")
+          ? `${API_BASE}/admin/dishes/${dish.id}/modifiers`
+          : `${API_BASE}/admin/dishes/${dish.id}/modifiers/${m.id}`;
+        const method = m.id.startsWith("new-") ? "POST" : "PUT";
+        const res = await fetch(url, {
+          method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-      } else {
-        await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers/${m.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        if (!res.ok) throw new Error("save failed");
       }
+      for (const id of removed) {
+        const res = await fetch(
+          `${API_BASE}/admin/dishes/${dish.id}/modifiers/${id}`,
+          { method: "DELETE" }
+        );
+        if (!res.ok) throw new Error("delete failed");
+      }
+      onClose();
+    } catch {
+      alert("Не удалось сохранить модификаторы");
     }
-    for (const id of removed) {
-      await fetch(`${API_BASE}/admin/dishes/${dish.id}/modifiers/${id}`, {
-        method: "DELETE",
-      });
-    }
-    onClose();
   };
 
   const addons = mods.filter((m) => m.type === "addon");

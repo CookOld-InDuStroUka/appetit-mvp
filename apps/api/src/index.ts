@@ -316,7 +316,12 @@ const CategoryUpsertSchema = z.object({
 const ModifierUpsertSchema = z.object({
   name: z.string().min(1),
   type: z.enum(["addon", "exclusion"]),
-  price: z.coerce.number().nonnegative().default(0),
+  price: z
+    .preprocess(
+      (v) => (v === undefined || v === null || v === "" ? 0 : v),
+      z.coerce.number().nonnegative()
+    )
+    .optional(),
 });
 
 app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
@@ -418,32 +423,50 @@ app.get(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response
 
 app.post(`${BASE}/admin/dishes/:id/modifiers`, async (req: Request, res: Response) => {
   const parsed = ModifierUpsertSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
   const data = parsed.data;
-  const mod = await prisma.dishModifier.create({
-    data: {
-      dishId: req.params.id,
-      name: data.name,
-      type: data.type,
-      price: data.type === "addon" ? data.price : 0,
-    },
-  });
-  res.json(mod);
+  try {
+    const mod = await prisma.dishModifier.create({
+      data: {
+        dishId: req.params.id,
+        name: data.name,
+        type: data.type,
+        price: data.type === "addon" ? data.price ?? 0 : 0,
+      },
+    });
+    res.json({ ...mod, price: Number(mod.price) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save modifier" });
+  }
 });
 
 app.put(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
   const parsed = ModifierUpsertSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid payload", details: parsed.error.flatten() });
+  }
   const data = parsed.data;
-  const mod = await prisma.dishModifier.update({
-    where: { id: req.params.modId },
-    data: {
-      name: data.name,
-      type: data.type,
-      price: data.type === "addon" ? data.price : 0,
-    },
-  });
-  res.json(mod);
+  try {
+    const mod = await prisma.dishModifier.update({
+      where: { id: req.params.modId },
+      data: {
+        name: data.name,
+        type: data.type,
+        price: data.type === "addon" ? data.price ?? 0 : 0,
+      },
+    });
+    res.json({ ...mod, price: Number(mod.price) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save modifier" });
+  }
 });
 
 app.delete(`${BASE}/admin/dishes/:dishId/modifiers/:modId`, async (req: Request, res: Response) => {
