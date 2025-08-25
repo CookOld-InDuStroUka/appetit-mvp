@@ -7,6 +7,7 @@ export default function AdminHeader() {
   const { theme, toggleTheme } = useTheme();
 
   const links = [
+    { href: "/", label: "На сайт" },
     { href: "/admin", label: "Главная" },
     { href: "/admin/branches", label: "Филиалы" },
     { href: "/admin/menu", label: "Меню" },
@@ -103,6 +104,9 @@ export default function AdminHeader() {
             flex-direction: column;
             gap: 8px;
             padding: 8px clamp(8px, 4vw, 24px);
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--header-border);
+            width: 100%;
           }
         }
       `}</style>
