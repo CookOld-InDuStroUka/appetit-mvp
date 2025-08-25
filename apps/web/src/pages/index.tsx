@@ -8,7 +8,6 @@ import PromoSlider from "../components/PromoSlider";
 import MobileMenu from "../components/MobileMenu";
 import { useDelivery } from "../components/DeliveryContext";
 
-// use local API if the env variable is missing so the menu still loads
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
@@ -62,17 +61,13 @@ export default function Home() {
         >
           <PromoSlider />
           <MobileMenu />
+
           {sections.map((sec) => (
-            <section key={sec.name} id={sec.name} style={{ marginBottom: "40px" }}>
-              <h2 style={{ marginBottom: "20px" }}>{sec.name}</h2>
-              {sec.dishes.length > 0 ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                    gap: "20px",
-                  }}
-                >
+            <section key={sec.name} id={sec.name} className="section">
+              <h2 className="section-title">{sec.name}</h2>
+
+              {sec.dishes.length > 0 && (
+                <div className="cards-grid">
                   {sec.dishes.map((item) => (
                     <DishCard
                       key={item.id}
@@ -81,21 +76,52 @@ export default function Home() {
                     />
                   ))}
                 </div>
-              ) : null}
+              )}
             </section>
           ))}
-          <p style={{ marginTop: "40px" }}>
-            Добро пожаловать в APPETIT – сеть стрит-фуд кафе в Усть-Каменогорске.
-            Мы готовим сочную шаурму, донеры, хот-доги, картофель фри и другие
-            закуски с доставкой на дом или в офис. Выбирай любимое блюдо, добавляй
-            соусы и напитки, оформляй заказ онлайн – и уже через 30 минут
-            наслаждайся вкусом! Работаем ежедневно с 10:00 до 01:30. Быстро.
-            Вкусно. С любовью. APPETIT – это твоя шаурма №1 в городе.
-          </p>
+
           <DishModal dish={selectedDish} onClose={() => setSelectedDish(null)} />
         </main>
       </div>
       <Footer />
+
+      <style jsx>{`
+        /* -------- настраиваемые переменные -------- */
+        :global(:root) {
+          --card-min: 280px;  /* минимальная ширина карточки (уменьшишь — поместится больше) */
+          --gap-x: 22px;      /* горизонтальный зазор между карточками */
+          --gap-y: 20px;      /* вертикальный зазор между рядами */
+        }
+        /* ----------------------------------------- */
+
+        .section { margin-bottom: 28px; }
+        .section-title {
+          margin: 0 0 12px;
+          font-size: 26px;
+          font-weight: 800;
+          color: #0f172a;
+        }
+
+        /* Карточки равномерно занимают строку: 3 колонки минимум, без «пропасти» справа.
+           minmax(...) не позволяет ужимать менее --card-min, зато растягивает до 1fr. */
+        .cards-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(var(--card-min), 1fr));
+          column-gap: var(--gap-x);
+          row-gap: var(--gap-y);
+          align-items: start;
+        }
+
+        /* На средних экранах — 2 колонки */
+        @media (max-width: 1200px) {
+          .cards-grid { grid-template-columns: repeat(2, minmax(var(--card-min), 1fr)); }
+        }
+
+        /* На мобиле — одна колонка */
+        @media (max-width: 700px) {
+          .cards-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
     </>
   );
 }

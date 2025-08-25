@@ -1,11 +1,12 @@
+// src/pages/dish/[id].tsx
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import { dishImageMap } from "../../config/imageMap";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type Variant = { id: string; name: string; price: number };
 type Dish = {
@@ -73,11 +74,11 @@ export default function DishPage() {
     return () => ac.abort();
   }, [router.isReady, dishId]);
 
+  // Кандидаты для картинки: imageUrl -> /dishes/<id>.jpg -> /dishes/<slug>.jpg -> FALLBACK
   const candidates = useMemo(() => {
     if (!dish) return [FALLBACK];
     const arr: string[] = [];
     if (dish.imageUrl && !isPlaceholder(dish.imageUrl)) arr.push(dish.imageUrl);
-    if (dishImageMap[dish.id]) arr.push(dishImageMap[dish.id]); // карта по id
     arr.push(`/dishes/${dish.id}.jpg`);
     arr.push(`/dishes/${slugify(dish.name)}.jpg`);
     arr.push(FALLBACK);
@@ -101,7 +102,7 @@ export default function DishPage() {
               style={{
                 position: "relative",
                 width: "100%",
-                aspectRatio: "3/2",
+                aspectRatio: "3 / 2",
                 borderRadius: 12,
                 overflow: "hidden",
                 background: "#eee",
