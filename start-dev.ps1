@@ -4,7 +4,7 @@
 docker compose up -d db
 
 # 2) API (порт 4000)
-Start-Process powershell -ArgumentList "cd apps\api; pnpm dev"
+Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File .\start-api-logging.ps1"
 
 # 3) WEB (порт 3000)
 Start-Process powershell -ArgumentList "cd apps\web; pnpm dev"
