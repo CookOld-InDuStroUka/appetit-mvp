@@ -52,83 +52,94 @@ export default function DishCard({ dish, onClick }: Props) {
 
   const [imgIdx, setImgIdx] = useState(0);
   const src = candidates[Math.min(imgIdx, candidates.length - 1)];
+  const price = `${nfmt.format(dish.minPrice ?? dish.basePrice)} ₸`;
 
-  const base = nfmt.format(dish.basePrice) + " ₸";
-  const min = dish.minPrice && dish.minPrice < dish.basePrice ? nfmt.format(dish.minPrice) + " ₸" : null;
-  const priceLabel = min ? `от ${min}` : base;
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem({ id: dish.id, name: dish.name, price: dish.basePrice, imageUrl: src, qty: 1 });
+  };
 
-  // ⬇ NEW LAYOUT
   return (
     <article className="card" onClick={onClick} role="button" tabIndex={0}>
-      {/* Верх: крупное фото на белом фоне, без серой плитки */}
+      {/* ===== MEDIA: картинка по высоте контейнера ===== */}
       <div className="media">
         <Image
           src={src}
           alt={dish.name}
-          fill
-          sizes="280px"
-          style={{ objectFit: "contain" }}
+          width={800}
+          height={600}
+          sizes="(max-width: 768px) 50vw, 280px"
+          style={{ height: "100%", width: "auto", objectFit: "contain" }}
           onError={() => setImgIdx((i) => Math.min(i + 1, candidates.length - 1))}
         />
       </div>
 
-      {/* Низ: текстовый блок компактный */}
-      <div className="body">
-        <h4 className="title">{dish.name}</h4>
-        {dish.description && <p className="desc">{dish.description}</p>}
-        <div className="price">{priceLabel}</div>
+      <h4 className="title">{dish.name}</h4>
+      {dish.description && <p className="desc">{dish.description}</p>}
+
+      <div className="row">
+        <div className="price">{price}</div>
+        <button className="btnAdd" onClick={handleAdd} aria-label="Добавить">+</button>
       </div>
 
       <style jsx>{`
         .card{
+          width: 100%;                 /* FIX: заполняем столбец, убираем лишние поля вокруг */
           background:#fff;
-          border:1px solid rgba(17,24,39,.12);
           border-radius:12px;
-          overflow:hidden;
-          transition:box-shadow .15s ease, transform .12s ease;
+          padding:12px;                /* можешь поставить 10px, если ещё плотнее нужно */
+          border:1px solid #eef2f7;
+          box-shadow:0 6px 16px rgba(15,23,42,.06);
+          transition:box-shadow .15s ease, transform .1s ease;
+          cursor:pointer;
+          display:flex;                /* FIX: выравниваем высоту */
+          flex-direction:column;       /* FIX: чтобы футер был у низа */
         }
-        .card:hover{ box-shadow:0 6px 20px rgba(2,6,23,.06); transform:translateY(-1px); }
+        .card:hover{ box-shadow:0 10px 22px rgba(15,23,42,.08); transform:translateY(-1px); }
 
-        /* Фото-блок как на примере: воздух, паддинги, тень у предмета */
         .media{
           position:relative;
           width:100%;
-          height:190px;              /* подгони 180–200 по вкусу */
-          background:#fff;           /* БЕЗ серого фона */
-          padding:16px;              /* рамка-воздух вокруг изображения */
-          box-sizing:border-box;
-          border-bottom:1px solid rgba(17,24,39,.06);
+          height:190px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:#fff;
+          border-bottom:1px solid rgba(17,24,39,.08);
+          overflow:hidden;
         }
-        :global(.card .media img){
-          object-fit:contain;
-          filter: drop-shadow(0 6px 14px rgba(0,0,0,.10)); /* аккуратная тень как на рефе */
-        }
-
-        .body{ padding:12px 14px 14px; }
 
         .title{
-          margin:0 0 6px;
-          color:#111827;
-          font-weight:800;
-          font-size:16px;
-          line-height:1.2;
+          margin:10px 2px 4px;
+          color:#0f172a;
+          font-weight:700;
+          font-size:15px;
+          line-height:1.25;
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
         }
         .desc{
           color:#6b7280;
-          font-size:14px;
+          font-size:12px;
           line-height:1.25;
-          margin:0 0 10px;
+          margin:0 2px 8px;
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-          min-height:36px; /* чтобы ряд карточек ровно выравнивался */
-        }
-        .price{
-          color:#111827;
-          font-size:15px;
-          font-weight:800;
+          min-height:28px;
         }
 
-        /* Если нужно ещё компактнее — уменьши высоту media и padding у body */
+        .row{
+          margin-top:auto;            /* FIX: прижимает низ карточки вниз — ряды становятся ровнее */
+          display:flex; align-items:center; justify-content:space-between; gap:8px;
+        }
+        .price{ font-weight:800; font-size:15px; color:#0f172a; }
+
+        .btnAdd{
+          background:#2b6cf8; color:#fff; border:0; border-radius:8px;
+          width:36px; height:28px; display:grid; place-items:center;
+          font-size:16px; line-height:1; cursor:pointer;
+          transition:filter .12s, transform .1s;
+        }
+        .btnAdd:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+        .btnAdd:active{ transform:translateY(0); }
       `}</style>
     </article>
   );

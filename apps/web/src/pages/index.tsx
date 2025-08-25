@@ -89,7 +89,7 @@ export default function Home() {
         /* -------- настраиваемые переменные -------- */
         :global(:root) {
           --card-min: 280px;  /* минимальная ширина карточки (уменьшишь — поместится больше) */
-          --gap-x: 22px;      /* горизонтальный зазор между карточками */
+          --gap-x: 12px;      /* горизонтальный зазор между карточками */
           --gap-y: 20px;      /* вертикальный зазор между рядами */
         }
         /* ----------------------------------------- */
@@ -106,7 +106,7 @@ export default function Home() {
            minmax(...) не позволяет ужимать менее --card-min, зато растягивает до 1fr. */
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(var(--card-min), 1fr));
+          grid-template-columns: repeat(4, minmax(var(--card-min), 1fr));
           column-gap: var(--gap-x);
           row-gap: var(--gap-y);
           align-items: start;
