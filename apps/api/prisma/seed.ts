@@ -372,10 +372,10 @@ async function main() {
 
   // --- Promo codes ---
   await prisma.promoCode.upsert({
-    where: { code: "test10" },
+    where: { code: "TEST10" },
     update: {},
     create: {
-      code: "test10",
+      code: "TEST10",
       discount: 10,
       expiresAt: new Date("2099-12-31"),
       conditions: "Тестовый промокод",

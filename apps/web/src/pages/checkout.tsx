@@ -107,7 +107,7 @@ export default function Checkout() {
         </>}
         <label>ID блюда для теста (из /dishes) <input value={form.dishId || ""} onChange={e => setForm({ ...form, dishId: e.target.value })} /></label>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={promo} onChange={e => setPromo(e.target.value)} placeholder="Промокод" />
+          <input value={promo} onChange={e => setPromo(e.target.value.toUpperCase())} placeholder="Промокод" />
           <button onClick={applyPromo}>Применить</button>
         </div>
         <div>

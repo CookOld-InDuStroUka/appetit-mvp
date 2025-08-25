@@ -361,16 +361,20 @@ const OrderSchema = z.object({
     qty: z.number().int().positive()
   })).min(1),
   paymentMethod: z.enum(["cash", "card"]),
-  promoCode: z.string().optional().nullable()
+  promoCode: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((s) => (s ? s.toUpperCase() : s))
 });
 
 const PromoCodeSchema = z.object({
-  code: z.string(),
+  code: z.string().transform((s) => s.toUpperCase()),
   branchId: z.string().optional().nullable(),
 });
 
 const PromoCodeUpsertSchema = z.object({
-  code: z.string(),
+  code: z.string().transform((s) => s.toUpperCase()),
   discount: z.number().int(),
   expiresAt: z.coerce.date(),
   conditions: z.string().optional().nullable(),

@@ -29,12 +29,16 @@ export default function PromoCodesAdmin() {
   });
 
   const load = async () => {
-    const [codes, brs] = await Promise.all([
-      fetch(`${API_BASE}/admin/promo-codes`).then((r) => r.json()),
-      fetch(`${API_BASE}/branches`).then((r) => r.json()),
-    ]);
-    setPromos(codes);
-    setBranches(brs);
+    try {
+      const [codes, brs] = await Promise.all([
+        fetch(`${API_BASE}/admin/promo-codes`).then((r) => r.json()),
+        fetch(`${API_BASE}/branches`).then((r) => r.json()),
+      ]);
+      setPromos(codes);
+      setBranches(brs);
+    } catch (err) {
+      console.error("Failed to load promo codes", err);
+    }
   };
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function PromoCodesAdmin() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        code: p.code,
+        code: p.code.toUpperCase(),
         discount: Number(p.discount),
         expiresAt: p.expiresAt,
         conditions: p.conditions ?? null,
@@ -74,7 +78,7 @@ export default function PromoCodesAdmin() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        code: form.code,
+        code: form.code.toUpperCase(),
         discount: Number(form.discount),
         expiresAt: form.expiresAt,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
@@ -160,7 +164,7 @@ export default function PromoCodesAdmin() {
         <input
           placeholder="Код"
           value={form.code}
-          onChange={(e) => setForm({ ...form, code: e.target.value })}
+          onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
         />
         <input
           type="number"
