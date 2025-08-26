@@ -60,6 +60,7 @@ export type OrderDTO = {
   zoneId?: string | null;
   branchId?: string | null;
   pickupTime?: string | null;
+  promoCode?: string | null;
   subtotal: number;
   deliveryFee: number;
   discount: number;

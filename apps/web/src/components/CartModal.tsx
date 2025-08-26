@@ -59,7 +59,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         body: JSON.stringify(payload),
       });
       if (!r.ok) return null;
-      return r.json();
+      const data = await r.json();
+      if (data.error) return null;
+      return data;
     };
 
     try {
@@ -143,15 +145,22 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const { open, overnight } = parseHours(branchInfo?.hours);
     const sel = toMin(time);
     const start = toMin(open);
-    const ASTANA_OFFSET = 5 * 60 * 60000; // Asia/Almaty UTC+5
-    const astanaNow = new Date(Date.now() + ASTANA_OFFSET);
+    const astanaNow = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Almaty" })
+    );
     const cur = astanaNow.getHours() * 60 + astanaNow.getMinutes();
     let date = astanaNow;
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
-    date.setHours(h, m, 0, 0);
-    return new Date(date.getTime() - ASTANA_OFFSET).toISOString();
+    const utc = Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      h - 6,
+      m
+    );
+    return new Date(utc).toISOString().replace("Z", "+06:00");
   };
 
   const submit = async () => {

@@ -229,7 +229,7 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
     (promo.maxUses !== null && promo.usedCount >= (promo.maxUses ?? 0)) ||
     (promo.branches.length > 0 && (!parsed.data.branchId || !promo.branches.some((b: any) => b.id === parsed.data.branchId)))
   ) {
-    return res.status(404).json({ error: "Invalid code" });
+    return res.json({ error: "Invalid code" });
   }
   res.json({
     code: promo.code,
@@ -978,7 +978,7 @@ app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
     : undefined;
   const orders = await prisma.order.findMany({
     where,
-    include: { items: true },
+    include: { items: true, promoCode: true },
     orderBy: { createdAt: "desc" },
   });
   res.json(
@@ -992,6 +992,7 @@ app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
       zoneId: o.zoneId,
       branchId: o.branchId,
       pickupTime: o.pickupTime,
+      promoCode: o.promoCode?.code,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
       discount: Number(o.discount),
@@ -1018,7 +1019,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
     where: { id: req.params.id },
     include: {
       orders: {
-        include: { items: { include: { dish: true } } },
+        include: { items: { include: { dish: true } }, promoCode: true },
         orderBy: { createdAt: "desc" },
       },
     },
@@ -1041,6 +1042,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
       zoneId: o.zoneId,
       branchId: o.branchId,
       pickupTime: o.pickupTime,
+      promoCode: o.promoCode?.code,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
       discount: Number(o.discount),

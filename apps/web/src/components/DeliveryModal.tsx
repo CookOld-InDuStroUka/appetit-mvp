@@ -39,6 +39,7 @@ export default function DeliveryModal() {
     setPickupTime,
     branches,
     history,
+    outOfZone,
     addHistory,
     removeHistory,
     close,
@@ -211,8 +212,13 @@ export default function DeliveryModal() {
             ×
           </button>
           <button
+            disabled={mode === "delivery" && outOfZone}
             onClick={() => {
               if (mode === "delivery") {
+                if (outOfZone) {
+                  alert("Адрес вне зоны доставки");
+                  return;
+                }
                 addHistory(address);
                 close();
                 return;
@@ -235,6 +241,7 @@ export default function DeliveryModal() {
               background: "var(--accent)",
               color: "#fff",
               cursor: "pointer",
+              opacity: mode === "delivery" && outOfZone ? 0.6 : 1,
             }}
           >
             Подтвердить
@@ -306,7 +313,12 @@ export default function DeliveryModal() {
               height={420}
             />
             <button
+              disabled={outOfZone}
               onClick={() => {
+                if (outOfZone) {
+                  alert("Адрес вне зоны доставки");
+                  return;
+                }
                 addHistory(address);
                 close();
               }}
@@ -319,6 +331,7 @@ export default function DeliveryModal() {
                 background: "var(--accent)",
                 color: "#fff",
                 cursor: "pointer",
+                opacity: outOfZone ? 0.6 : 1,
               }}
             >
               Подтвердить

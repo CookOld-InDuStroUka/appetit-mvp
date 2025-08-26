@@ -50,12 +50,14 @@ export default function Checkout() {
       });
       if (r.ok) {
         const data = await r.json();
-        setDiscount(data.discount);
-        setApplyToDelivery(!!data.appliesToDelivery);
-      } else {
-        setDiscount(0);
-        setApplyToDelivery(false);
-        alert("Промокод не найден");
+        if (data.error) {
+          setDiscount(0);
+          setApplyToDelivery(false);
+          alert("Промокод не найден");
+        } else {
+          setDiscount(data.discount);
+          setApplyToDelivery(!!data.appliesToDelivery);
+        }
       }
     } catch {
       setDiscount(0);

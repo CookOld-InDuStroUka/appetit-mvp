@@ -62,6 +62,7 @@ type Ctx = {
   pickupTime: string;
   branches: Branch[];
   history: string[];
+  outOfZone: boolean;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -75,6 +76,7 @@ type Ctx = {
   setPickupTime: (v: string) => void;
   addHistory: (addr: string) => void;
   removeHistory: (addr: string) => void;
+  setOutOfZone: (v: boolean) => void;
 };
 
 const Ctx = createContext<Ctx | undefined>(undefined);
@@ -91,6 +93,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [pickupTime, setPickupTime] = useState("");
   const [isOpen, setOpen] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [outOfZone, setOutOfZone] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("deliveryAddresses");
@@ -155,24 +158,26 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         entrance,
         floor,
         comment,
-        branch,
-        pickupTime,
-        branches,
-        history,
-        isOpen,
-        open,
-        close,
-        setMode,
-        setAddress,
+      branch,
+      pickupTime,
+      branches,
+      history,
+      outOfZone,
+      isOpen,
+      open,
+      close,
+      setMode,
+      setAddress,
         setApt,
         setEntrance,
         setFloor,
         setComment,
-        setBranch,
-        setPickupTime,
-        addHistory,
-        removeHistory,
-      }}
+      setBranch,
+      setPickupTime,
+      addHistory,
+      removeHistory,
+      setOutOfZone,
+    }}
     >
       {children}
       {isOpen && <DeliveryModal />}

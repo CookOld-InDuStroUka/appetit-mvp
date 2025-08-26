@@ -82,6 +82,7 @@ export default function OrdersPage() {
                 ) : (
                   <div>Самовывоз: {o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</div>
                 )}
+                {o.promoCode && <div>Промокод: {o.promoCode}</div>}
                 <div>Сумма: {o.total} ₸</div>
               </li>
             ))}

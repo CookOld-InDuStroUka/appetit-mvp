@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { loadYmaps } from "../utils/ymapsLoader";
+import { useDelivery } from "./DeliveryContext";
 
 type Props = {
   address: string;
@@ -46,7 +47,8 @@ export default function DeliveryMap({
     [50.1, 83.1],
   ];
   const polygonsRef = useRef<any[]>([]);
-  const [outOfZone, setOutOfZone] = useState(false);
+  const [outOfZone, setOutOfZoneLocal] = useState(false);
+  const { setOutOfZone } = useDelivery();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -222,6 +224,7 @@ export default function DeliveryMap({
           });
           map.geoObjects.add(markerRef.current);
           const inside = polygonsRef.current.some((p) => p.geometry.contains(coords));
+          setOutOfZoneLocal(!inside);
           setOutOfZone(!inside);
         };
 
