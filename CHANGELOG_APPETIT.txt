@@ -1,4 +1,6 @@
 ## 2025-08-27
+- feat: build sidebar and mobile menus from admin categories
+- feat: show promo slide promo code with apply/share actions
 - feat: redesign dish modal with topping buttons, ingredient exclusions, and quantity selector
 
 ## 2025-08-26

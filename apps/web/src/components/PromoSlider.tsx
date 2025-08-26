@@ -179,14 +179,48 @@ export default function PromoSlider({
             style={{
               background: "#fff",
               padding: 20,
-              borderRadius: 12,
-              maxWidth: 320,
+              borderRadius: 8,
+              maxWidth: 400,
               width: "90%",
+              textAlign: "center",
             }}
           >
             <h3 style={{ marginTop: 0 }}>{modal.title}</h3>
             <p>{modal.text}</p>
-            {modal.promoCode && <p>Промокод: {modal.promoCode}</p>}
+            {modal.promoCode && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(modal.promoCode!);
+                      alert("Промокод скопирован");
+                    } catch {}
+                  }}
+                >
+                  Применить промокод
+                </button>
+                <div style={{ marginTop: 8, fontWeight: 700 }}>{modal.promoCode}</div>
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={async () => {
+                  const text = modal.shareText || modal.promoCode || "";
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ text });
+                    } catch {}
+                  } else {
+                    try {
+                      await navigator.clipboard.writeText(text);
+                      alert("Ссылка скопирована");
+                    } catch {}
+                  }
+                }}
+              >
+                Поделиться промокодом
+              </button>
+            </div>
           </div>
         </div>
       )}
