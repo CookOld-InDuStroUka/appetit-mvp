@@ -32,7 +32,8 @@ export default function AnalyticsPage() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [utm, setUtm] = useState("");
-  const [period, setPeriod] = useState("7");
+  const [dimension, setDimension] = useState("source");
+  const [period, setPeriod] = useState("day");
   const [compare, setCompare] = useState(false);
   const [data, setData] = useState<Analytics | null>(null);
   const [saved, setSaved] = useState<any[]>([]);
@@ -44,13 +45,14 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
+    if (period === "custom") return;
     const now = new Date();
     const endDate = now.toISOString().slice(0, 10);
     let startDate = new Date(now);
-    if (period === "month") {
+    if (period === "week") {
+      startDate.setDate(startDate.getDate() - 6);
+    } else if (period === "month") {
       startDate.setMonth(startDate.getMonth() - 1);
-    } else {
-      startDate.setDate(startDate.getDate() - parseInt(period) + 1);
     }
     setEnd(endDate);
     setStart(startDate.toISOString().slice(0, 10));
@@ -61,7 +63,8 @@ export default function AnalyticsPage() {
     if (branchId !== "all") params.append("branchId", branchId);
     if (start) params.append("from", start);
     if (end) params.append("to", end);
-    if (utm) params.append("utmSource", utm);
+    params.append("dimension", dimension);
+    if (utm) params.append("utm", utm);
     if (compare) params.append("compare", "true");
     const q = params.toString();
     fetch(`${API_BASE}/admin/analytics${q ? `?${q}` : ""}`)
@@ -77,7 +80,7 @@ export default function AnalyticsPage() {
         setData(null);
         setError("Не удалось загрузить данные");
       });
-  }, [branchId, start, end, utm, compare]);
+  }, [branchId, start, end, utm, dimension, compare]);
 
   const save = () => {
     if (!data) return;
@@ -101,11 +104,17 @@ export default function AnalyticsPage() {
           ))}
         </select>
         <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-          <option value="7">{t("days7")}</option>
-          <option value="30">{t("days30")}</option>
-          <option value="90">{t("days90")}</option>
+          <option value="day">{t("day")}</option>
+          <option value="week">{t("week")}</option>
           <option value="month">{t("month")}</option>
+          <option value="custom">{t("custom")}</option>
         </select>
+        {period === "custom" && (
+          <>
+            <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+          </>
+        )}
         <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <input
             type="checkbox"
@@ -114,9 +123,14 @@ export default function AnalyticsPage() {
           />
           {t("comparePrev")}
         </label>
+        <select value={dimension} onChange={(e) => setDimension(e.target.value)}>
+          <option value="source">{t("utmSource")}</option>
+          <option value="medium">{t("utmMedium")}</option>
+          <option value="campaign">{t("utmCampaign")}</option>
+        </select>
         <input
           type="text"
-          placeholder="utm_source"
+          placeholder={t("filter")}
           value={utm}
           onChange={(e) => setUtm(e.target.value)}
         />
@@ -181,7 +195,13 @@ export default function AnalyticsPage() {
           <table style={{ width: "100%", maxWidth: 600, marginBottom: 20 }}>
             <thead>
               <tr>
-                <th>{t("source")}</th>
+                <th>
+                  {dimension === "medium"
+                    ? t("utmMedium")
+                    : dimension === "campaign"
+                    ? t("utmCampaign")
+                    : t("utmSource")}
+                </th>
                 <th>{t("orders")}</th>
                 <th>{t("revenue")}</th>
               </tr>
@@ -189,7 +209,7 @@ export default function AnalyticsPage() {
             <tbody>
               {Object.entries(data.sources).map(([src, info]) => (
                 <tr key={src}>
-                  <td>{t(src)}</td>
+                  <td>{src}</td>
                   <td>{info.orders}</td>
                   <td>{info.revenue}</td>
                 </tr>

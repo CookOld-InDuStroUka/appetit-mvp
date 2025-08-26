@@ -77,7 +77,14 @@ export default function Checkout() {
       branchId: null,
       items: form.items.length ? form.items : [{ dishId: form.dishId, variantId: null, qty: 1 }],
       paymentMethod: "cash",
-      promoCode: promo || null
+      promoCode: promo || null,
+      utmSource: localStorage.getItem("utm_source"),
+      utmMedium: localStorage.getItem("utm_medium"),
+      utmCampaign: localStorage.getItem("utm_campaign"),
+      utmContent: localStorage.getItem("utm_content"),
+      utmTerm: localStorage.getItem("utm_term"),
+      referrer: localStorage.getItem("referrer"),
+      visitorId: localStorage.getItem("visitor_id"),
     };
     try {
       const r = await fetch(`${API_BASE}/orders`, {

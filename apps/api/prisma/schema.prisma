@@ -137,6 +137,13 @@ model Order {
   promoCodeId   String?
   promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
   utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  referrer      String?
+  visitorId     String?
+  paidAt        DateTime?
   userId        String?
   user          User?       @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())
@@ -208,6 +215,24 @@ model Expense {
   amount      Decimal  @db.Decimal(10, 2)
   description String?
   createdAt   DateTime @default(now())
+}
+
+model Setting {
+  key   String  @id
+  value String?
+}
+
+model MarketingSpend {
+  id         String   @id @default(cuid())
+  day        DateTime
+  source     String?
+  medium     String?
+  campaign   String?
+  impressions Int?    @default(0)
+  clicks     Int?    @default(0)
+  amount     Decimal  @db.Decimal(10, 2)
+  branchId   String?
+  @@unique([day, source, campaign, branchId])
 }
 
 model BonusTransaction {

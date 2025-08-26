@@ -20,6 +20,12 @@ export type CreateOrderInput = {
   userId?: string;
   bonusToUse?: number;
   utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
+  referrer?: string | null;
+  visitorId?: string | null;
 };
 
 export type OrderStatus =
@@ -65,6 +71,12 @@ export type OrderDTO = {
   pickupCode?: string | null;
   promoCode?: string | null;
   utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
+  referrer?: string | null;
+  visitorId?: string | null;
   subtotal: number;
   deliveryFee: number;
   discount: number;
@@ -72,5 +84,6 @@ export type OrderDTO = {
   bonusEarned: number;
   bonusUsed: number;
   createdAt: string;
+  paidAt?: string | null;
   items: OrderItemDTO[];
 };

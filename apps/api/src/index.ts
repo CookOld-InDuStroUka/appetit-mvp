@@ -866,6 +866,12 @@ const OrderSchema = z.object({
   branchId: z.string().optional().nullable(),
   pickupTime: z.string().optional().nullable(),
   utmSource: z.string().optional().nullable(),
+  utmMedium: z.string().optional().nullable(),
+  utmCampaign: z.string().optional().nullable(),
+  utmContent: z.string().optional().nullable(),
+  utmTerm: z.string().optional().nullable(),
+  referrer: z.string().optional().nullable(),
+  visitorId: z.string().optional().nullable(),
   items: z.array(z.object({
     dishId: z.string(),
     variantId: z.string().optional().nullable(),
@@ -1095,6 +1101,12 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       pickupTime,
       pickupCode,
       utmSource: data.utmSource ?? null,
+      utmMedium: data.utmMedium ?? null,
+      utmCampaign: data.utmCampaign ?? null,
+      utmContent: data.utmContent ?? null,
+      utmTerm: data.utmTerm ?? null,
+      referrer: data.referrer ?? null,
+      visitorId: data.visitorId ?? null,
       items: {
         create: prepared.map((p) => ({
           dishId: p.item.dishId,
@@ -1225,7 +1237,7 @@ app.post(`${BASE}/admin/expenses`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
-  const { branchId, from, to, utmSource, compare } = req.query;
+  const { branchId, from, to, utm, dimension, compare } = req.query;
 
   const baseOrderWhere: any = {};
   const baseExpenseWhere: any = {};
@@ -1233,8 +1245,14 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     baseOrderWhere.branchId = String(branchId);
     baseExpenseWhere.branchId = String(branchId);
   }
-  if (utmSource) {
-    baseOrderWhere.utmSource = String(utmSource);
+  const dimField =
+    dimension === "medium"
+      ? "utmMedium"
+      : dimension === "campaign"
+      ? "utmCampaign"
+      : "utmSource";
+  if (utm) {
+    baseOrderWhere[dimField] = String(utm);
   }
 
   const endDate = to ? new Date(String(to)) : new Date();
@@ -1270,18 +1288,20 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     const sources: Record<string, { orders: number; revenue: number }> = {};
     const userCounts: Record<string, number> = {};
     for (const o of paidOrders) {
-      const src = o.utmSource ?? "direct";
-      if (!sources[src]) sources[src] = { orders: 0, revenue: 0 };
-      sources[src].orders++;
-      sources[src].revenue += Number(o.total);
-      if (o.userId) {
-        userCounts[o.userId] = (userCounts[o.userId] || 0) + 1;
+      const key = (o as any)[dimField] ?? "direct";
+      if (!sources[key]) sources[key] = { orders: 0, revenue: 0 };
+      sources[key].orders++;
+      sources[key].revenue += Number(o.total);
+      const userKey = o.userId ?? o.customerPhone;
+      if (userKey) {
+        userCounts[userKey] = (userCounts[userKey] || 0) + 1;
       }
     }
     let repeatCount = 0;
     let repeatRevenue = 0;
     for (const o of paidOrders) {
-      if (o.userId && userCounts[o.userId] > 1) {
+      const userKey = o.userId ?? o.customerPhone;
+      if (userKey && userCounts[userKey] > 1) {
         repeatCount++;
         repeatRevenue += Number(o.total);
       }
@@ -1341,6 +1361,38 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
   }
 
   res.json({ ...current, previous });
+});
+
+const TrackingSchema = z.object({
+  gaTrackingId: z.string().optional().nullable(),
+  yaMetricaId: z.string().optional().nullable(),
+});
+
+app.get(`${BASE}/admin/settings/tracking`, async (_req: Request, res: Response) => {
+  const keys = ["gaTrackingId", "yaMetricaId"];
+  const entries = await prisma.setting.findMany({ where: { key: { in: keys } } });
+  const result: any = {};
+  for (const k of keys) {
+    result[k] = entries.find((e) => e.key === k)?.value ?? null;
+  }
+  res.json(result);
+});
+
+app.post(`${BASE}/admin/settings/tracking`, async (req: Request, res: Response) => {
+  const parsed = TrackingSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const { gaTrackingId, yaMetricaId } = parsed.data;
+  await prisma.setting.upsert({
+    where: { key: "gaTrackingId" },
+    update: { value: gaTrackingId ?? null },
+    create: { key: "gaTrackingId", value: gaTrackingId ?? null },
+  });
+  await prisma.setting.upsert({
+    where: { key: "yaMetricaId" },
+    update: { value: yaMetricaId ?? null },
+    create: { key: "yaMetricaId", value: yaMetricaId ?? null },
+  });
+  res.json({ ok: true });
 });
 
 app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
@@ -1442,10 +1494,14 @@ app.put(`${BASE}/admin/orders/:id/status`, async (req: Request, res: Response) =
   const parsed = OrderStatusUpdateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
   try {
+    const update: any = { status: parsed.data.status };
+    if (parsed.data.status === OrderStatus.done) {
+      update.paidAt = new Date();
+    }
     const o = await prisma.order.update({
       where: { id: req.params.id },
-      data: { status: parsed.data.status },
-      select: { id: true, status: true },
+      data: update,
+      select: { id: true, status: true, paidAt: true },
     });
     res.json(o);
   } catch (err) {

@@ -18,6 +18,7 @@ export default function AdminHeader() {
       { href: "/admin/orders", label: "Заказы" },
       { href: "/admin/promos", label: "Маркетинг" },
       { href: "/admin/analytics", label: "Аналитика" },
+      { href: "/admin/settings", label: "Настройки" },
       { href: "/admin/profile", label: "Профиль" },
     ];
     if (admin?.role === "super") base.push({ href: "/admin/admins", label: "Админы" });
