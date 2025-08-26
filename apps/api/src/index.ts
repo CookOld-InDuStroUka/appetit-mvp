@@ -1225,75 +1225,122 @@ app.post(`${BASE}/admin/expenses`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
-  const { branchId } = req.query;
-  const orderWhere: any = { status: "done" };
-  const expenseWhere: any = {};
+  const { branchId, from, to, utmSource, compare } = req.query;
+
+  const baseOrderWhere: any = {};
+  const baseExpenseWhere: any = {};
   if (branchId) {
-    orderWhere.branchId = String(branchId);
-    expenseWhere.branchId = String(branchId);
+    baseOrderWhere.branchId = String(branchId);
+    baseExpenseWhere.branchId = String(branchId);
   }
-  const [orders, expenses] = await Promise.all([
-    prisma.order.findMany({ where: orderWhere }),
-    prisma.expense.findMany({ where: Object.keys(expenseWhere).length ? expenseWhere : undefined }),
-  ]);
-  const ordersTotal = orders.reduce(
-    (s: number, o: any) => s + Number(o.total),
-    0
-  );
-  const ordersCount = orders.length;
-  const averageCheck = ordersCount ? ordersTotal / ordersCount : 0;
-  const sources: Record<string, number> = {};
-  const userCounts: Record<string, number> = {};
-  for (const o of orders) {
-    const src = o.utmSource ?? "direct";
-    sources[src] = (sources[src] || 0) + 1;
-    if (o.userId) {
-      userCounts[o.userId] = (userCounts[o.userId] || 0) + 1;
+  if (utmSource) {
+    baseOrderWhere.utmSource = String(utmSource);
+  }
+
+  const endDate = to ? new Date(String(to)) : new Date();
+  endDate.setHours(23, 59, 59, 999);
+  const startDate = from
+    ? new Date(String(from))
+    : new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  startDate.setHours(0, 0, 0, 0);
+
+  async function collectMetrics(start: Date, end: Date) {
+    const orderWhere = {
+      ...baseOrderWhere,
+      createdAt: { gte: start, lt: end },
+    };
+    const expenseWhere = {
+      ...baseExpenseWhere,
+      createdAt: { gte: start, lt: end },
+    };
+
+    const [allOrders, expenses] = await Promise.all([
+      prisma.order.findMany({ where: orderWhere }),
+      prisma.expense.findMany({ where: expenseWhere }),
+    ]);
+
+    const paidOrders = allOrders.filter((o) => o.status === "done");
+    const ordersAll = allOrders.length;
+    const ordersPaid = paidOrders.length;
+    const revenue = paidOrders.reduce(
+      (s, o) => s + Number(o.total),
+      0
+    );
+    const averageCheck = ordersPaid ? revenue / ordersPaid : 0;
+    const sources: Record<string, { orders: number; revenue: number }> = {};
+    const userCounts: Record<string, number> = {};
+    for (const o of paidOrders) {
+      const src = o.utmSource ?? "direct";
+      if (!sources[src]) sources[src] = { orders: 0, revenue: 0 };
+      sources[src].orders++;
+      sources[src].revenue += Number(o.total);
+      if (o.userId) {
+        userCounts[o.userId] = (userCounts[o.userId] || 0) + 1;
+      }
     }
-  }
-  let repeatOrders = 0;
-  for (const o of orders) {
-    if (o.userId && userCounts[o.userId] > 1) repeatOrders++;
-  }
-  const repeatRate = ordersCount ? repeatOrders / ordersCount : 0;
-  const expensesTotal = expenses.reduce(
-    (s: number, e: any) => s + Number(e.amount),
-    0
-  );
-  const profit = ordersTotal - expensesTotal;
-
-  const days: string[] = [];
-  const ordersDaily: number[] = [];
-  const expensesDaily: number[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - i);
-    const next = new Date(d);
-    next.setDate(d.getDate() + 1);
-    days.push(d.toISOString().slice(0, 10));
-    ordersDaily.push(
-      orders
-        .filter((o: any) => o.createdAt >= d && o.createdAt < next)
-        .reduce((s: number, o: any) => s + Number(o.total), 0)
+    let repeatCount = 0;
+    let repeatRevenue = 0;
+    for (const o of paidOrders) {
+      if (o.userId && userCounts[o.userId] > 1) {
+        repeatCount++;
+        repeatRevenue += Number(o.total);
+      }
+    }
+    const repeatRate = ordersPaid ? repeatCount / ordersPaid : 0;
+    const repeatRevenueShare = revenue ? repeatRevenue / revenue : 0;
+    const expensesTotal = expenses.reduce(
+      (s: number, e: any) => s + Number(e.amount),
+      0
     );
-    expensesDaily.push(
-      expenses
-        .filter((e: any) => e.createdAt >= d && e.createdAt < next)
-        .reduce((s: number, e: any) => s + Number(e.amount), 0)
-    );
+    const profit = revenue - expensesTotal;
+
+    const days: string[] = [];
+    const ordersDaily: number[] = [];
+    const expensesDaily: number[] = [];
+    for (
+      let d = new Date(start);
+      d < end;
+      d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
+    ) {
+      const next = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+      days.push(d.toISOString().slice(0, 10));
+      ordersDaily.push(
+        paidOrders
+          .filter((o: any) => o.createdAt >= d && o.createdAt < next)
+          .reduce((s: number, o: any) => s + Number(o.total), 0)
+      );
+      expensesDaily.push(
+        expenses
+          .filter((e: any) => e.createdAt >= d && e.createdAt < next)
+          .reduce((s: number, e: any) => s + Number(e.amount), 0)
+      );
+    }
+
+    return {
+      revenue,
+      ordersPaid,
+      ordersAll,
+      averageCheck,
+      repeatRate,
+      repeatCount,
+      repeatRevenueShare,
+      sources,
+      expensesTotal,
+      profit,
+      daily: { days, orders: ordersDaily, expenses: expensesDaily },
+    };
   }
 
-  res.json({
-    ordersTotal,
-    ordersCount,
-    averageCheck,
-    repeatRate,
-    sources,
-    expensesTotal,
-    profit,
-    daily: { days, orders: ordersDaily, expenses: expensesDaily },
-  });
+  const current = await collectMetrics(startDate, endDate);
+  let previous;
+  if (compare === "true") {
+    const diff = endDate.getTime() - startDate.getTime();
+    const prevStart = new Date(startDate.getTime() - diff);
+    const prevEnd = new Date(startDate.getTime());
+    previous = await collectMetrics(prevStart, prevEnd);
+  }
+
+  res.json({ ...current, previous });
 });
 
 app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {

@@ -5,16 +5,23 @@ import { useLang } from "../../../components/LangContext";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-type Analytics = {
-  ordersTotal: number;
-  ordersCount: number;
+type KPIData = {
+  revenue: number;
+  ordersPaid: number;
+  ordersAll: number;
   averageCheck: number;
   repeatRate: number;
+  repeatCount: number;
+  repeatRevenueShare: number;
   conversion?: number;
-  sources: Record<string, number>;
+};
+
+type Analytics = KPIData & {
+  sources: Record<string, { orders: number; revenue: number }>;
   expensesTotal: number;
   profit: number;
   daily: { days: string[]; orders: number[]; expenses: number[] };
+  previous?: KPIData;
 };
 
 export default function AnalyticsPage() {
@@ -24,6 +31,8 @@ export default function AnalyticsPage() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [utm, setUtm] = useState("");
+  const [period, setPeriod] = useState("7");
+  const [compare, setCompare] = useState(false);
   const [data, setData] = useState<Analytics | null>(null);
   const [saved, setSaved] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +43,25 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
+    const now = new Date();
+    const endDate = now.toISOString().slice(0, 10);
+    let startDate = new Date(now);
+    if (period === "month") {
+      startDate.setMonth(startDate.getMonth() - 1);
+    } else {
+      startDate.setDate(startDate.getDate() - parseInt(period) + 1);
+    }
+    setEnd(endDate);
+    setStart(startDate.toISOString().slice(0, 10));
+  }, [period]);
+
+  useEffect(() => {
     const params = new URLSearchParams();
     if (branchId !== "all") params.append("branchId", branchId);
     if (start) params.append("from", start);
     if (end) params.append("to", end);
     if (utm) params.append("utmSource", utm);
+    if (compare) params.append("compare", "true");
     const q = params.toString();
     fetch(`${API_BASE}/admin/analytics${q ? `?${q}` : ""}`)
       .then((r) => {
@@ -53,7 +76,7 @@ export default function AnalyticsPage() {
         setData(null);
         setError("Не удалось загрузить данные");
       });
-  }, [branchId, start, end, utm]);
+  }, [branchId, start, end, utm, compare]);
 
   const save = () => {
     if (!data) return;
@@ -75,12 +98,20 @@ export default function AnalyticsPage() {
             </option>
           ))}
         </select>
-        <input
-          type="date"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-        />
-        <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+        <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+          <option value="7">{t("days7")}</option>
+          <option value="30">{t("days30")}</option>
+          <option value="90">{t("days90")}</option>
+          <option value="month">{t("month")}</option>
+        </select>
+        <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <input
+            type="checkbox"
+            checked={compare}
+            onChange={(e) => setCompare(e.target.checked)}
+          />
+          {t("comparePrev")}
+        </label>
         <input
           type="text"
           placeholder="utm_source"
@@ -101,22 +132,43 @@ export default function AnalyticsPage() {
               marginBottom: 16,
             }}
           >
-            <KPI label={t("orders")} value={String(data.ordersCount)} spark={data.daily.orders} />
-            <KPI label={t("revenue")} value={`${data.ordersTotal} ₸`} spark={data.daily.orders} />
             <KPI
-              label={t("averageCheck")}
-              value={`${Math.round(data.averageCheck)} ₸`}
+              label={t("orders")}
+              value={`${data.ordersPaid}/${data.ordersAll}`}
+              numeric={data.ordersPaid}
+              previous={data.previous?.ordersPaid}
+              spark={data.daily.orders}
+              info={t("ordersInfo")}
+            />
+            <KPI
+              label={t("revenue")}
+              value={`${data.revenue} ₸`}
+              numeric={data.revenue}
+              previous={data.previous?.revenue}
               spark={data.daily.orders}
             />
             <KPI
-              label={t("repeatRate")}
-              value={`${(data.repeatRate * 100).toFixed(1)}%`}
+              label={t("averageCheck")}
+              value={`${Math.round(data.averageCheck)} ₸`}
+              numeric={data.averageCheck}
+              previous={data.previous?.averageCheck}
               spark={data.daily.orders}
+              info={t("averageCheckInfo")}
+            />
+            <KPI
+              label={t("repeatRate")}
+              value={`${(data.repeatRate * 100).toFixed(1)}% / ${data.repeatCount} / ${(data.repeatRevenueShare * 100).toFixed(1)}%`}
+              numeric={data.repeatRate}
+              previous={data.previous?.repeatRate}
+              spark={data.daily.orders}
+              info={t("repeatInfo")}
             />
             {data.conversion !== undefined && (
               <KPI
                 label={t("conversion")}
                 value={`${(data.conversion * 100).toFixed(1)}%`}
+                numeric={data.conversion}
+                previous={data.previous?.conversion}
                 spark={data.daily.orders}
               />
             )}
@@ -128,13 +180,15 @@ export default function AnalyticsPage() {
               <tr>
                 <th>{t("source")}</th>
                 <th>{t("orders")}</th>
+                <th>{t("revenue")}</th>
               </tr>
             </thead>
             <tbody>
-              {Object.entries(data.sources).map(([src, count]) => (
+              {Object.entries(data.sources).map(([src, info]) => (
                 <tr key={src}>
                   <td>{t(src)}</td>
-                  <td>{count}</td>
+                  <td>{info.orders}</td>
+                  <td>{info.revenue}</td>
                 </tr>
               ))}
             </tbody>
@@ -202,17 +256,42 @@ export default function AnalyticsPage() {
 function KPI({
   label,
   value,
+  numeric,
+  previous,
   spark,
+  info,
 }: {
   label: string;
   value: string;
+  numeric: number;
+  previous?: number;
   spark: number[];
+  info?: string;
 }) {
   const max = Math.max(...spark, 1);
+  const delta =
+    previous !== undefined && previous !== 0
+      ? ((numeric - previous) / previous) * 100
+      : previous === 0 && numeric > 0
+      ? 100
+      : undefined;
   return (
     <div style={{ flex: 1, minWidth: 120 }}>
-      <div style={{ fontWeight: 600 }}>{label}</div>
+      <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+        {label}
+        {info && (
+          <span title={info} style={{ cursor: "help", borderBottom: "1px dotted" }}>
+            i
+          </span>
+        )}
+      </div>
       <div style={{ fontSize: 24 }}>{value}</div>
+      {delta !== undefined && (
+        <div style={{ color: delta >= 0 ? "green" : "red", fontSize: 12 }}>
+          {delta >= 0 ? "+" : ""}
+          {delta.toFixed(1)}%
+        </div>
+      )}
       <svg viewBox="0 0 100 20" style={{ width: "100%", height: 20 }}>
         <polyline
           fill="none"
