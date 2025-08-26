@@ -6,7 +6,7 @@ export type Admin = { id: string; role: string };
 
 type AdminCtx = {
   admin: Admin | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -22,7 +22,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<boolean> => {
     const res = await fetch(`${API_BASE}/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -32,8 +35,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       const { id, role } = await res.json();
       const data = { id, role };
       setAdmin(data);
-      localStorage.setItem("admin", JSON.stringify(data));
+      if (typeof window !== "undefined")
+        localStorage.setItem("admin", JSON.stringify(data));
+      return true;
     }
+    return false;
   };
 
   const logout = () => {
