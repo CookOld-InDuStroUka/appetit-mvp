@@ -1,14 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import type { PromoSlide, PromoModal } from "../types/promo";
+import { useCart } from "./CartContext";
 
 type PromoSliderProps = {
-  slides?: string[];
+  slides?: PromoSlide[];
   intervalMs?: number;
   width?: number;
   height?: number;
 };
 
-const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.jpg"];
+const DEFAULT_SLIDES: PromoSlide[] = [
+  { image: "/promo1.jpg" },
+  { image: "/promo2.jpg" },
+];
 
 export default function PromoSlider({
   slides = DEFAULT_SLIDES,
@@ -19,7 +24,9 @@ export default function PromoSlider({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [imgs, setImgs] = useState(slides);
+  const [imgs, setImgs] = useState<PromoSlide[]>(slides);
+  const [modal, setModal] = useState<PromoModal | null>(null);
+  const { setPromo } = useCart();
 
   useEffect(() => setImgs(slides), [slides]);
 
@@ -86,9 +93,13 @@ export default function PromoSlider({
           Нет доступных промо
         </div>
       ) : (
-        imgs.map((src, i) => (
+        imgs.map((slide, i) => (
           <div
-            key={`${src}-${i}`}
+            key={`${slide.image}-${i}`}
+            onClick={() => {
+              if (slide.modal) setModal(slide.modal);
+              else if (slide.link) window.location.href = slide.link;
+            }}
             style={{
               position: "absolute",
               top: 0,
@@ -96,10 +107,11 @@ export default function PromoSlider({
               width: "100%",
               height: "100%",
               transition: prefersReducedMotion ? undefined : "left 0.5s ease-in-out",
+              cursor: slide.modal || slide.link ? "pointer" : "default",
             }}
           >
             <Image
-              src={src}
+              src={slide.image}
               alt={`Promo ${i + 1}`}
               fill
               sizes={sizesAttr}
@@ -146,6 +158,70 @@ export default function PromoSlider({
               }}
             />
           ))}
+        </div>
+      )}
+
+      {modal && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setModal(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              padding: 20,
+              borderRadius: 8,
+              maxWidth: 400,
+              width: "90%",
+              textAlign: "center",
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>{modal.title}</h3>
+            <p>{modal.text}</p>
+            {modal.promoCode && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={() => {
+                    setPromo(modal.promoCode!);
+                    setModal(null);
+                  }}
+                >
+                  Применить промокод
+                </button>
+                <div style={{ marginTop: 8, fontWeight: 700 }}>{modal.promoCode}</div>
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={async () => {
+                  const text = modal.shareText || modal.promoCode || "";
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ text });
+                    } catch {}
+                  } else {
+                    try {
+                      await navigator.clipboard.writeText(text);
+                      alert("Ссылка скопирована");
+                    } catch {}
+                  }
+                }}
+              >
+                Поделиться промокодом
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

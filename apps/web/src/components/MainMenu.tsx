@@ -1,16 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export const MENU_ITEMS = [
-  { title: "Комбо", href: "#Комбо" },
-  { title: "Блюда", href: "#Блюда" },
-  { title: "Закуски", href: "#Закуски" },
-  { title: "Соусы", href: "#Соусы" },
-  { title: "Напитки", href: "#Напитки" },
-  { title: "Кофе с собой", href: "#Кофе с собой" },
-];
+export interface MenuItem {
+  title: string;
+  href: string;
+}
 
-export default function MainMenu() {
-  const [active, setActive] = useState<string>("Комбо");
+interface Props {
+  items: MenuItem[];
+}
+
+export default function MainMenu({ items }: Props) {
+  const [active, setActive] = useState<string>(items[0]?.title || "");
+
+  useEffect(() => {
+    if (items.length && !items.find((i) => i.title === active)) {
+      setActive(items[0].title);
+    }
+  }, [items, active]);
 
   const scrollTo = (hash: string, title: string) => {
     setActive(title);
@@ -22,7 +28,7 @@ export default function MainMenu() {
     <aside className="main-sidebar">
       <nav>
         <ul className="menu">
-          {MENU_ITEMS.map((item) => (
+          {items.map((item) => (
             <li key={item.title}>
               <button
                 className={`sidebar-btn ${active === item.title ? "active" : ""}`}

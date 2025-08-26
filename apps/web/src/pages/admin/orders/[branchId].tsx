@@ -1,39 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import AdminLayout from "../../../components/AdminLayout";
 import { formatAstanaTime } from "../../../utils/time";
+import OrderDetailsModal, { Order, OrderStatus } from "../../../components/OrderDetailsModal";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-type OrderStatus =
-  | "created"
-  | "accepted"
-  | "cooking"
-  | "delivering"
-  | "done"
-  | "canceled";
-
 const STATUS_LABELS: Record<OrderStatus, string> = {
-  created: "Создан",
+  created: "Новый",
   accepted: "Принят",
   cooking: "Готовится",
   delivering: "В пути",
   done: "Завершён",
   canceled: "Отменён",
-};
-
-type Order = {
-  id: string;
-  customerName?: string | null;
-  customerPhone: string;
-  status: OrderStatus;
-  total: number;
-  pickupCode?: string | null;
-  pickupTime?: string | null;
-  promoCode?: string | null;
-  createdAt: string;
 };
 
 export default function OrdersAdmin() {
@@ -43,13 +24,20 @@ export default function OrdersAdmin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [branchName, setBranchName] = useState<string>("");
+  const [selected, setSelected] = useState<Order | null>(null);
+  const seenIds = useRef<Set<string>>(new Set());
 
   const load = async () => {
     if (!branchId) return;
     try {
       const res = await fetch(`${API_BASE}/admin/orders?branchId=${branchId}`);
       if (!res.ok) throw new Error("failed");
-      const list = await res.json();
+      const list: Order[] = await res.json();
+      const newOnes = list.filter((o) => !seenIds.current.has(o.id) && o.status === "created");
+      if (newOnes.length > 0) {
+        alert("Новый заказ!");
+      }
+      seenIds.current = new Set(list.map((o) => o.id));
       setOrders(list);
       setError(null);
     } catch (e) {
@@ -111,9 +99,17 @@ export default function OrdersAdmin() {
         </thead>
         <tbody>
           {orders.map((o) => (
-            <tr key={o.id}>
+            <tr
+              key={o.id}
+              style={{ background: o.status === "created" ? "#fff6e5" : undefined }}
+            >
               <td>
-                {o.id.slice(0, 8)}
+                <button
+                  style={{ background: "none", border: "none", cursor: "pointer" }}
+                  onClick={() => setSelected(o)}
+                >
+                  {o.id.slice(0, 8)}
+                </button>
                 <button
                   style={{ marginLeft: 4 }}
                   onClick={() => navigator.clipboard.writeText(o.id)}
@@ -149,6 +145,13 @@ export default function OrdersAdmin() {
           ))}
         </tbody>
       </table>
+      {selected && (
+        <OrderDetailsModal
+          order={selected}
+          onClose={() => setSelected(null)}
+          onStatusChange={(s) => update(selected.id, s)}
+        />
+      )}
     </AdminLayout>
   );
 }

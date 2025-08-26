@@ -1,23 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import UserInfoModal from "./UserInfoModal";
 import { useLang } from "./LangContext";
+import type { CartItem } from "../types/cart";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
-
-export type CartItem = {
-  id: string; // уникальный ключ позиции в корзине
-  dishId: string;
-  name: string;
-  price: number;
-  imageUrl?: string;
-  qty: number;
-  addons?: { id: string; name: string; price: number }[];
-  excluded?: { id: string; name: string }[];
-};
 
 type Props = {
   items: CartItem[];
@@ -49,8 +39,6 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     setBranch,
   } = useDelivery();
   const [showUserInfo, setShowUserInfo] = useState(false);
-
-  const skipAlert = useRef(false);
   const applyPromo = async (code: string) => {
     const tryCheck = async (branchId?: string) => {
       const payload: any = { code };
@@ -77,24 +65,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         if (res) {
           setDiscount(res.discount);
           if (candidate && candidate !== branch) {
-            skipAlert.current = true;
             setBranch(candidate);
-            const b = branches.find((br) => br.id === candidate);
-            alert(
-              `Промокод действует только для филиала ${b?.name ?? candidate}. Промокод применён.`
-            );
-          } else if (!skipAlert.current) {
-            alert("Промокод применён");
           }
-          skipAlert.current = false;
           return;
         }
       }
       setDiscount(0);
-      skipAlert.current = false;
     } catch {
       setDiscount(0);
-      skipAlert.current = false;
     }
   };
 
@@ -102,7 +80,6 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     if (promo && (branch || branches.length)) {
       applyPromo(promo);
     }
-    skipAlert.current = false;
   }, [promo, branch, branches.length]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -196,7 +173,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
           ? toAstanaISO(pickupTime)
           : null,
       items: items.map((i) => ({
-        dishId: i.dishId,
+        dishId: i.dishId ?? i.id,
         variantId: null,
         qty: i.qty,
         addonIds: i.addons?.map((a) => a.id),

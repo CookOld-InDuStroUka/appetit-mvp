@@ -12,10 +12,8 @@ type AuthCtx = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  requestCode: (phone: string) => Promise<void>;
-  verifyCode: (phone: string, code: string) => Promise<void>;
-  registerEmail: (email: string, password: string) => Promise<void>;
-  loginEmail: (email: string, password: string) => Promise<void>;
+  requestCode: (contact: string) => Promise<void>;
+  verifyCode: (contact: string, code: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -43,45 +41,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const open = () => setOpen(true);
   const close = () => setOpen(false);
 
-  const requestCode = async (phone: string) => {
+  const requestCode = async (contact: string) => {
+    const payload = contact.includes("@") ? { email: contact } : { phone: contact };
     await fetch(`${API_BASE}/auth/request-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone })
+      body: JSON.stringify(payload)
     });
   };
 
-  const verifyCode = async (phone: string, code: string) => {
+  const verifyCode = async (contact: string, code: string) => {
+    const payload = contact.includes("@") ? { email: contact, code } : { phone: contact, code };
     const res = await fetch(`${API_BASE}/auth/verify-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, code })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data.user);
-      close();
-    }
-  };
-
-  const registerEmail = async (email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/register-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data.user);
-      close();
-    }
-  };
-
-  const loginEmail = async (email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/login-email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
       const data = await res.json();
@@ -93,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => setUser(null);
 
   return (
-    <Ctx.Provider value={{ user, setUser, isOpen, open, close, requestCode, verifyCode, registerEmail, loginEmail, logout }}>
+    <Ctx.Provider value={{ user, setUser, isOpen, open, close, requestCode, verifyCode, logout }}>
       {children}
       {isOpen && <AuthModal />}
     </Ctx.Provider>

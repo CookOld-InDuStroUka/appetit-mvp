@@ -255,7 +255,7 @@ model Shift {
 }
 
 model AuthCode {
-  phone     String   @id
+  contact   String   @id
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())

@@ -1,3 +1,27 @@
+## 2025-08-28
+- feat: send verification codes to phone or email during login
+- feat: unify auth modal for SMS and email code flow
+- feat: apply promo code from promo modal directly to cart
+- feat: restore simple profile page with user data and order list
+- feat: seed coffee category with latte and americano drinks
+- fix: hide repeated alert when opening cart with already applied promo
+- fix: keep daily analytics bars narrow and scrollable
+- fix: remove all promo-code applied alerts
+- fix: show toppings and exclusions for all dishes
+- feat: link account button in header to profile page
+
+## 2025-08-27
+- feat: build sidebar and mobile menus from admin categories
+- feat: show promo slide promo code with apply/share actions
+- feat: redesign dish modal with topping buttons, ingredient exclusions, and quantity selector
+
+## 2025-08-26
+- fix: guard dish modal against null dish selection
+- feat: restore profile modal and orders link in header
+- feat: allow adding toppings and excluding ingredients in dish modal
+- feat: open promo slide details in modal window
+- fix: scale analytics bars using shared max to prevent oversized columns
+
 ## 2025-08-23
 - feat: fetch branch list from API in delivery modal to sync menu with admin changes
 - feat: edit branch menu locally with save button and apply via confirmation

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DishCard from "../components/DishCard";
 import DishModal from "../components/DishModal";
 import Header from "../components/Header";
-import MainMenu from "../components/MainMenu";
+import MainMenu, { MenuItem } from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 import { PromoSlide } from "../types/promo";
@@ -17,6 +17,7 @@ const API_BASE =
 type DishDTO = {
   id: string;
   categoryId?: string;
+  category?: string;
   name: string;
   nameKz?: string;
   description?: string;
@@ -28,7 +29,7 @@ type DishDTO = {
 };
 
 export default function Home() {
-  const [sections, setSections] = useState<{ name: string; dishes: DishDTO[] }[]>([]);
+  const [sections, setSections] = useState<{ name: string; slug: string; dishes: DishDTO[] }[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
   const [slides, setSlides] = useState<PromoSlide[]>([]);
   const { branch } = useDelivery();
@@ -44,7 +45,8 @@ export default function Home() {
               .then((r) => r.json())
               .then((dishes: DishDTO[]) => ({
                 name: lang === "kz" && c.nameKz ? c.nameKz : c.name,
-                dishes,
+                slug: c.slug,
+                dishes: dishes.map((d) => ({ ...d, category: c.slug })),
               }))
           )
         );
@@ -71,7 +73,12 @@ export default function Home() {
     <>
       <Header />
       <div className="page-layout">
-        <MainMenu />
+        <MainMenu
+          items={sections.map<MenuItem>((sec) => ({
+            title: sec.name,
+            href: `#${sec.name}`,
+          }))}
+        />
         <main
           style={{
             flex: 1,
@@ -82,7 +89,7 @@ export default function Home() {
           }}
         >
           <PromoSlider slides={slides.length ? slides : undefined} />
-          <MobileMenu />
+          <MobileMenu items={sections.map((sec) => sec.name)} />
           {sections.map((sec) => (
             <section key={sec.name} id={sec.name} style={{ marginBottom: "40px" }}>
               <h2 style={{ marginBottom: "20px" }}>{sec.name}</h2>

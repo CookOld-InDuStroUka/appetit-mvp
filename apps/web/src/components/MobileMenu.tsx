@@ -1,15 +1,10 @@
 import React from "react";
-import { useLang } from "./LangContext";
 
-export default function MobileMenu() {
-  const { t } = useLang();
-  const items = [
-    t("combo"),
-    t("dishes"),
-    t("snacks"),
-    t("sauces"),
-    t("drinks"),
-  ];
+interface Props {
+  items: string[];
+}
+
+export default function MobileMenu({ items }: Props) {
   return (
     <nav className="mobile-menu">
       <ul>

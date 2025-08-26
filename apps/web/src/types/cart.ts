@@ -5,4 +5,7 @@ export type CartItem = {
   price: number;
   qty: number;
   imageUrl?: string;
+  dishId?: string;
+  addons?: { id: string; name: string; price: number }[];
+  excluded?: { id: string; name: string }[];
 };
