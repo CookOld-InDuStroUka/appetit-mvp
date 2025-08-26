@@ -165,7 +165,8 @@ app.post(`${BASE}/admin/upload`, (req: Request, res: Response) => {
 const AuthRequestSchema = z.object({ phone: z.string().min(5) });
 const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
 const AuthEmailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
-const AdminAuthSchema = AuthEmailSchema.extend({ role: z.string().optional() });
+const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(6) });
+const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
@@ -233,7 +234,7 @@ app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
   const parsed = AdminAuthSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const admin = await prisma.admin.findUnique({ where: { email: parsed.data.email } });
+  const admin = await prisma.admin.findUnique({ where: { login: parsed.data.login } });
   if (!admin || !(await bcrypt.compare(parsed.data.password, admin.password))) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
@@ -250,7 +251,7 @@ async function getAdminByHeader(req: Request) {
 app.get(`${BASE}/admin/accounts`, async (req: Request, res: Response) => {
   const admin = await getAdminByHeader(req);
   if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
-  const admins = await prisma.admin.findMany({ select: { id: true, email: true, role: true } });
+  const admins = await prisma.admin.findMany({ select: { id: true, login: true, role: true } });
   res.json({ admins });
 });
 
@@ -259,8 +260,8 @@ app.post(`${BASE}/admin/accounts`, async (req: Request, res: Response) => {
   if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
   const parsed = AdminAuthSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const created = await prisma.admin.create({ data: { email: parsed.data.email, password: parsed.data.password, role: parsed.data.role ?? "manager" } });
-  res.json({ ok: true, admin: { id: created.id, email: created.email, role: created.role } });
+  const created = await prisma.admin.create({ data: { login: parsed.data.login, password: parsed.data.password, role: parsed.data.role ?? "manager" } });
+  res.json({ ok: true, admin: { id: created.id, login: created.login, role: created.role } });
 });
 
 app.patch(`${BASE}/admin/accounts/:id`, async (req: Request, res: Response) => {

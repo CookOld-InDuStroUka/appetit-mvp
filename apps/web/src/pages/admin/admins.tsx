@@ -4,13 +4,13 @@ import { useAdminAuth } from "../../components/AdminAuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-type Admin = { id: string; email: string; role: string };
+type Admin = { id: string; login: string; role: string };
 
 export default function AdminsPage() {
   const { admin } = useAdminAuth();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [filter, setFilter] = useState("");
-  const [email, setEmail] = useState("");
+  const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("manager");
 
@@ -27,9 +27,9 @@ export default function AdminsPage() {
     await fetch(`${API_BASE}/admin/accounts`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Admin-Id": admin!.id },
-      body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({ login: loginName, password, role }),
     });
-    setEmail("");
+    setLoginName("");
     setPassword("");
     setRole("manager");
     const res = await fetch(`${API_BASE}/admin/accounts`, { headers: { "X-Admin-Id": admin!.id } });
@@ -53,7 +53,7 @@ export default function AdminsPage() {
     setAdmins((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const filtered = admins.filter((a) => a.email.includes(filter));
+  const filtered = admins.filter((a) => a.login.includes(filter));
 
   if (admin?.role !== "super") return <AdminLayout>Нет доступа</AdminLayout>;
 
@@ -66,7 +66,7 @@ export default function AdminsPage() {
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
-            <th style={{ border: "1px solid #ccc", padding: 8 }}>Email</th>
+            <th style={{ border: "1px solid #ccc", padding: 8 }}>Логин</th>
             <th style={{ border: "1px solid #ccc", padding: 8 }}>Роль</th>
             <th></th>
           </tr>
@@ -74,7 +74,7 @@ export default function AdminsPage() {
         <tbody>
           {filtered.map((a) => (
             <tr key={a.id}>
-              <td style={{ border: "1px solid #ccc", padding: 8 }}>{a.email}</td>
+              <td style={{ border: "1px solid #ccc", padding: 8 }}>{a.login}</td>
               <td style={{ border: "1px solid #ccc", padding: 8 }}>
                 <select value={a.role} onChange={(e) => changeRole(a.id, e.target.value)}>
                   <option value="manager">manager</option>
@@ -90,7 +90,7 @@ export default function AdminsPage() {
       </table>
       <h2 style={{ marginTop: 32 }}>Создать администратора</h2>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: 8, border: "1px solid #ccc", borderRadius: 6 }} />
+        <input value={loginName} onChange={(e) => setLoginName(e.target.value)} placeholder="Логин" style={{ padding: 8, border: "1px solid #ccc", borderRadius: 6 }} />
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Пароль" style={{ padding: 8, border: "1px solid #ccc", borderRadius: 6 }} />
         <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="manager">manager</option>

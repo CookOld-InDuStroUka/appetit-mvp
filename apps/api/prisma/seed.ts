@@ -12,9 +12,9 @@ async function main() {
 
   const hashed = await bcrypt.hash("admin", 10);
   await prisma.admin.upsert({
-    where: { email: "admin@admin.com" },
+    where: { login: "admin" },
     update: { password: hashed, role: "super" },
-    create: { email: "admin@admin.com", password: hashed, role: "super" },
+    create: { login: "admin", password: hashed, role: "super" },
   });
 
   // --- Branches & Zones (стабильные id) ---

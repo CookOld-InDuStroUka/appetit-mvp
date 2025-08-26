@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useAdminAuth } from "../../components/AdminAuthContext";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");
+  const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login, admin } = useAdminAuth();
@@ -15,11 +15,11 @@ export default function AdminLoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await login(email, password);
+    const ok = await login(loginName, password);
     if (ok) {
       router.push("/admin");
     } else {
-      setError("Неверный email или пароль");
+      setError("Неверный логин или пароль");
     }
   };
 
@@ -28,9 +28,9 @@ export default function AdminLoginPage() {
       <h1>Админ вход</h1>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <input
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Email"
+          value={loginName}
+          onChange={e => setLoginName(e.target.value)}
+          placeholder="Логин"
           style={{ padding: "8px 12px", border: "1px solid #ccc", borderRadius: 8 }}
         />
         <input
