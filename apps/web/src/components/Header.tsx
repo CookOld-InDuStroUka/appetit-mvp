@@ -18,8 +18,7 @@ export default function Header() {
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
-  const [pendingPromo, setPendingPromo] = useState<string | null>(null);
-  const { items: cartItems, updateQty, clear, removeItem } = useCart();
+  const { items: cartItems, updateQty, clear, removeItem, setPromo } = useCart();
   const { user, open: openAuth } = useAuth();
   const { setBranch } = useDelivery();
 
@@ -29,13 +28,13 @@ export default function Header() {
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { promo?: string; branchId?: string } | undefined;
-      if (detail?.promo) setPendingPromo(detail.promo);
+      if (detail?.promo) setPromo(detail.promo.toUpperCase());
       if (detail?.branchId) setBranch(detail.branchId);
       setCartOpen(true);
     };
     document.addEventListener("open-cart", handler);
     return () => document.removeEventListener("open-cart", handler);
-  }, [setBranch]);
+  }, [setBranch, setPromo]);
 
   // подсказки поиска
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(
@@ -307,14 +306,10 @@ export default function Header() {
       {isCartOpen && (
         <CartModal
           items={cartItems}
-          onClose={() => {
-            setCartOpen(false);
-            setPendingPromo(null);
-          }}
+          onClose={() => setCartOpen(false)}
           onClear={clear}
           updateQty={updateQty}
           removeItem={removeItem}
-          initialPromo={pendingPromo || undefined}
         />
       )}
     </>

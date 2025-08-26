@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
+import { useCart } from "./CartContext";
 import UserInfoModal from "./UserInfoModal";
 
 const API_BASE =
@@ -23,11 +24,10 @@ type Props = {
   onClear: () => void;
   updateQty: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
-  initialPromo?: string;
 };
 
-export default function CartModal({ items, onClose, onClear, updateQty, removeItem, initialPromo }: Props) {
-  const [promo, setPromo] = useState(initialPromo || "");
+export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
+  const { promo, setPromo } = useCart();
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<"cash" | "card">("cash");
   const [useBonus, setUseBonus] = useState(false);
@@ -97,13 +97,6 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       skipAlert.current = false;
     }
   };
-
-  useEffect(() => {
-    if (initialPromo) {
-      const upper = initialPromo.toUpperCase();
-      setPromo(upper);
-    }
-  }, [initialPromo]);
 
   useEffect(() => {
     if (promo) {
@@ -402,7 +395,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   name="promo"
-                  value={promo}
+                  value={promo || ""}
                   onChange={(e) => setPromo(e.target.value.toUpperCase())}
                   placeholder="Промокод"
                   style={{
@@ -414,7 +407,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   }}
                 />
                 <button
-                  onClick={() => applyPromo(promo)}
+                  onClick={() => promo && applyPromo(promo)}
                   style={{
                     padding: "8px 12px",
                     borderRadius: 8,
