@@ -1020,6 +1020,88 @@ app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
   );
 });
 
+app.get(`${BASE}/admin/expenses`, async (req: Request, res: Response) => {
+  const where = req.query.branchId
+    ? { branchId: String(req.query.branchId) }
+    : undefined;
+  const expenses = await prisma.expense.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+  });
+  res.json(
+    expenses.map((e: any) => ({
+      id: e.id,
+      branchId: e.branchId,
+      amount: Number(e.amount),
+      description: e.description,
+      createdAt: e.createdAt,
+    }))
+  );
+});
+
+app.post(`${BASE}/admin/expenses`, async (req: Request, res: Response) => {
+  const { branchId, amount, description } = req.body;
+  const expense = await prisma.expense.create({
+    data: { branchId, amount, description },
+  });
+  res.json({
+    id: expense.id,
+    branchId: expense.branchId,
+    amount: Number(expense.amount),
+    description: expense.description,
+    createdAt: expense.createdAt,
+  });
+});
+
+app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
+  const { branchId } = req.query;
+  const where = branchId ? { branchId: String(branchId) } : undefined;
+  const [orders, expenses] = await Promise.all([
+    prisma.order.findMany({ where }),
+    prisma.expense.findMany({ where }),
+  ]);
+  const ordersTotal = orders.reduce(
+    (s: number, o: any) => s + Number(o.total),
+    0
+  );
+  const ordersCount = orders.length;
+  const expensesTotal = expenses.reduce(
+    (s: number, e: any) => s + Number(e.amount),
+    0
+  );
+  const profit = ordersTotal - expensesTotal;
+
+  const days: string[] = [];
+  const ordersDaily: number[] = [];
+  const expensesDaily: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const next = new Date(d);
+    next.setDate(d.getDate() + 1);
+    days.push(d.toISOString().slice(0, 10));
+    ordersDaily.push(
+      orders
+        .filter((o: any) => o.createdAt >= d && o.createdAt < next)
+        .reduce((s: number, o: any) => s + Number(o.total), 0)
+    );
+    expensesDaily.push(
+      expenses
+        .filter((e: any) => e.createdAt >= d && e.createdAt < next)
+        .reduce((s: number, e: any) => s + Number(e.amount), 0)
+    );
+  }
+
+  res.json({
+    ordersTotal,
+    ordersCount,
+    expensesTotal,
+    profit,
+    daily: { days, orders: ordersDaily, expenses: expensesDaily },
+  });
+});
+
 app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.params.id },

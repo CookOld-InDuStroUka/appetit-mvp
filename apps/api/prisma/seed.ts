@@ -69,25 +69,40 @@ async function main() {
     }
   ];
 
-  for (const b of seedBranches) {
-    await prisma.branch.upsert({
-      where: { id: b.id },
-      update: { name: b.name, address: b.address, phone: b.phone },
-      create: { id: b.id, name: b.name, address: b.address, phone: b.phone }
-    });
+    for (const b of seedBranches) {
+      await prisma.branch.upsert({
+        where: { id: b.id },
+        update: { name: b.name, address: b.address, phone: b.phone },
+        create: { id: b.id, name: b.name, address: b.address, phone: b.phone },
+      });
 
-    await prisma.zone.upsert({
-      where: { id: b.zoneId },
-      update: { name: b.zoneName, branchId: b.id, deliveryFee: 500, minOrder: 2000 },
-      create: {
-        id: b.zoneId,
-        name: b.zoneName,
+      await prisma.zone.upsert({
+        where: { id: b.zoneId },
+        update: {
+          name: b.zoneName,
+          branchId: b.id,
+          deliveryFee: 500,
+          minOrder: 2000,
+        },
+        create: {
+          id: b.zoneId,
+          name: b.zoneName,
+          branchId: b.id,
+          deliveryFee: 500,
+          minOrder: 2000,
+        },
+      });
+    }
+
+    // sample expenses per branch
+    await prisma.expense.createMany({
+      data: seedBranches.map((b) => ({
         branchId: b.id,
-        deliveryFee: 500,
-        minOrder: 2000
-      }
+        amount: 1000,
+        description: "seed expense",
+      })),
+      skipDuplicates: true,
     });
-  }
 
   // --- Categories ---
   const dishesCat = await prisma.category.upsert({

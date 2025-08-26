@@ -190,6 +190,15 @@ model PromoCode {
   orders      Order[]
 }
 
+model Expense {
+  id          String   @id @default(cuid())
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  createdAt   DateTime @default(now())
+}
+
 model AuthCode {
   phone     String   @id
   code      String

@@ -9,23 +9,37 @@ type LangContextType = {
 };
 
 const translations: Record<Lang, Record<string, string>> = {
-  ru: {
-    tagline: "вкусная шаурма",
-    search: "Поиск",
-    searchBtn: "Искать",
-    contacts: "Контакты",
-    orders: "Заказы",
-    login: "Войти",
-  },
-  kz: {
-    tagline: "дәмді шаурма",
-    search: "Іздеу",
-    searchBtn: "Іздеу",
-    contacts: "Контактілер",
-    orders: "Тапсырыстар",
-    login: "Кіру",
-  },
-};
+    ru: {
+      tagline: "вкусная шаурма",
+      search: "Поиск",
+      searchBtn: "Искать",
+      contacts: "Контакты",
+      orders: "Заказы",
+      login: "Войти",
+      analytics: "Аналитика",
+      allBranches: "Все филиалы",
+      branch: "Филиал",
+      expenses: "Расходы",
+      profit: "Прибыль",
+      saveReport: "Сохранить отчёт",
+      savedReports: "Сохранённые отчёты",
+    },
+    kz: {
+      tagline: "дәмді шаурма",
+      search: "Іздеу",
+      searchBtn: "Іздеу",
+      contacts: "Контактілер",
+      orders: "Тапсырыстар",
+      login: "Кіру",
+      analytics: "Аналитика",
+      allBranches: "Барлық филиалдар",
+      branch: "Филиал",
+      expenses: "Шығындар",
+      profit: "Пайда",
+      saveReport: "Есепті сақтау",
+      savedReports: "Сақталған есептер",
+    },
+  };
 
 const LangContext = createContext<LangContextType>({
   lang: "ru",
