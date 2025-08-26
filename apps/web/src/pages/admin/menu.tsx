@@ -7,15 +7,18 @@ import ModifierManagerModal from "../../components/ModifierManagerModal";
 interface Dish {
   id: string;
   name: string;
+  nameKz?: string | null;
   categoryId: string;
   basePrice: number;
   description?: string | null;
+  descriptionKz?: string | null;
   imageUrl?: string | null;
 }
 
 interface Category {
   id: string;
   name: string;
+  nameKz?: string | null;
   dishes: Dish[];
 }
 

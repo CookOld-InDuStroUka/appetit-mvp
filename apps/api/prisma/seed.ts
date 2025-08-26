@@ -107,23 +107,24 @@ async function main() {
   // --- Categories ---
   const dishesCat = await prisma.category.upsert({
     where: { slug: "dishes" },
-    update: { name: "Блюда" },
-    create: { id: "cat-dishes", slug: "dishes", name: "Блюда", sortOrder: 2, isActive: true }
+    update: { name: "Блюда", nameKz: "Тағамдар" },
+    create: { id: "cat-dishes", slug: "dishes", name: "Блюда", nameKz: "Тағамдар", sortOrder: 2, isActive: true }
   });
 
   const comboCat = await prisma.category.upsert({
     where: { slug: "combo" },
-    update: {},
-    create: { id: "cat-combo", slug: "combo", name: "Комбо", sortOrder: 1, isActive: true }
+    update: { nameKz: "Комбо" },
+    create: { id: "cat-combo", slug: "combo", name: "Комбо", nameKz: "Комбо", sortOrder: 1, isActive: true }
   });
 
   const snacksCat = await prisma.category.upsert({
     where: { slug: "snacks" },
-    update: { name: "Закуски" },
+    update: { name: "Закуски", nameKz: "Тіскебасар" },
     create: {
       id: "cat-snacks",
       slug: "snacks",
       name: "Закуски",
+      nameKz: "Тіскебасар",
       sortOrder: 3,
       isActive: true,
     },
@@ -131,11 +132,12 @@ async function main() {
 
   const saucesCat = await prisma.category.upsert({
     where: { slug: "sauces" },
-    update: { name: "Соусы" },
+    update: { name: "Соусы", nameKz: "Тұздықтар" },
     create: {
       id: "cat-sauces",
       slug: "sauces",
       name: "Соусы",
+      nameKz: "Тұздықтар",
       sortOrder: 4,
       isActive: true,
     },
@@ -143,11 +145,12 @@ async function main() {
 
   const drinksCat = await prisma.category.upsert({
     where: { slug: "drinks" },
-    update: { name: "Напитки" },
+    update: { name: "Напитки", nameKz: "Сусындар" },
     create: {
       id: "cat-drinks",
       slug: "drinks",
       name: "Напитки",
+      nameKz: "Сусындар",
       sortOrder: 5,
       isActive: true,
     },

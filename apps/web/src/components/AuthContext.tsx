@@ -4,7 +4,7 @@ import AuthModal from "./AuthModal";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-export type User = { id: string; phone?: string | null; email?: string | null; name?: string | null; bonus: number };
+export type User = { id: string; phone?: string | null; email?: string | null; name?: string | null; birthDate?: string | null; notificationsEnabled?: boolean; bonus: number };
 
 type AuthCtx = {
   user: User | null;

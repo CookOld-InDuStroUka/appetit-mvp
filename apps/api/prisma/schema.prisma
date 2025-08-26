@@ -10,6 +10,7 @@ datasource db {
 model Category {
   id        String  @id @default(cuid())
   name      String
+  nameKz    String?
   slug      String? @unique
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
@@ -20,8 +21,10 @@ model Dish {
   id           String             @id @default(cuid())
   categoryId   String
   name         String
+  nameKz       String?
   slug         String?
   description  String?
+  descriptionKz String?
   basePrice    Decimal            @db.Decimal(10, 2)
   imageUrl     String?
   isActive     Boolean            @default(true)
@@ -166,6 +169,8 @@ model User {
   email     String?  @unique
   password  String?
   name      String?
+  birthDate DateTime?
+  notificationsEnabled Boolean @default(true)
   bonus     Int      @default(0)
   orders    Order[]
   createdAt DateTime @default(now())

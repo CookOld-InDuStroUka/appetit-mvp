@@ -3,7 +3,7 @@ import React, { useState } from "react";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 type Props = {
-  user: { id: string; name?: string | null; phone?: string | null };
+  user: { id: string; name?: string | null; phone?: string | null; birthDate?: string | null; notificationsEnabled?: boolean };
   onClose: () => void;
   onSaved: (u: any) => void;
 };
@@ -11,6 +11,8 @@ type Props = {
 export default function UserInfoModal({ user, onClose, onSaved }: Props) {
   const [name, setName] = useState(user.name ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
+  const [birthDate, setBirthDate] = useState(user.birthDate ? user.birthDate.slice(0,10) : "");
+  const [notify, setNotify] = useState(user.notificationsEnabled ?? true);
   const [loading, setLoading] = useState(false);
 
   const save = async () => {
@@ -19,7 +21,7 @@ export default function UserInfoModal({ user, onClose, onSaved }: Props) {
       const res = await fetch(`${API_BASE}/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone }),
+        body: JSON.stringify({ name, phone, birthDate: birthDate || null, notificationsEnabled: notify }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -63,6 +65,21 @@ export default function UserInfoModal({ user, onClose, onSaved }: Props) {
               background: "var(--card-bg)",
             }}
           />
+          <input
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--border)",
+              background: "var(--card-bg)",
+            }}
+          />
+          <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
+            Получать уведомления и акции
+          </label>
         </div>
         <button
           onClick={save}

@@ -3,6 +3,7 @@ import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import UserInfoModal from "./UserInfoModal";
+import { useLang } from "./LangContext";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
@@ -33,6 +34,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const [useBonus, setUseBonus] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, open: openAuth, setUser } = useAuth();
+  const { t } = useLang();
   const {
     mode,
     address,
@@ -406,7 +408,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   name="promo"
                   value={promo || ""}
                   onChange={(e) => setPromo(e.target.value.toUpperCase())}
-                  placeholder="Промокод"
+                  placeholder={t("promoPlaceholder")}
                   style={{
                     flex: 1,
                     padding: "8px 12px",
@@ -425,11 +427,11 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                     cursor: "pointer",
                   }}
                 >
-                  Применить
+                  {t("apply")}
                 </button>
               </div>
               <span style={{ fontSize: 12, color: "var(--muted-text)" }}>
-                Промокоды могут действовать не во всех филиалах.
+                {t("promoInfo")}
               </span>
             </div>
 
@@ -440,33 +442,33 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   checked={useBonus}
                   onChange={(e) => setUseBonus(e.target.checked)}
                 />
-                Списать бонусы (доступно {availableBonus} ₸)
+                {`${t("useBonus")} (доступно ${availableBonus} ₸)`}
               </label>
             )}
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span>Итого</span>
+                <span>{t("total")}</span>
                 <span>{total} ₸</span>
               </div>
               {discountAmount > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span>Скидка</span>
+                  <span>{t("discount")}</span>
                   <span>-{discountAmount} ₸</span>
                 </div>
               )}
               {bonusToApply > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span>Списано бонусов</span>
+                  <span>{t("bonusUsed")}</span>
                   <span>-{bonusToApply} ₸</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 14 }}>
-                <span>Начислим бонусов</span>
+                <span>{t("bonusEarn")}</span>
                 <span>{bonusEarned} ₸</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
-                <span>К оплате</span>
+                <span>{t("toPay")}</span>
                 <span>{totalAfterDiscount - bonusToApply} ₸</span>
               </div>
             </div>

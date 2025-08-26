@@ -156,7 +156,7 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 
   await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
 
-  res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, bonus: user.bonus } });
+  res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
@@ -169,7 +169,7 @@ app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
     create: { email: parsed.data.email, password: parsed.data.password }
   });
 
-  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, bonus: user.bonus } });
+  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
@@ -181,7 +181,7 @@ app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
-  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, bonus: user.bonus } });
+  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/admin/register`, async (req: Request, res: Response) => {
@@ -324,8 +324,10 @@ app.get(`${BASE}/admin/branches/:branchId/dishes`, async (req: Request, res: Res
   const result = dishes.map((d: any) => ({
     id: d.id,
     name: d.name,
+    nameKz: d.nameKz,
     categoryId: d.categoryId,
     categoryName: d.category?.name ?? "",
+    categoryNameKz: d.category?.nameKz ?? "",
     available: availSet.has(d.id),
   }));
   res.json(result);
@@ -352,14 +354,17 @@ app.post(`${BASE}/admin/branches/:branchId/dishes/:dishId`, async (req: Request,
 
 const DishUpsertSchema = z.object({
   name: z.string().min(1),
+  nameKz: z.string().optional().nullable(),
   categoryId: z.string(),
   basePrice: z.coerce.number().nonnegative(),
   description: z.string().optional().nullable(),
+  descriptionKz: z.string().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
 });
 
 const CategoryUpsertSchema = z.object({
   name: z.string().min(1),
+  nameKz: z.string().optional().nullable(),
   sortOrder: z.number().int().optional(),
 });
 
@@ -425,12 +430,15 @@ app.get(`${BASE}/admin/dishes`, async (_req: Request, res: Response) => {
   const result = categories.map((c: any) => ({
     id: c.id,
     name: c.name,
+    nameKz: c.nameKz,
     dishes: c.dishes.map((d: any) => ({
       id: d.id,
       name: d.name,
+      nameKz: d.nameKz,
       categoryId: d.categoryId,
       basePrice: Number(d.basePrice),
       description: d.description ?? null,
+      descriptionKz: d.descriptionKz ?? null,
       imageUrl: d.imageUrl ?? null,
       statusId: d.statusId ?? null,
       status: d.status
@@ -449,9 +457,11 @@ app.post(`${BASE}/admin/dishes`, async (req: Request, res: Response) => {
     const dish = await prisma.dish.create({
       data: {
         name: data.name,
+        nameKz: data.nameKz ?? null,
         categoryId: data.categoryId,
         basePrice: data.basePrice,
         description: data.description ?? null,
+        descriptionKz: data.descriptionKz ?? null,
         imageUrl: data.imageUrl ?? null,
       },
     });
@@ -487,9 +497,11 @@ app.put(`${BASE}/admin/dishes/:id`, async (req: Request, res: Response) => {
       where: { id: req.params.id },
       data: {
         name: data.name,
+        nameKz: data.nameKz ?? null,
         categoryId: data.categoryId,
         basePrice: data.basePrice,
         description: data.description ?? null,
+        descriptionKz: data.descriptionKz ?? null,
         imageUrl: data.imageUrl ?? null,
       },
     });
@@ -582,7 +594,7 @@ app.post(`${BASE}/admin/categories`, async (req: Request, res: Response) => {
   const data = parsed.data;
   const count = await prisma.category.count();
   const cat = await prisma.category.create({
-    data: { name: data.name, sortOrder: data.sortOrder ?? count },
+    data: { name: data.name, nameKz: data.nameKz ?? null, sortOrder: data.sortOrder ?? count },
   });
   res.json(cat);
 });
@@ -658,7 +670,9 @@ app.get(`${BASE}/dishes`, async (req: Request, res: Response) => {
         id: d.id,
         categoryId: d.categoryId,
         name: d.name,
+        nameKz: d.nameKz ?? undefined,
         description: d.description ?? undefined,
+        descriptionKz: d.descriptionKz ?? undefined,
         imageUrl: d.imageUrl ?? undefined,
         basePrice: base,
         minPrice: min,
@@ -685,7 +699,7 @@ app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
       isActive: true,
       name: { contains: q, mode: "insensitive" }
     },
-    select: { id: true, name: true },
+    select: { id: true, name: true, nameKz: true },
     orderBy: { name: "asc" },
     take: 10
   });
@@ -1131,6 +1145,8 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
     phone: user.phone,
     email: user.email,
     name: user.name,
+    birthDate: user.birthDate,
+    notificationsEnabled: user.notificationsEnabled,
     bonus: user.bonus,
     orders: user.orders.map((o: any) => ({
       id: o.id,
@@ -1171,13 +1187,17 @@ const UserUpdateSchema = z.object({
   phone: z.string().min(5).optional(),
   email: z.string().email().optional(),
   password: z.string().min(6).optional(),
+  birthDate: z.string().optional().nullable(),
+  notificationsEnabled: z.boolean().optional(),
 });
 
 app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
   const parsed = UserUpdateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const user = await prisma.user.update({ where: { id: req.params.id }, data: parsed.data });
-  res.json({ id: user.id, phone: user.phone, email: user.email, name: user.name, bonus: user.bonus });
+  const data: any = { ...parsed.data };
+  if (data.birthDate) data.birthDate = new Date(data.birthDate);
+  const user = await prisma.user.update({ where: { id: req.params.id }, data });
+  res.json({ id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus });
 });
 
 const OrderStatusUpdateSchema = z.object({
