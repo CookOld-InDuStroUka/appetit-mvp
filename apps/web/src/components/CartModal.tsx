@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDelivery } from "./DeliveryContext";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
@@ -39,8 +39,6 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     setBranch,
   } = useDelivery();
   const [showUserInfo, setShowUserInfo] = useState(false);
-
-  const skipAlert = useRef(false);
   const applyPromo = async (code: string) => {
     const tryCheck = async (branchId?: string) => {
       const payload: any = { code };
@@ -67,32 +65,20 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         if (res) {
           setDiscount(res.discount);
           if (candidate && candidate !== branch) {
-            skipAlert.current = true;
             setBranch(candidate);
-            const b = branches.find((br) => br.id === candidate);
-            alert(
-              `Промокод действует только для филиала ${b?.name ?? candidate}. Промокод применён.`
-            );
-          } else if (!skipAlert.current) {
-            alert("Промокод применён");
           }
-          skipAlert.current = false;
           return;
         }
       }
       setDiscount(0);
-      skipAlert.current = false;
     } catch {
       setDiscount(0);
-      skipAlert.current = false;
     }
   };
 
   useEffect(() => {
     if (promo && (branch || branches.length)) {
-      skipAlert.current = true;
       applyPromo(promo);
-      skipAlert.current = false;
     }
   }, [promo, branch, branches.length]);
 

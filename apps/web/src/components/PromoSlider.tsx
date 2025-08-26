@@ -195,7 +195,6 @@ export default function PromoSlider({
                   onClick={() => {
                     setPromo(modal.promoCode!);
                     setModal(null);
-                    alert("Промокод применён");
                   }}
                 >
                   Применить промокод

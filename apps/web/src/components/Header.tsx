@@ -5,7 +5,6 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useLang } from "./LangContext";
-import UserInfoModal from "./UserInfoModal";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -19,9 +18,8 @@ export default function Header() {
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
-  const { user, open: openAuth, setUser } = useAuth();
+  const { user, open: openAuth } = useAuth();
   const { lang, setLang, t } = useLang();
-  const [infoOpen, setInfoOpen] = useState(false);
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
@@ -161,10 +159,10 @@ export default function Header() {
             </Link>
 
             {user ? (
-              <button onClick={() => setInfoOpen(true)} className="link link--auth">
+              <Link href="/profile" className="link link--auth">
                 <UserIcon />
                 <span>{user.phone || user.email}</span>
-              </button>
+              </Link>
             ) : (
               <button onClick={openAuth} className="link link--auth">
                 <UserIcon />
@@ -311,16 +309,6 @@ export default function Header() {
           onClear={clear}
           updateQty={updateQty}
           removeItem={removeItem}
-        />
-      )}
-      {infoOpen && user && (
-        <UserInfoModal
-          user={user}
-          onClose={() => setInfoOpen(false)}
-          onSaved={(u) => {
-            setUser(u);
-            setInfoOpen(false);
-          }}
         />
       )}
     </>
