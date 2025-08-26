@@ -17,6 +17,20 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   canceled: "Отменён",
 };
 
+const ORDER_FLOW: OrderStatus[] = [
+  "created",
+  "accepted",
+  "cooking",
+  "delivering",
+  "done",
+  "canceled",
+];
+
+const nextStatus = (s: OrderStatus): OrderStatus => {
+  const idx = ORDER_FLOW.indexOf(s);
+  return ORDER_FLOW[idx + 1] || s;
+};
+
 export default function OrdersAdmin() {
   const router = useRouter();
   const { branchId } = router.query as { branchId?: string };
@@ -26,6 +40,7 @@ export default function OrdersAdmin() {
   const [branchName, setBranchName] = useState<string>("");
   const [selected, setSelected] = useState<Order | null>(null);
   const seenIds = useRef<Set<string>>(new Set());
+  const [hasNew, setHasNew] = useState(false);
 
   const load = async () => {
     if (!branchId) return;
@@ -33,12 +48,15 @@ export default function OrdersAdmin() {
       const res = await fetch(`${API_BASE}/admin/orders?branchId=${branchId}`);
       if (!res.ok) throw new Error("failed");
       const list: Order[] = await res.json();
-      const newOnes = list.filter((o) => !seenIds.current.has(o.id) && o.status === "created");
+      const newOnes = list.filter(
+        (o) => !seenIds.current.has(o.id) && o.status === "created"
+      );
       if (newOnes.length > 0) {
-        alert("Новый заказ!");
+        setHasNew(true);
       }
       seenIds.current = new Set(list.map((o) => o.id));
       setOrders(list);
+      setHasNew(list.some((o) => o.status === "created"));
       setError(null);
     } catch (e) {
       console.error("Failed to fetch orders", e);
@@ -80,9 +98,22 @@ export default function OrdersAdmin() {
       <p>
         <Link href="/admin/orders">Вернуться к списку филиалов</Link>
       </p>
-      {error && (
-        <p style={{ color: "red" }}>{error}</p>
+      {hasNew && (
+        <div
+          style={{
+            position: "fixed",
+            right: 20,
+            top: 100,
+            background: "#ff9800",
+            color: "#fff",
+            padding: "8px 12px",
+            borderRadius: 8,
+          }}
+        >
+          Новый заказ
+        </div>
       )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <table border={1} cellPadding={4} style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr>
@@ -134,6 +165,12 @@ export default function OrdersAdmin() {
                     </option>
                   ))}
                 </select>
+                <button
+                  style={{ marginLeft: 4 }}
+                  onClick={() => update(o.id, nextStatus(o.status))}
+                >
+                  ▶
+                </button>
               </td>
               <td>
                 {new Date(o.createdAt).toLocaleString('ru-RU', {
