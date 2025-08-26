@@ -161,7 +161,7 @@ export default function Header() {
             {user ? (
               <Link href="/profile" className="link link--auth">
                 <UserIcon />
-                <span>{user.phone || user.email}</span>
+                <span>{user.name || user.phone || user.email}</span>
               </Link>
             ) : (
               <button onClick={openAuth} className="link link--auth">

@@ -15,9 +15,11 @@ declare module '@prisma/client' {
   }
   export enum OrderStatus {
     created,
-    paid,
-    completed,
-    cancelled
+    accepted,
+    cooking,
+    delivering,
+    done,
+    canceled,
   }
   export enum OrderType {
     delivery,

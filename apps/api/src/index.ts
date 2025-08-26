@@ -1277,11 +1277,11 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
       prisma.expense.findMany({ where: expenseWhere }),
     ]);
 
-    const paidOrders = allOrders.filter((o) => o.status === "done");
+    const paidOrders = allOrders.filter((o: any) => o.status === "done");
     const ordersAll = allOrders.length;
     const ordersPaid = paidOrders.length;
     const revenue = paidOrders.reduce(
-      (s, o) => s + Number(o.total),
+      (s: number, o: any) => s + Number(o.total),
       0
     );
     const averageCheck = ordersPaid ? revenue / ordersPaid : 0;
@@ -1373,7 +1373,7 @@ app.get(`${BASE}/admin/settings/tracking`, async (_req: Request, res: Response) 
   const entries = await prisma.setting.findMany({ where: { key: { in: keys } } });
   const result: any = {};
   for (const k of keys) {
-    result[k] = entries.find((e) => e.key === k)?.value ?? null;
+    result[k] = entries.find((e: any) => e.key === k)?.value ?? null;
   }
   res.json(result);
 });

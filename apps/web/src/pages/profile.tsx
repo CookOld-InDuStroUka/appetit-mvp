@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useAuth } from "../components/AuthContext";
+import UserInfoModal from "../components/UserInfoModal";
 import type { OrderDTO } from "@appetit/shared";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function ProfilePage() {
-  const { user, open: openAuth, logout } = useAuth();
+  const { user, setUser, open: openAuth, logout } = useAuth();
   const [orders, setOrders] = useState<OrderDTO[]>([]);
+  const [showEdit, setShowEdit] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +54,19 @@ export default function ProfilePage() {
         <p>Бонусы: {user.bonus ?? 0} ₸</p>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0 }}>Данные</h2>
+          <button
+            onClick={() => setShowEdit(true)}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--accent)",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Изменить
+          </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400 }}>
           <div><strong>Имя:</strong> {user.name ?? "—"}</div>
@@ -80,6 +95,16 @@ export default function ProfilePage() {
         )}
       </main>
       <Footer />
+      {showEdit && user && (
+        <UserInfoModal
+          user={user}
+          onClose={() => setShowEdit(false)}
+          onSaved={(u) => {
+            setUser(u);
+            setShowEdit(false);
+          }}
+        />
+      )}
     </>
   );
 }
