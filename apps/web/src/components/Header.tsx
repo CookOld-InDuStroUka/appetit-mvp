@@ -20,7 +20,7 @@ export default function Header() {
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem, setPromo } = useCart();
-  const { user, open: openAuth } = useAuth();
+  const { user, open: openAuth, logout } = useAuth();
   const { setBranch } = useDelivery();
   const { lang, setLang, t } = useLang();
 
@@ -187,9 +187,14 @@ export default function Header() {
             )}
 
             {user ? (
-              <Link href="/profile" className="link">
-                {user.name || user.email || user.phone}
-              </Link>
+              <>
+                <Link href="/profile" className="link">
+                  {user.name || user.email || user.phone}
+                </Link>
+                <button onClick={logout} className="link">
+                  {t("logout")}
+                </button>
+              </>
             ) : (
               <button onClick={openAuth} className="link">
                 <UserIcon />

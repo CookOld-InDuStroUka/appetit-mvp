@@ -8,7 +8,7 @@ import type { OrderDTO } from "@appetit/shared";
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function ProfilePage() {
-  const { user, open: openAuth, setUser } = useAuth();
+  const { user, open: openAuth, setUser, logout } = useAuth();
   const { setItems } = useCart();
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [bonus, setBonus] = useState(0);
@@ -26,7 +26,7 @@ export default function ProfilePage() {
     fetch(`${API_BASE}/users/${user.id}`)
       .then((r) => r.json())
       .then((data) => {
-        setOrders(data.orders);
+        setOrders(Array.isArray(data.orders) ? data.orders : []);
         setBonus(data.bonus);
         setName(data.name || "");
         setEmail(data.email || "");
@@ -76,7 +76,15 @@ export default function ProfilePage() {
     <>
       <Header />
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 20 }}>
-        <h1>Профиль</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 style={{ margin: 0 }}>Профиль</h1>
+          <button
+            onClick={logout}
+            style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "#fff", cursor: "pointer" }}
+          >
+            Выйти
+          </button>
+        </div>
         <p>Бонусы: {bonus} ₸</p>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0 }}>Данные</h2>
