@@ -6,6 +6,7 @@ const API_BASE =
 interface Category {
   id: string;
   name: string;
+  nameKz?: string;
   sortOrder: number;
 }
 
@@ -19,7 +20,7 @@ export default function CategoryManagerModal({ onClose, onSaved }: Props) {
   const [removed, setRemoved] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/admin/categories`)
+    fetch(`${API_BASE}/admin/categories`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setCats(d));
   }, []);
@@ -27,11 +28,17 @@ export default function CategoryManagerModal({ onClose, onSaved }: Props) {
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   const add = () =>
-    setCats([...cats, { id: `new-${Date.now()}`, name: "", sortOrder: cats.length }]);
+    setCats([...cats, { id: `new-${Date.now()}`, name: "", nameKz: "", sortOrder: cats.length }]);
 
   const updateName = (idx: number, name: string) => {
     const copy = [...cats];
     copy[idx].name = name;
+    setCats(copy);
+  };
+
+  const updateNameKz = (idx: number, nameKz: string) => {
+    const copy = [...cats];
+    copy[idx].nameKz = nameKz;
     setCats(copy);
   };
 
@@ -54,7 +61,7 @@ export default function CategoryManagerModal({ onClose, onSaved }: Props) {
   const save = async () => {
     for (let i = 0; i < cats.length; i++) {
       const c = cats[i];
-      const payload = { name: c.name, sortOrder: i };
+      const payload = { name: c.name, nameKz: c.nameKz || null, sortOrder: i };
       if (c.id.startsWith("new-")) {
         await fetch(`${API_BASE}/admin/categories`, {
           method: "POST",
@@ -81,22 +88,30 @@ export default function CategoryManagerModal({ onClose, onSaved }: Props) {
         <h2 style={{ marginTop: 0 }}>Типы блюд</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {cats.map((c, idx) => (
-            <div key={c.id} style={{ display: "flex", gap: 4 }}>
+            <div key={c.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <input
                 value={c.name}
                 onChange={(e) => updateName(idx, e.target.value)}
                 placeholder="Название"
-                style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
               />
-              <button onClick={() => move(idx, -1)} className="admin-nav-btn">
-                ↑
-              </button>
-              <button onClick={() => move(idx, 1)} className="admin-nav-btn">
-                ↓
-              </button>
-              <button onClick={() => remove(idx)} className="admin-nav-btn">
-                ✕
-              </button>
+              <input
+                value={c.nameKz || ""}
+                onChange={(e) => updateNameKz(idx, e.target.value)}
+                placeholder="Название (каз.)"
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+              />
+              <div style={{ display: "flex", gap: 4 }}>
+                <button onClick={() => move(idx, -1)} className="admin-nav-btn">
+                  ↑
+                </button>
+                <button onClick={() => move(idx, 1)} className="admin-nav-btn">
+                  ↓
+                </button>
+                <button onClick={() => remove(idx)} className="admin-nav-btn">
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
           <button onClick={add} className="add-btn">

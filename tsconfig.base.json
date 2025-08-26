@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@appetit/shared/*": ["packages/shared/*"]
+      "@appetit/shared/*": ["packages/shared/*"],
+      "@appetit/shared": ["packages/shared"]
     }
   }
 }

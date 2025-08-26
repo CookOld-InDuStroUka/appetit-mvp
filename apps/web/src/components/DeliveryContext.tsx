@@ -38,6 +38,12 @@ const DEFAULT_BRANCHES: Branch[] = [
     hours: "10:00 – 00:00",
   },
   {
+    id: "kabanbay",
+    name: "ул. Кабанбай батыра, 148",
+    coords: [49.954, 82.620],
+    hours: "09:00 – 22:00",
+  },
+  {
     id: "nazarbaeva",
     name: "пр. Нурсултана Назарбаева, 28А",
     coords: [49.962379, 82.602893],
@@ -53,8 +59,10 @@ type Ctx = {
   floor: string;
   comment: string;
   branch: string;
+  pickupTime: string;
   branches: Branch[];
   history: string[];
+  outOfZone: boolean;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -65,8 +73,10 @@ type Ctx = {
    setFloor: (v: string) => void;
   setComment: (v: string) => void;
   setBranch: (id: string) => void;
+  setPickupTime: (v: string) => void;
   addHistory: (addr: string) => void;
   removeHistory: (addr: string) => void;
+  setOutOfZone: (v: boolean) => void;
 };
 
 const Ctx = createContext<Ctx | undefined>(undefined);
@@ -80,8 +90,10 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
   const [comment, setComment] = useState("");
   const [branches, setBranches] = useState<Branch[]>(DEFAULT_BRANCHES);
   const [branch, setBranch] = useState(DEFAULT_BRANCHES[0].id);
+  const [pickupTime, setPickupTime] = useState("");
   const [isOpen, setOpen] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [outOfZone, setOutOfZone] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("deliveryAddresses");
@@ -146,22 +158,26 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
         entrance,
         floor,
         comment,
-        branch,
-        branches,
-        history,
-        isOpen,
-        open,
-        close,
-        setMode,
-        setAddress,
+      branch,
+      pickupTime,
+      branches,
+      history,
+      outOfZone,
+      isOpen,
+      open,
+      close,
+      setMode,
+      setAddress,
         setApt,
         setEntrance,
         setFloor,
         setComment,
-        setBranch,
-        addHistory,
-        removeHistory,
-      }}
+      setBranch,
+      setPickupTime,
+      addHistory,
+      removeHistory,
+      setOutOfZone,
+    }}
     >
       {children}
       {isOpen && <DeliveryModal />}

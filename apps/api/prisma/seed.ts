@@ -1,12 +1,21 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
   // Clean previous examples to avoid leftover branches
+  await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.dishAvailability.deleteMany();
   await prisma.zone.deleteMany();
   await prisma.branch.deleteMany();
+
+  const hashed = await bcrypt.hash("admin", 10);
+  await prisma.admin.upsert({
+    where: { login: "admin" },
+    update: { password: hashed, role: "super" },
+    create: { login: "admin", password: hashed, role: "super" },
+  });
 
   // --- Branches & Zones (стабильные id) ---
   const seedBranches = [
@@ -68,46 +77,62 @@ async function main() {
     }
   ];
 
-  for (const b of seedBranches) {
-    await prisma.branch.upsert({
-      where: { id: b.id },
-      update: { name: b.name, address: b.address, phone: b.phone },
-      create: { id: b.id, name: b.name, address: b.address, phone: b.phone }
-    });
+    for (const b of seedBranches) {
+      await prisma.branch.upsert({
+        where: { id: b.id },
+        update: { name: b.name, address: b.address, phone: b.phone },
+        create: { id: b.id, name: b.name, address: b.address, phone: b.phone },
+      });
 
-    await prisma.zone.upsert({
-      where: { id: b.zoneId },
-      update: { name: b.zoneName, branchId: b.id, deliveryFee: 500, minOrder: 2000 },
-      create: {
-        id: b.zoneId,
-        name: b.zoneName,
+      await prisma.zone.upsert({
+        where: { id: b.zoneId },
+        update: {
+          name: b.zoneName,
+          branchId: b.id,
+          deliveryFee: 500,
+          minOrder: 2000,
+        },
+        create: {
+          id: b.zoneId,
+          name: b.zoneName,
+          branchId: b.id,
+          deliveryFee: 500,
+          minOrder: 2000,
+        },
+      });
+    }
+
+    // sample expenses per branch
+    await prisma.expense.createMany({
+      data: seedBranches.map((b) => ({
         branchId: b.id,
-        deliveryFee: 500,
-        minOrder: 2000
-      }
+        amount: 1000,
+        description: "seed expense",
+      })),
+      skipDuplicates: true,
     });
-  }
 
   // --- Categories ---
   const dishesCat = await prisma.category.upsert({
     where: { slug: "dishes" },
-    update: { name: "Блюда" },
-    create: { id: "cat-dishes", slug: "dishes", name: "Блюда", sortOrder: 2, isActive: true }
+    update: { name: "Блюда", nameKz: "Тағамдар" },
+    create: { id: "cat-dishes", slug: "dishes", name: "Блюда", nameKz: "Тағамдар", sortOrder: 2, isActive: true }
   });
 
   const comboCat = await prisma.category.upsert({
     where: { slug: "combo" },
-    update: {},
-    create: { id: "cat-combo", slug: "combo", name: "Комбо", sortOrder: 1, isActive: true }
+    update: { nameKz: "Комбо" },
+    create: { id: "cat-combo", slug: "combo", name: "Комбо", nameKz: "Комбо", sortOrder: 1, isActive: true }
   });
 
   const snacksCat = await prisma.category.upsert({
     where: { slug: "snacks" },
-    update: { name: "Закуски" },
+    update: { name: "Закуски", nameKz: "Тіскебасар" },
     create: {
       id: "cat-snacks",
       slug: "snacks",
       name: "Закуски",
+      nameKz: "Тіскебасар",
       sortOrder: 3,
       isActive: true,
     },
@@ -115,11 +140,12 @@ async function main() {
 
   const saucesCat = await prisma.category.upsert({
     where: { slug: "sauces" },
-    update: { name: "Соусы" },
+    update: { name: "Соусы", nameKz: "Тұздықтар" },
     create: {
       id: "cat-sauces",
       slug: "sauces",
       name: "Соусы",
+      nameKz: "Тұздықтар",
       sortOrder: 4,
       isActive: true,
     },
@@ -127,11 +153,12 @@ async function main() {
 
   const drinksCat = await prisma.category.upsert({
     where: { slug: "drinks" },
-    update: { name: "Напитки" },
+    update: { name: "Напитки", nameKz: "Сусындар" },
     create: {
       id: "cat-drinks",
       slug: "drinks",
       name: "Напитки",
+      nameKz: "Сусындар",
       sortOrder: 5,
       isActive: true,
     },
@@ -403,7 +430,18 @@ async function main() {
       expiresAt: new Date("2099-12-31"),
       conditions: "Тестовый промокод",
       maxUses: null,
-      branchId: null,
+    },
+  });
+
+  await prisma.promoCode.upsert({
+    where: { code: "TEST1" },
+    update: {},
+    create: {
+      code: "TEST1",
+      discount: 5,
+      expiresAt: new Date("2099-12-31"),
+      conditions: "Тестовый промокод",
+      maxUses: null,
     },
   });
 

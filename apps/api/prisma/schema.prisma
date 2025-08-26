@@ -10,6 +10,7 @@ datasource db {
 model Category {
   id        String  @id @default(cuid())
   name      String
+  nameKz    String?
   slug      String? @unique
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
@@ -20,8 +21,10 @@ model Dish {
   id           String             @id @default(cuid())
   categoryId   String
   name         String
+  nameKz       String?
   slug         String?
   description  String?
+  descriptionKz String?
   basePrice    Decimal            @db.Decimal(10, 2)
   imageUrl     String?
   isActive     Boolean            @default(true)
@@ -75,6 +78,7 @@ model Branch {
   zones   Zone[]
   orders  Order[] //  обратная связь к Order.branch
   promoCodes PromoCode[]
+  expenses Expense[]
 }
 
 model Zone {
@@ -122,13 +126,24 @@ model Order {
   zone          Zone?       @relation(fields: [zoneId], references: [id])
   branchId      String?
   branch        Branch?     @relation(fields: [branchId], references: [id])
+  pickupTime    DateTime?
+  pickupCode    String?     @unique          
   subtotal      Decimal     @db.Decimal(10, 2)
   deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
   discount      Decimal     @default(0) @db.Decimal(10, 2)
   total         Decimal     @db.Decimal(10, 2)
   bonusEarned   Int         @default(0)
+  bonusUsed     Int         @default(0)
   promoCodeId   String?
   promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  referrer      String?
+  visitorId     String?
+  paidAt        DateTime?
   userId        String?
   user          User?       @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())
@@ -146,6 +161,8 @@ model OrderItem {
   order     Order        @relation(fields: [orderId], references: [id])
   dish      Dish         @relation(fields: [dishId], references: [id])
   variant   DishVariant? @relation(fields: [variantId], references: [id])
+  addons     String[]     @default([])
+  exclusions String[]     @default([])
 }
 
 model CmsPage {
@@ -160,15 +177,21 @@ model User {
   phone     String?  @unique
   email     String?  @unique
   password  String?
+  name      String?
+  birthDate DateTime?
+  notificationsEnabled Boolean @default(true)
   bonus     Int      @default(0)
   orders    Order[]
+  bonusTransactions BonusTransaction[]
   createdAt DateTime @default(now())
 }
 
 model Admin {
   id        String   @id @default(cuid())
-  email     String   @unique
+  login     String   @unique
   password  String
+  role      String   @default("manager")
+  shifts    Shift[]
   createdAt DateTime @default(now())
 }
 
@@ -176,18 +199,81 @@ model PromoCode {
   id          String   @id @default(cuid())
   code        String   @unique
   discount    Int
+  appliesToDelivery Boolean @default(false)
   expiresAt   DateTime
   conditions  String?
   maxUses     Int?
   usedCount   Int      @default(0)
+  branches    Branch[]
+  orders      Order[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
   branchId    String?
   branch      Branch?  @relation(fields: [branchId], references: [id])
-  orders      Order[]
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Setting {
+  key   String  @id
+  value String?
+}
+
+model MarketingSpend {
+  id         String   @id @default(cuid())
+  day        DateTime
+  source     String?
+  medium     String?
+  campaign   String?
+  impressions Int?    @default(0)
+  clicks     Int?    @default(0)
+  amount     Decimal  @db.Decimal(10, 2)
+  branchId   String?
+  @@unique([day, source, campaign, branchId])
+}
+
+model BonusTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  used      Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Shift {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  date      DateTime
+  hours     Int
+  createdAt DateTime @default(now())
 }
 
 model AuthCode {
   phone     String   @id
   code      String
   expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Mailing {
+  id        String   @id @default(cuid())
+  message   String
+  sendAt    DateTime?
+  createdAt DateTime @default(now())
+  sent      Boolean  @default(false)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int
+  comment   String
+  pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
 }

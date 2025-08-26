@@ -1,13 +1,39 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ZoneMap from "../components/ZoneMap";
+import { useEffect, useState } from "react";
+
+interface Branch {
+  id: string;
+  name: string;
+  address: string;
+}
 
 export default function AddressesPage() {
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/branches`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setBranches(d));
+  }, [API_BASE]);
+
   return (
     <>
       <Header />
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 20 }}>
         <h1>Адреса и зоны доставки</h1>
-        <p>Скоро здесь появится информация об адресах и зонах доставки.</p>
+        <ZoneMap />
+        <h2 style={{ marginTop: 24 }}>Филиалы</h2>
+        <ul style={{ padding: 0, listStyle: "none" }}>
+          {branches.map((b) => (
+            <li key={b.id} style={{ marginBottom: 8 }}>
+              <strong>{b.name}</strong>: {b.address}
+            </li>
+          ))}
+        </ul>
       </main>
       <Footer />
     </>

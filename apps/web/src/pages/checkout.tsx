@@ -14,6 +14,7 @@ export default function Checkout() {
   });
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [applyToDelivery, setApplyToDelivery] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
@@ -49,17 +50,22 @@ export default function Checkout() {
       });
       if (r.ok) {
         const data = await r.json();
-        setDiscount(data.discount);
-      } else {
-        setDiscount(0);
-        alert("Промокод не найден");
+        if (data.error) {
+          setDiscount(0);
+          setApplyToDelivery(false);
+        } else {
+          setDiscount(data.discount);
+          setApplyToDelivery(!!data.appliesToDelivery);
+        }
       }
     } catch {
       setDiscount(0);
+      setApplyToDelivery(false);
     }
   };
 
-  const discountAmount = Math.round(subtotal * discount / 100);
+  const base = subtotal + (applyToDelivery && form.type === "delivery" ? deliveryFee : 0);
+  const discountAmount = Math.round((base * discount) / 100);
   const total = subtotal + (form.type === "delivery" ? deliveryFee : 0) - discountAmount;
 
   const submit = async () => {
@@ -71,7 +77,14 @@ export default function Checkout() {
       branchId: null,
       items: form.items.length ? form.items : [{ dishId: form.dishId, variantId: null, qty: 1 }],
       paymentMethod: "cash",
-      promoCode: promo || null
+      promoCode: promo || null,
+      utmSource: localStorage.getItem("utm_source"),
+      utmMedium: localStorage.getItem("utm_medium"),
+      utmCampaign: localStorage.getItem("utm_campaign"),
+      utmContent: localStorage.getItem("utm_content"),
+      utmTerm: localStorage.getItem("utm_term"),
+      referrer: localStorage.getItem("referrer"),
+      visitorId: localStorage.getItem("visitor_id"),
     };
     try {
       const r = await fetch(`${API_BASE}/orders`, {

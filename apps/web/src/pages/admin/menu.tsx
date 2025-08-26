@@ -7,15 +7,18 @@ import ModifierManagerModal from "../../components/ModifierManagerModal";
 interface Dish {
   id: string;
   name: string;
+  nameKz?: string | null;
   categoryId: string;
   basePrice: number;
   description?: string | null;
+  descriptionKz?: string | null;
   imageUrl?: string | null;
 }
 
 interface Category {
   id: string;
   name: string;
+  nameKz?: string | null;
   dishes: Dish[];
 }
 
@@ -32,7 +35,9 @@ export default function MenuAdmin() {
 
   const load = async () => {
     try {
-      const d = await fetch(`${API_BASE}/admin/dishes`).then((r) => r.json());
+      const d = await fetch(`${API_BASE}/admin/dishes`, {
+        cache: "no-store",
+      }).then((r) => r.json());
       setCats(d);
     } catch {
       setCats([]);

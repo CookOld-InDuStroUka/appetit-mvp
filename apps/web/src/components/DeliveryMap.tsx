@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadYmaps } from "../utils/ymapsLoader";
+import { useDelivery } from "./DeliveryContext";
 
 type Props = {
   address: string;
@@ -45,6 +46,9 @@ export default function DeliveryMap({
     [49.7, 82.4],
     [50.1, 83.1],
   ];
+  const polygonsRef = useRef<any[]>([]);
+  const [outOfZone, setOutOfZoneLocal] = useState(false);
+  const { setOutOfZone } = useDelivery();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -208,6 +212,7 @@ export default function DeliveryMap({
           interactivityModel: "default#transparent",
         });
         map.geoObjects.add(bluePolygon);
+        polygonsRef.current = [violetPolygon, orangePolygon, bluePolygon];
 
         const placeMarker = (coords: [number, number]) => {
           if (markerRef.current) {
@@ -218,6 +223,9 @@ export default function DeliveryMap({
             iconColor: "#ff5500",
           });
           map.geoObjects.add(markerRef.current);
+          const inside = polygonsRef.current.some((p) => p.geometry.contains(coords));
+          setOutOfZoneLocal(!inside);
+          setOutOfZone(!inside);
         };
 
         const geocodeAddress = (query: string) => {
@@ -283,6 +291,23 @@ export default function DeliveryMap({
 
   return (
     <div style={{ position: "relative", height }}>
+      {outOfZone && (
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(255,0,0,0.8)",
+            color: "#fff",
+            padding: "4px 8px",
+            borderRadius: 4,
+            zIndex: 1000,
+          }}
+        >
+          Адрес вне зоны доставки
+        </div>
+      )}
       <div
         ref={mapRef}
         style={{ height: "100%", borderRadius: 8, overflow: "hidden", background: "#e5e5e5" }}

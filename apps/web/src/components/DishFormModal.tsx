@@ -6,9 +6,11 @@ const API_BASE =
 type Dish = {
   id: string;
   name: string;
+  nameKz?: string | null;
   categoryId: string;
   basePrice: number;
   description?: string | null;
+  descriptionKz?: string | null;
   imageUrl?: string | null;
 };
 
@@ -30,11 +32,13 @@ export default function DishFormModal({
   onSaved,
 }: Props) {
   const [name, setName] = useState(dish?.name ?? "");
+  const [nameKz, setNameKz] = useState(dish?.nameKz ?? "");
   const [categoryId, setCategoryId] = useState(
     dish?.categoryId ?? initialCategoryId ?? categories[0]?.id ?? ""
   );
   const [basePrice, setBasePrice] = useState(dish?.basePrice ?? 0);
   const [description, setDescription] = useState(dish?.description ?? "");
+  const [descriptionKz, setDescriptionKz] = useState(dish?.descriptionKz ?? "");
   const [imageUrl, setImageUrl] = useState(dish?.imageUrl ?? "");
   const [uploading, setUploading] = useState(false);
 
@@ -44,9 +48,11 @@ export default function DishFormModal({
     e.preventDefault();
     const payload = {
       name,
+      nameKz: nameKz || null,
       categoryId,
       basePrice: Number(basePrice),
       description: description || null,
+      descriptionKz: descriptionKz || null,
       imageUrl: imageUrl || null,
     };
     try {
@@ -102,6 +108,12 @@ export default function DishFormModal({
             required
             style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
           />
+          <input
+            value={nameKz}
+            onChange={(e) => setNameKz(e.target.value)}
+            placeholder="Название (каз.)"
+            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+          />
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
@@ -148,6 +160,13 @@ export default function DishFormModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Описание"
+            rows={3}
+            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+          />
+          <textarea
+            value={descriptionKz}
+            onChange={(e) => setDescriptionKz(e.target.value)}
+            placeholder="Описание (каз.)"
             rows={3}
             style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
           />

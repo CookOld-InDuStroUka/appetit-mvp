@@ -7,12 +7,16 @@ type CartContextValue = {
   updateQty: (id: string, qty: number) => void;
   removeItem: (id: string) => void;
   clear: () => void;
+  setItems: (items: CartItem[]) => void;
+  promo: string | null;
+  setPromo: (code: string | null) => void;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [promo, setPromo] = useState<string | null>(null);
 
   const addItem = (item: CartItem) => {
     setItems((prev) => {
@@ -40,8 +44,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clear = () => setItems([]);
 
+  const setItemsDirect = (items: CartItem[]) => setItems(items);
+
   return (
-    <CartContext.Provider value={{ items, addItem, updateQty, removeItem, clear }}>
+    <CartContext.Provider
+      value={{ items, addItem, updateQty, removeItem, clear, setItems: setItemsDirect, promo, setPromo }}
+    >
       {children}
     </CartContext.Provider>
   );
