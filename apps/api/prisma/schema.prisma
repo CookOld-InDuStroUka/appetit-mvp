@@ -127,6 +127,7 @@ model Order {
   branchId      String?
   branch        Branch?     @relation(fields: [branchId], references: [id])
   pickupTime    DateTime?
+  pickupCode    String?     @unique          
   subtotal      Decimal     @db.Decimal(10, 2)
   deliveryFee   Decimal     @default(0) @db.Decimal(10, 2)
   discount      Decimal     @default(0) @db.Decimal(10, 2)
@@ -210,4 +211,12 @@ model AuthCode {
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Mailing {
+  id        String   @id @default(cuid())
+  message   String
+  sendAt    DateTime?
+  createdAt DateTime @default(now())
+  sent      Boolean  @default(false)
 }

@@ -80,7 +80,17 @@ export default function OrdersPage() {
                 {o.type === "delivery" ? (
                   <div>Примерное время прибытия: —</div>
                 ) : (
-                  <div>Самовывоз: {o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</div>
+                  <>
+                    <div>Самовывоз: {o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</div>
+                    <div>Код выдачи: {o.pickupCode ?? "—"}</div>
+                    {o.pickupCode && (
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${o.pickupCode}`}
+                        alt="QR"
+                        style={{ marginTop: 8 }}
+                      />
+                    )}
+                  </>
                 )}
                 <div>Промокод: {o.promoCode ?? "—"}</div>
                 <div>Сумма: {o.total} ₸</div>

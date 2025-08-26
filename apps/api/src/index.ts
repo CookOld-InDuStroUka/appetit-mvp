@@ -292,6 +292,23 @@ app.delete(`${BASE}/admin/promo-codes/:id`, async (req: Request, res: Response) 
   res.json({ ok: true });
 });
 
+app.get(`${BASE}/admin/mailings`, async (_req: Request, res: Response) => {
+  const list = await prisma.mailing.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(list);
+});
+
+app.post(`${BASE}/admin/mailings`, async (req: Request, res: Response) => {
+  const parsed = MailingSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const mail = await prisma.mailing.create({
+    data: {
+      message: parsed.data.message,
+      sendAt: parsed.data.sendAt ? new Date(parsed.data.sendAt) : null,
+    },
+  });
+  res.json(mail);
+});
+
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
   const page = await prisma.cmsPage.findUnique({ where: { slug: req.params.slug } });
   if (!page || !page.isActive) return res.status(404).json({ error: "Not found" });
@@ -790,6 +807,11 @@ const PromoCodeUpsertSchema = z.object({
   branchIds: z.array(z.string()).optional().default([]),
 });
 
+const MailingSchema = z.object({
+  message: z.string().min(1),
+  sendAt: z.string().optional().nullable(),
+});
+
 app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   const parsed = OrderSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload", details: parsed.error.flatten() });
@@ -855,6 +877,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   let branchId: string | undefined;
   let discount = 0;
   let promoCodeId: string | undefined;
+  let pickupCode: string | undefined;
   let pickupTime: Date | null = null;
 
   if (data.type === "delivery") {
@@ -880,6 +903,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     if (data.pickupTime) {
       pickupTime = new Date(data.pickupTime);
     }
+    pickupCode = Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   if (data.promoCode) {
@@ -957,6 +981,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       promoCodeId: promoCodeId ?? null,
       userId: user.id,
       pickupTime,
+      pickupCode,
       items: {
         create: prepared.map((p) => ({
           dishId: p.item.dishId,
@@ -985,6 +1010,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     id: order.id,
     status: order.status,
     pickupTime: order.pickupTime,
+    pickupCode: order.pickupCode,
     promoCode: promoCodeId ? data.promoCode ?? null : null,
     subtotal,
     deliveryFee,
@@ -1005,6 +1031,7 @@ app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
   res.json({
     ...o,
     promoCode: o.promoCode?.code ?? null,
+    pickupCode: o.pickupCode,
   });
 });
 
@@ -1028,6 +1055,7 @@ app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
       zoneId: o.zoneId,
       branchId: o.branchId,
       pickupTime: o.pickupTime,
+      pickupCode: o.pickupCode,
       promoCode: o.promoCode?.code,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
@@ -1162,6 +1190,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
       zoneId: o.zoneId,
       branchId: o.branchId,
       pickupTime: o.pickupTime,
+      pickupCode: o.pickupCode,
       promoCode: o.promoCode?.code,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),

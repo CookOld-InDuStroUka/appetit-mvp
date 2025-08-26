@@ -30,6 +30,7 @@ type Order = {
   customerPhone: string;
   status: OrderStatus;
   total: number;
+  pickupCode?: string | null;
   pickupTime?: string | null;
   promoCode?: string | null;
   createdAt: string;
@@ -101,6 +102,7 @@ export default function OrdersAdmin() {
             <th>Клиент</th>
             <th>Телефон</th>
             <th>Сумма</th>
+            <th>Код</th>
             <th>Промокод</th>
             <th>Самовывоз</th>
             <th>Статус</th>
@@ -122,6 +124,7 @@ export default function OrdersAdmin() {
               <td>{o.customerName ?? "—"}</td>
               <td>{o.customerPhone}</td>
               <td>{o.total}</td>
+              <td>{o.pickupCode ?? "—"}</td>
               <td>{o.promoCode ?? "—"}</td>
               <td>{o.pickupTime ? formatAstanaTime(o.pickupTime) : "—"}</td>
               <td>

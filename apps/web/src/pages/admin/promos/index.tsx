@@ -15,6 +15,9 @@ export default function PromosAdmin() {
         <li>
           <Link href="/admin/promos/actions">Акции</Link>
         </li>
+        <li>
+          <Link href="/admin/promos/mailing">Рассылки</Link>
+        </li>
       </ul>
     </AdminLayout>
   );
