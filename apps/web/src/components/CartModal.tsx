@@ -10,11 +10,11 @@ const API_BASE =
 
 export type CartItem = {
   id: string; // уникальный ключ позиции в корзине
-  dishId: string;
   name: string;
   price: number;
   imageUrl?: string;
   qty: number;
+  dishId?: string;
   addons?: { id: string; name: string; price: number }[];
   excluded?: { id: string; name: string }[];
 };
@@ -196,7 +196,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
           ? toAstanaISO(pickupTime)
           : null,
       items: items.map((i) => ({
-        dishId: i.dishId,
+        dishId: i.dishId ?? i.id,
         variantId: null,
         qty: i.qty,
         addonIds: i.addons?.map((a) => a.id),

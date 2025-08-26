@@ -1,14 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import type { PromoSlide } from "../types/promo";
 
 type PromoSliderProps = {
-  slides?: string[];
+  slides?: PromoSlide[];
   intervalMs?: number;
   width?: number;
   height?: number;
 };
 
-const DEFAULT_SLIDES = ["/promo1.jpg", "/promo2.jpg"];
+const DEFAULT_SLIDES: PromoSlide[] = [
+  { image: "/promo1.jpg" },
+  { image: "/promo2.jpg" },
+];
 
 export default function PromoSlider({
   slides = DEFAULT_SLIDES,
@@ -19,7 +23,7 @@ export default function PromoSlider({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [imgs, setImgs] = useState(slides);
+  const [imgs, setImgs] = useState<PromoSlide[]>(slides);
 
   useEffect(() => setImgs(slides), [slides]);
 
@@ -86,9 +90,9 @@ export default function PromoSlider({
           Нет доступных промо
         </div>
       ) : (
-        imgs.map((src, i) => (
+        imgs.map((slide, i) => (
           <div
-            key={`${src}-${i}`}
+            key={`${slide.image}-${i}`}
             style={{
               position: "absolute",
               top: 0,
@@ -99,7 +103,7 @@ export default function PromoSlider({
             }}
           >
             <Image
-              src={src}
+              src={slide.image}
               alt={`Promo ${i + 1}`}
               fill
               sizes={sizesAttr}

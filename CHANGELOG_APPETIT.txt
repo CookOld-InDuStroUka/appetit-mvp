@@ -1,3 +1,6 @@
+## 2025-08-26
+- fix: guard dish modal against null dish selection
+
 ## 2025-08-23
 - feat: fetch branch list from API in delivery modal to sync menu with admin changes
 - feat: edit branch menu locally with save button and apply via confirmation
