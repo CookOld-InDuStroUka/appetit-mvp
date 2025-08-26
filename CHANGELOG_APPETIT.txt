@@ -1,3 +1,6 @@
+## 2025-08-27
+- feat: redesign dish modal with topping buttons, ingredient exclusions, and quantity selector
+
 ## 2025-08-26
 - fix: guard dish modal against null dish selection
 - feat: restore profile modal and orders link in header
