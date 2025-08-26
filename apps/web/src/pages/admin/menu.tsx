@@ -35,7 +35,9 @@ export default function MenuAdmin() {
 
   const load = async () => {
     try {
-      const d = await fetch(`${API_BASE}/admin/dishes`).then((r) => r.json());
+      const d = await fetch(`${API_BASE}/admin/dishes`, {
+        cache: "no-store",
+      }).then((r) => r.json());
       setCats(d);
     } catch {
       setCats([]);

@@ -1197,10 +1197,15 @@ app.post(`${BASE}/admin/expenses`, async (req: Request, res: Response) => {
 
 app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
   const { branchId } = req.query;
-  const where = branchId ? { branchId: String(branchId) } : undefined;
+  const orderWhere: any = { status: "done" };
+  const expenseWhere: any = {};
+  if (branchId) {
+    orderWhere.branchId = String(branchId);
+    expenseWhere.branchId = String(branchId);
+  }
   const [orders, expenses] = await Promise.all([
-    prisma.order.findMany({ where }),
-    prisma.expense.findMany({ where }),
+    prisma.order.findMany({ where: orderWhere }),
+    prisma.expense.findMany({ where: Object.keys(expenseWhere).length ? expenseWhere : undefined }),
   ]);
   const ordersTotal = orders.reduce(
     (s: number, o: any) => s + Number(o.total),

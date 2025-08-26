@@ -20,7 +20,7 @@ export default function CategoryManagerModal({ onClose, onSaved }: Props) {
   const [removed, setRemoved] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/admin/categories`)
+    fetch(`${API_BASE}/admin/categories`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setCats(d));
   }, []);
