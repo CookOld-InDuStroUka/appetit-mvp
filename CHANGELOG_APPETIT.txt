@@ -1,4 +1,6 @@
 ## 2025-08-28
+- feat: send verification codes to phone or email during login
+- feat: unify auth modal for SMS and email code flow
 - feat: apply promo code from promo modal directly to cart
 - feat: restore simple profile page with user data and order list
 - feat: seed coffee category with latte and americano drinks

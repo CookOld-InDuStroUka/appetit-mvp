@@ -161,10 +161,20 @@ app.post(`${BASE}/admin/upload`, (req: Request, res: Response) => {
   res.json({ url });
 });
 
-// simple auth via SMS codes
-const AuthRequestSchema = z.object({ phone: z.string().min(5) });
-const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
-const AuthEmailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+// simple auth via codes sent to phone or email
+const AuthRequestSchema = z
+  .object({
+    phone: z.string().min(5).optional(),
+    email: z.string().email().optional(),
+  })
+  .refine((d) => d.phone || d.email, { message: "phone or email required" });
+const AuthVerifySchema = z
+  .object({
+    phone: z.string().min(5).optional(),
+    email: z.string().email().optional(),
+    code: z.string().min(4).max(6),
+  })
+  .refine((d) => d.phone || d.email, { message: "phone or email required" });
 // allow shorter passwords so the seeded "admin" credentials work
 const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
@@ -172,19 +182,22 @@ const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const existing = await prisma.user.findUnique({ where: { phone: parsed.data.phone } });
+
+  const { phone, email } = parsed.data;
+  const where = phone ? { phone } : { email: email! };
+  const existing = await prisma.user.findUnique({ where });
   if (!existing) return res.status(404).json({ error: "User not found" });
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
   await prisma.authCode.upsert({
-    where: { phone: parsed.data.phone },
+    where: { contact: phone ?? email! },
     update: { code, expiresAt, createdAt: new Date() },
-    create: { phone: parsed.data.phone, code, expiresAt }
+    create: { contact: phone ?? email!, code, expiresAt }
   });
 
-  console.log(`Auth code for ${parsed.data.phone}: ${code}`);
+  console.log(`Auth code for ${phone ?? email}: ${code}`);
   res.json({ ok: true });
 });
 
@@ -192,42 +205,19 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   const parsed = AuthVerifySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const record = await prisma.authCode.findUnique({ where: { phone: parsed.data.phone } });
-  if (!record || record.code !== parsed.data.code || record.expiresAt < new Date()) {
+  const { phone, email, code } = parsed.data;
+  const contact = phone ?? email!;
+  const record = await prisma.authCode.findUnique({ where: { contact } });
+  if (!record || record.code !== code || record.expiresAt < new Date()) {
     return res.status(400).json({ error: "Invalid code" });
   }
 
-  const user = await prisma.user.findUnique({ where: { phone: parsed.data.phone } });
+  const user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
   if (!user) return res.status(400).json({ error: "Account not found" });
 
-  await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
+  await prisma.authCode.delete({ where: { contact } });
 
   res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
-});
-
-app.post(`${BASE}/auth/register-email`, async (req: Request, res: Response) => {
-  const parsed = AuthEmailSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-
-  const user = await prisma.user.upsert({
-    where: { email: parsed.data.email },
-    update: { password: parsed.data.password },
-    create: { email: parsed.data.email, password: parsed.data.password }
-  });
-
-  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
-});
-
-app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
-  const parsed = AuthEmailSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (!user || user.password !== parsed.data.password) {
-    return res.status(400).json({ error: "Invalid credentials" });
-  }
-
-  res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
 });
 
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
