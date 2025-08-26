@@ -12,8 +12,7 @@ const fmtKZT = new Intl.NumberFormat("ru-KZ", {
 });
 
 export default function Header() {
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
@@ -23,10 +22,7 @@ export default function Header() {
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
 
-  // подсказки поиска
-  const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>(
-    []
-  );
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
@@ -35,7 +31,6 @@ export default function Header() {
       setSuggestions([]);
       return;
     }
-
     const ac = new AbortController();
     const t = setTimeout(async () => {
       try {
@@ -44,13 +39,11 @@ export default function Header() {
           { signal: ac.signal }
         );
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const data = await r.json();
-        setSuggestions(data);
+        setSuggestions(await r.json());
       } catch {
         setSuggestions([]);
       }
     }, 200);
-
     return () => {
       ac.abort();
       clearTimeout(t);
@@ -87,7 +80,7 @@ export default function Header() {
               top: suggestPos.top,
               left: suggestPos.left,
               width: suggestPos.width,
-              background: "#122234",
+              background: "#0F1B2A",
               border: "1px solid rgba(255,255,255,.08)",
               borderTop: "none",
               maxHeight: 220,
@@ -101,23 +94,14 @@ export default function Header() {
             {suggestions.map((s) => (
               <li key={s.id}>
                 <a
-                  href={`/#dish-${s.id}`}
+                  href={`/dish/${s.id}`}
                   style={{
                     display: "block",
                     padding: "8px 12px",
                     textDecoration: "none",
-                    color: "#e2e8f0",
+                    color: "#E2E8F0",
                   }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSuggestions([]);
-                    const el = document.getElementById(`dish-${s.id}`);
-                    if (el) {
-                      el.scrollIntoView({ behavior: "smooth", block: "center" });
-                    } else {
-                      location.href = `/#dish-${s.id}`;
-                    }
-                  }}
+                  onClick={() => setSuggestions([])}
                 >
                   {s.name}
                 </a>
@@ -132,13 +116,10 @@ export default function Header() {
     <>
       <header className="hdr">
         <div className="row">
-          {/* ЛОГО + слоган (положи файл в public/logo-appetit.svg) */}
-          <Link href="/" className="logo">
-            <img src="/logo-appetit.svg" alt="APPETIT" />
-            <span className="tagline">вкусная шаурма</span>
-          </Link>
+          {/* Бренд оставляем как есть */}
+          <Brand />
 
-          {/* ПОИСК по центру */}
+          {/* Поиск — серый прямоугольник c иконкой справа */}
           <div ref={searchRef} className="search">
             <input
               className="search__input"
@@ -152,29 +133,29 @@ export default function Header() {
             </button>
           </div>
 
-          {/* ПРАВАЯ ПАНЕЛЬ */}
+          {/* Правый блок */}
           <nav className="right">
-            <button className="link" type="button">
+            <button className="link link--hide-sm" type="button" aria-label="Выбор языка">
               <span>RU</span>
               <ChevronDown />
             </button>
 
-            <Link href="/contacts" className="link">
+            <Link href="/contacts" className="link link--hide-sm">
               Контакты
             </Link>
 
             {user ? (
-              <span className="link muted">{user.phone || user.email}</span>
+              <span className="link muted link--auth">{user.phone || user.email}</span>
             ) : (
-              <button onClick={openAuth} className="link">
+              <button onClick={openAuth} className="link link--auth">
                 <UserIcon />
                 <span>Войти</span>
               </button>
             )}
 
-            <button onClick={() => setCartOpen(true)} className="link">
+            <button onClick={() => setCartOpen(true)} className="link link--cart" aria-label="Корзина">
               <CartIcon />
-              <span>{cartLabel}</span>
+              <span className="price">{cartLabel}</span>
             </button>
           </nav>
         </div>
@@ -184,50 +165,31 @@ export default function Header() {
             position: sticky;
             top: 0;
             z-index: 50;
-            background: #0f1b2a;
+            background: #0f1b2a; /* как на референсе */
             color: #cbd5e1;
-            border-bottom: 1px solid rgba(255,255,255,.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           }
+
           .row {
             max-width: 1280px;
             margin: 0 auto;
-            height: 60px;
+            height: 56px;              /* компактная высота как на макете */
             padding: 0 16px;
             display: grid;
-            grid-template-columns: 1fr minmax(280px, 520px) 1fr;
+            grid-template-columns: 1fr minmax(420px, 560px) 1fr;
             align-items: center;
             gap: 16px;
           }
-          .logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: inherit;
-          }
-          .logo img {
-            height: 28px;
-            width: auto;
-            display: block;
-            background: #fff;
-            border-radius: 8px;
-            padding: 2px 6px;
-          }
-          .tagline {
-            font-size: 12px;
-            color: #9fb3c8;
-            line-height: 1;
-            margin-top: 2px;
-          }
 
+          /* === Поиск: «холодный серый» прямоугольник === */
           .search {
             display: flex;
             align-items: center;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 10px;
-            padding: 2px;
-            height: 36px;
+            height: 34px;
+            padding: 0 2px 0 10px;
+            border-radius: 8px;
+            background: #5a6773;            /* глухой серый как на скрине */
+            border: 1px solid #6a7783;      /* лёгкий кант */
           }
           .search__input {
             flex: 1;
@@ -235,49 +197,88 @@ export default function Header() {
             outline: none;
             background: transparent;
             color: #e2e8f0;
-            padding: 0 12px;
+            font-weight: 500;
           }
-          .search__input::placeholder { color: rgba(255,255,255,.6); }
+          .search__input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+          }
           .search__btn {
             width: 36px;
-            height: 32px;
+            height: 30px;
             display: grid;
             place-items: center;
             border: 0;
             background: transparent;
-            color: #cbd5e1;
-            border-radius: 8px;
+            color: #e2e8f0;
+            border-radius: 6px;
             cursor: pointer;
           }
-          .search__btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+          .search__btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+          }
 
+          /* === Правый блок === */
           .right {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 16px;
+            gap: 18px; /* как на референсе — не слишком широко */
           }
           .link {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: #cbd5e1;
             background: transparent;
             border: 0;
-            padding: 6px 8px;
-            border-radius: 8px;
+            padding: 6px 6px;
+            border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500; /* убрали жирность, чтобы выглядело тоньше */
+            line-height: 1;
           }
-          .link:hover { color: #fff; background: rgba(255,255,255,.08); }
-          .muted { color: #9fb3c8; font-weight: 500; }
-          :global(svg) { width: 20px; height: 20px; stroke-width: 1.6; color: currentColor; }
+          .link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.06);
+          }
+          .link--auth :global(svg) {
+            margin-right: 2px;
+          }
+          .link--cart .price {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.2px;
+          }
+          .muted {
+            color: #9fb3c8;
+            font-weight: 500;
+          }
 
+          :global(svg) {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.6;
+            color: currentColor;
+          }
+
+          /* Мобилка */
           @media (max-width: 820px) {
-            .row { grid-template-columns: 1fr 1fr; gap: 10px; height: 56px; }
-            .search { grid-column: 1 / -1; }
-            .tagline { display: none; }
+            .row {
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+              height: auto;
+              padding: 8px 12px;
+            }
+            .search {
+              grid-column: 1 / -1;
+              height: 36px;
+            }
+            .link--hide-sm {
+              display: none;
+            }
+            .right {
+              gap: 10px;
+            }
           }
         `}</style>
       </header>
@@ -297,7 +298,69 @@ export default function Header() {
   );
 }
 
-/* Иконки — тонкие, как в референсе */
+/* ===== Бренд: (не меняем) ===== */
+function Brand() {
+  return (
+    <Link
+      href="/"
+      data-app-brand
+      aria-label="APPETIT — вкусная шаурма"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        whiteSpace: "nowrap",
+        textDecoration: "none",
+        color: "inherit",
+        minWidth: 200,
+      }}
+    >
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 36,
+          padding: "0 16px",
+          borderRadius: 14,
+          background: "#fff",
+          border: "1px solid rgba(0,0,0,.06)",
+          boxShadow: "0 1px 2px rgba(0,0,0,.06)",
+          lineHeight: 1,
+        }}
+      >
+        <strong
+          style={{
+            fontSize: 19,
+            fontWeight: 800,
+            letterSpacing: 0.6,
+            color: "#EF4444",
+            lineHeight: 1,
+          }}
+        >
+          APPETIT
+        </strong>
+      </span>
+
+      <span
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          lineHeight: 1.15,
+          fontSize: 13,
+          fontWeight: 700,
+          color: "rgba(255,255,255,.92)",
+        }}
+      >
+        <span>вкусная</span>
+        <span>шаурма</span>
+      </span>
+    </Link>
+  );
+}
+
+/* ===== Иконки ===== */
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
@@ -317,16 +380,16 @@ function UserIcon(props: React.SVGProps<SVGSVGElement>) {
 function CartIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor"/>
-      <circle cx="10" cy="20" r="1.5" stroke="currentColor"/>
-      <circle cx="18" cy="20" r="1.5" stroke="currentColor"/>
+      <path d="M3 4h2l2.2 10.5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L21 8H7" stroke="currentColor" />
+      <circle cx="10" cy="20" r="1.5" stroke="currentColor" />
+      <circle cx="18" cy="20" r="1.5" stroke="currentColor" />
     </svg>
   );
 }
 function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
-      <path d="M6 9l6 6 6-6" stroke="currentColor"/>
+      <path d="M6 9l6 6 6-6" stroke="currentColor" />
     </svg>
   );
 }
