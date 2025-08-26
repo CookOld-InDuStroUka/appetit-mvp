@@ -6,10 +6,10 @@ import { Branch } from "../../../components/PickupMap";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-export default function SliderAdmin() {
+export default function ActionsAdmin() {
   const [slides, setSlides] = useState<PromoSlide[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
-  const [form, setForm] = useState<PromoSlide>({ image: "" });
+  const [form, setForm] = useState<PromoSlide>({ image: "", active: true });
   const [uploading, setUploading] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
 
@@ -46,7 +46,7 @@ export default function SliderAdmin() {
 
   const clearForm = () => {
     setEditing(null);
-    setForm({ image: "" });
+    setForm({ image: "", active: true });
   };
 
   const saveSlide = () => {
@@ -83,7 +83,7 @@ export default function SliderAdmin() {
 
   return (
     <AdminLayout>
-      <h1>Слайдер</h1>
+      <h1>Акции</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 500 }}>
         <div>
           {form.image && (
@@ -101,7 +101,7 @@ export default function SliderAdmin() {
               if (file) uploadImage(file);
             }}
           />
-          {uploading && <div>Загрузка...</div>}
+        {uploading && <div>Загрузка...</div>}
         </div>
         <input
           type="text"
@@ -109,6 +109,14 @@ export default function SliderAdmin() {
           value={form.link || ""}
           onChange={(e) => setForm({ ...form, link: e.target.value })}
         />
+        <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <input
+            type="checkbox"
+            checked={form.active !== false}
+            onChange={(e) => setForm({ ...form, active: e.target.checked })}
+          />
+          Активен
+        </label>
         <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <input
             type="checkbox"
@@ -204,6 +212,20 @@ export default function SliderAdmin() {
                 )}
               </div>
             )}
+            <label style={{ display: "flex", gap: 4, alignItems: "center", margin: "8px 0" }}>
+              <input
+                type="checkbox"
+                checked={s.active !== false}
+                onChange={(e) =>
+                  setSlides(
+                    slides.map((sl, j) =>
+                      j === i ? { ...sl, active: e.target.checked } : sl
+                    )
+                  )
+                }
+              />
+              Активен
+            </label>
             <button onClick={() => startEdit(i)} style={{ marginRight: 8 }}>
               Редактировать
             </button>

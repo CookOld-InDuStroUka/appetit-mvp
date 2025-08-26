@@ -23,6 +23,11 @@ const translations: Record<Lang, Record<string, string>> = {
       profit: "Прибыль",
       saveReport: "Сохранить отчёт",
       savedReports: "Сохранённые отчёты",
+      combo: "Комбо",
+      dishes: "Блюда",
+      snacks: "Закуски",
+      sauces: "Соусы",
+      drinks: "Напитки",
     },
     kz: {
       tagline: "дәмді шаурма",
@@ -38,6 +43,11 @@ const translations: Record<Lang, Record<string, string>> = {
       profit: "Пайда",
       saveReport: "Есепті сақтау",
       savedReports: "Сақталған есептер",
+      combo: "Комбо",
+      dishes: "Тағамдар",
+      snacks: "Тіскебасар",
+      sauces: "Тұздықтар",
+      drinks: "Сусындар",
     },
   };
 

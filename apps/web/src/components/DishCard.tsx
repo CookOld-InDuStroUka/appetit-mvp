@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useCart } from "./CartContext";
+import { useLang } from "./LangContext";
 
 type Dish = {
   id: string;
   name: string;
+  nameKz?: string;
   description?: string;
+  descriptionKz?: string;
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
@@ -39,18 +42,22 @@ const nfmt = new Intl.NumberFormat("ru-RU");
 
 export default function DishCard({ dish, onClick }: Props) {
   const { addItem } = useCart();
+  const { lang } = useLang();
   const [src, setSrc] = useState<string>(sanitize(dish.imageUrl, dish.id));
+  const displayName = lang === "kz" && dish.nameKz ? dish.nameKz : dish.name;
+  const displayDesc =
+    lang === "kz" && dish.descriptionKz ? dish.descriptionKz : dish.description;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addItem({
-      id: dish.id,
-      dishId: dish.id,
-      name: dish.name,
-      price: dish.basePrice,
-      imageUrl: src,
-      qty: 1,
-    });
+      addItem({
+        id: dish.id,
+        dishId: dish.id,
+        name: displayName,
+        price: dish.basePrice,
+        imageUrl: src,
+        qty: 1,
+      });
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -90,7 +97,7 @@ export default function DishCard({ dish, onClick }: Props) {
         )}
         <Image
           src={src}
-          alt={dish.name}
+          alt={displayName}
           fill
           sizes="(max-width: 900px) 45vw, 320px"
           style={{ objectFit: "cover" }}
@@ -98,8 +105,8 @@ export default function DishCard({ dish, onClick }: Props) {
         />
       </div>
 
-      <h4 style={{ margin: "10px 0 4px" }}>{dish.name}</h4>
-      {dish.description && <p className="dish-card-desc">{dish.description}</p>}
+      <h4 style={{ margin: "10px 0 4px" }}>{displayName}</h4>
+      {displayDesc && <p className="dish-card-desc">{displayDesc}</p>}
       <p className="dish-card-price" style={{ fontWeight: 600 }}>
         {dish.minPrice
           ? `от ${nfmt.format(dish.minPrice)} ₸`

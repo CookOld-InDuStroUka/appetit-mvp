@@ -8,6 +8,7 @@ import PromoSlider from "../components/PromoSlider";
 import { PromoSlide } from "../types/promo";
 import MobileMenu from "../components/MobileMenu";
 import { useDelivery } from "../components/DeliveryContext";
+import { useLang } from "../components/LangContext";
 
 // use local API if the env variable is missing so the menu still loads
 const API_BASE =
@@ -17,7 +18,9 @@ type DishDTO = {
   id: string;
   categoryId?: string;
   name: string;
+  nameKz?: string;
   description?: string;
+  descriptionKz?: string;
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
@@ -29,6 +32,7 @@ export default function Home() {
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
   const [slides, setSlides] = useState<PromoSlide[]>([]);
   const { branch } = useDelivery();
+  const { lang } = useLang();
 
   useEffect(() => {
     const load = async () => {
@@ -38,7 +42,10 @@ export default function Home() {
           categories.map((c: any) =>
             fetch(`${API_BASE}/dishes?categoryId=${c.id}&branchId=${branch}`)
               .then((r) => r.json())
-              .then((dishes: DishDTO[]) => ({ name: c.name, dishes }))
+              .then((dishes: DishDTO[]) => ({
+                name: lang === "kz" && c.nameKz ? c.nameKz : c.name,
+                dishes,
+              }))
           )
         );
         setSections(items.filter((sec) => sec.dishes.length > 0));
@@ -47,7 +54,7 @@ export default function Home() {
       }
     };
     load();
-  }, [branch]);
+  }, [branch, lang]);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("promoSlides") : null;

@@ -11,9 +11,9 @@ type PromoSliderProps = {
 
 // Слайды по умолчанию соответствуют файлам в public/
 const DEFAULT_SLIDES: PromoSlide[] = [
-  { image: "/promo1.jpg" },
-  { image: "/promo2.svg" },
-  { image: "/promo3.svg" },
+  { image: "/promo1.jpg", active: true },
+  { image: "/promo2.svg", active: true },
+  { image: "/promo3.svg", active: true },
 ];
 
 export default function PromoSlider({
@@ -22,13 +22,17 @@ export default function PromoSlider({
   width = 1668,
   height = 634,
 }: PromoSliderProps) {
+  const activeSlides = useMemo(
+    () => slides.filter((s) => s.active !== false),
+    [slides]
+  );
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [imgs, setImgs] = useState(slides);
+  const [imgs, setImgs] = useState(activeSlides);
   const [modal, setModal] = useState<PromoSlide["modal"] | null>(null);
 
-  useEffect(() => setImgs(slides), [slides]);
+  useEffect(() => setImgs(activeSlides), [activeSlides]);
 
   const next = () => setIndex((i) => (i + 1) % Math.max(imgs.length, 1));
   const prev = () => setIndex((i) => (i - 1 + Math.max(imgs.length, 1)) % Math.max(imgs.length, 1));

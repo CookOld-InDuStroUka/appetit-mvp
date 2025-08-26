@@ -19,6 +19,7 @@ export default function AnalyticsPage() {
   const [branches, setBranches] = useState<any[]>([]);
   const [data, setData] = useState<Analytics | null>(null);
   const [saved, setSaved] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/branches`).then((r) => r.json()).then(setBranches);
@@ -27,7 +28,19 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     const q = branchId === "all" ? "" : `?branchId=${branchId}`;
-    fetch(`${API_BASE}/admin/analytics${q}`).then((r) => r.json()).then(setData);
+    fetch(`${API_BASE}/admin/analytics${q}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
+      .then((d) => {
+        setData(d);
+        setError(null);
+      })
+      .catch(() => {
+        setData(null);
+        setError("Не удалось загрузить данные");
+      });
   }, [branchId]);
 
   const save = () => {
@@ -53,6 +66,7 @@ export default function AnalyticsPage() {
           </option>
         ))}
       </select>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       {data && (
         <>
           <div>

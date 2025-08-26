@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useCart } from "./CartContext";
+import { useLang } from "./LangContext";
 
 type DishLight = {
   id: string;
   name: string;
+  nameKz?: string;
   description?: string;
+  descriptionKz?: string;
   imageUrl?: string;
   basePrice: number;
 };
@@ -27,6 +30,7 @@ export default function DishModal({ dish, onClose }: Props) {
   const [excluded, setExcluded] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
   const { addItem } = useCart();
+  const { lang } = useLang();
 
   useEffect(() => {
     if (dish) {
@@ -41,6 +45,10 @@ export default function DishModal({ dish, onClose }: Props) {
   }, [dish]);
 
   if (!dish) return null;
+  const displayName = lang === "kz" && dish.nameKz ? dish.nameKz : dish.name;
+  const baseDesc = details?.description || dish.description;
+  const displayDesc =
+    lang === "kz" && dish.descriptionKz ? dish.descriptionKz : baseDesc;
 
   const toggleAddon = (id: string) => {
     setSelectedAddons((prev) =>
@@ -74,11 +82,11 @@ export default function DishModal({ dish, onClose }: Props) {
         </button>
         <img
           src={details?.imageUrl || dish.imageUrl || "https://placehold.co/600x400"}
-          alt={dish.name}
+          alt={displayName}
           style={{ width: "100%", borderRadius: 8 }}
         />
-        <h2>{dish.name}</h2>
-        {details?.description && <p>{details.description}</p>}
+        <h2>{displayName}</h2>
+        {displayDesc && <p>{displayDesc}</p>}
 
         {details?.addons && details.addons.length > 0 && (
           <>
@@ -142,7 +150,7 @@ export default function DishModal({ dish, onClose }: Props) {
                   JSON.stringify(selectedAddons) +
                   JSON.stringify(excluded),
                 dishId: dish.id,
-                name: dish.name,
+                name: displayName,
                 price: total,
                 imageUrl: details?.imageUrl || dish.imageUrl,
                 qty,

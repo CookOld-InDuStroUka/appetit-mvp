@@ -10,4 +10,5 @@ export interface PromoSlide {
   image: string;
   link?: string;
   modal?: PromoModal;
+  active?: boolean;
 }

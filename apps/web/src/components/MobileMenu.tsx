@@ -1,13 +1,21 @@
 import React from "react";
-import { MENU_ITEMS } from "./MainMenu";
+import { useLang } from "./LangContext";
 
 export default function MobileMenu() {
+  const { t } = useLang();
+  const items = [
+    t("combo"),
+    t("dishes"),
+    t("snacks"),
+    t("sauces"),
+    t("drinks"),
+  ];
   return (
     <nav className="mobile-menu">
       <ul>
-        {MENU_ITEMS.map((item) => (
-          <li key={item.title}>
-            <a href={item.href}>{item.title}</a>
+        {items.map((title) => (
+          <li key={title}>
+            <a href={`#${title}`}>{title}</a>
           </li>
         ))}
       </ul>

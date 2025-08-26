@@ -1,16 +1,17 @@
 import React from "react";
-
-export const MENU_ITEMS = [
-  { title: "Комбо", href: "#Комбо" },
-  { title: "Блюда", href: "#Блюда" },
-  { title: "Закуски", href: "#Закуски" },
-  { title: "Соусы", href: "#Соусы" },
-  { title: "Напитки", href: "#Напитки" },
-];
+import { useLang } from "./LangContext";
 
 export default function MainMenu() {
-  const scrollTo = (hash: string) => {
-    const id = hash.startsWith("#") ? hash.slice(1) : hash;
+  const { t } = useLang();
+  const items = [
+    t("combo"),
+    t("dishes"),
+    t("snacks"),
+    t("sauces"),
+    t("drinks"),
+  ];
+
+  const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -27,13 +28,10 @@ export default function MainMenu() {
             gap: 12,
           }}
         >
-          {MENU_ITEMS.map((item) => (
-            <li key={item.title}>
-              <button
-                className="sidebar-btn"
-                onClick={() => scrollTo(item.href)}
-              >
-                {item.title}
+          {items.map((title) => (
+            <li key={title}>
+              <button className="sidebar-btn" onClick={() => scrollTo(title)}>
+                {title}
               </button>
             </li>
           ))}
