@@ -5,18 +5,21 @@ import { AuthProvider } from "../components/AuthContext";
 import { ThemeProvider } from "../components/ThemeContext";
 import { DeliveryProvider } from "../components/DeliveryContext";
 import BackToTop from "../components/BackToTop";
+import { LangProvider } from "../components/LangContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <DeliveryProvider>
-          <CartProvider>
-            <Component {...pageProps} />
-            <BackToTop />
-          </CartProvider>
-        </DeliveryProvider>
-      </AuthProvider>
+      <LangProvider>
+        <AuthProvider>
+          <DeliveryProvider>
+            <CartProvider>
+              <Component {...pageProps} />
+              <BackToTop />
+            </CartProvider>
+          </DeliveryProvider>
+        </AuthProvider>
+      </LangProvider>
     </ThemeProvider>
   );
 }

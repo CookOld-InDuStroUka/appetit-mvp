@@ -53,7 +53,6 @@ export default function Checkout() {
         if (data.error) {
           setDiscount(0);
           setApplyToDelivery(false);
-          alert("Промокод не найден");
         } else {
           setDiscount(data.discount);
           setApplyToDelivery(!!data.appliesToDelivery);

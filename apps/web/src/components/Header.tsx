@@ -5,6 +5,7 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useDelivery } from "./DeliveryContext";
+import { useLang } from "./LangContext";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -21,6 +22,7 @@ export default function Header() {
   const { items: cartItems, updateQty, clear, removeItem, setPromo } = useCart();
   const { user, open: openAuth } = useAuth();
   const { setBranch } = useDelivery();
+  const { lang, setLang, t } = useLang();
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
@@ -148,35 +150,39 @@ export default function Header() {
           {/* ЛОГО + слоган (положи файл в public/logo-appetit.svg) */}
           <Link href="/" className="logo">
             <img src="/logo-appetit.svg" alt="APPETIT" />
-            <span className="tagline">вкусная шаурма</span>
+            <span className="tagline">{t("tagline")}</span>
           </Link>
 
           {/* ПОИСК по центру */}
           <div ref={searchRef} className="search">
             <input
               className="search__input"
-              placeholder="Поиск"
+              placeholder={t("search")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
             />
-            <button className="search__btn" onClick={searchSubmit} aria-label="Искать">
+            <button className="search__btn" onClick={searchSubmit} aria-label={t("searchBtn")}>
               <SearchIcon />
             </button>
           </div>
 
           {/* ПРАВАЯ ПАНЕЛЬ */}
           <nav className="right">
-            <button className="link" type="button">
-              <span>RU</span>
+            <button
+              className="link"
+              type="button"
+              onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
+            >
+              <span>{lang.toUpperCase()}</span>
               <ChevronDown />
             </button>
             <Link href="/contacts" className="link">
-              Контакты
+              {t("contacts")}
             </Link>
             {user && (
               <Link href="/orders" className="link">
-                Заказы
+                {t("orders")}
               </Link>
             )}
 
@@ -187,7 +193,7 @@ export default function Header() {
             ) : (
               <button onClick={openAuth} className="link">
                 <UserIcon />
-                <span>Войти</span>
+                <span>{t("login")}</span>
               </button>
             )}
 

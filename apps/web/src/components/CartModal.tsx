@@ -89,11 +89,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         }
       }
       setDiscount(0);
-      if (!skipAlert.current) alert("Промокод не найден");
       skipAlert.current = false;
     } catch {
       setDiscount(0);
-      if (!skipAlert.current) alert("Промокод не найден");
       skipAlert.current = false;
     }
   };
