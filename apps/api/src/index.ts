@@ -963,7 +963,19 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     });
   }
 
-  res.status(201).json({ id: order.id, status: order.status, subtotal, deliveryFee, discount, total, bonusEarned, bonusUsed, createdAt: order.createdAt });
+  res.status(201).json({
+    id: order.id,
+    status: order.status,
+    pickupTime: order.pickupTime,
+    promoCode: data.promoCode ?? null,
+    subtotal,
+    deliveryFee,
+    discount,
+    total,
+    bonusEarned,
+    bonusUsed,
+    createdAt: order.createdAt,
+  });
 });
 
 app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {

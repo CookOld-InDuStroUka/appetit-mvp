@@ -75,6 +75,7 @@ model Branch {
   zones   Zone[]
   orders  Order[] //  обратная связь к Order.branch
   promoCodes PromoCode[]
+  expenses Expense[]
 }
 
 model Zone {
