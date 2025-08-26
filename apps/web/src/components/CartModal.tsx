@@ -90,9 +90,10 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
 
   useEffect(() => {
     if (promo && (branch || branches.length)) {
+      skipAlert.current = true;
       applyPromo(promo);
+      skipAlert.current = false;
     }
-    skipAlert.current = false;
   }, [promo, branch, branches.length]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);

@@ -7,6 +7,7 @@ type Dish = {
   description?: string;
   imageUrl?: string;
   basePrice: number;
+  category?: string;
 };
 
 type Props = {
@@ -42,7 +43,10 @@ export default function DishModal({ dish, onClose }: Props) {
   const [toppings, setToppings] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
 
+  const DISABLE_MODS = new Set(["drinks", "sauces", "combo", "coffee", "snacks"]);
+
   if (!dish) return null;
+  const allowMods = !dish.category || !DISABLE_MODS.has(dish.category);
 
   const toggleExcluded = (id: string) => {
     setExcluded((prev) =>
@@ -96,32 +100,36 @@ export default function DishModal({ dish, onClose }: Props) {
         <h2>{dish.name}</h2>
         {dish.description && <p>{dish.description}</p>}
 
-        <h4 style={{ marginTop: 20 }}>Добавь вкуса</h4>
-        <div className="option-grid">
-          {TOPPINGS.map((top) => (
-            <button
-              key={top.id}
-              className={`option-btn ${toppings.includes(top.id) ? "active" : ""}`}
-              onClick={() => toggleTopping(top.id)}
-            >
-              <span>{top.name}</span>
-              <span style={{ fontWeight: 600 }}>+{top.price} ₸</span>
-            </button>
-          ))}
-        </div>
+        {allowMods && (
+          <>
+            <h4 style={{ marginTop: 20 }}>Добавь вкуса</h4>
+            <div className="option-grid">
+              {TOPPINGS.map((top) => (
+                <button
+                  key={top.id}
+                  className={`option-btn ${toppings.includes(top.id) ? "active" : ""}`}
+                  onClick={() => toggleTopping(top.id)}
+                >
+                  <span>{top.name}</span>
+                  <span style={{ fontWeight: 600 }}>+{top.price} ₸</span>
+                </button>
+              ))}
+            </div>
 
-        <h4 style={{ marginTop: 20 }}>Убери лишнее</h4>
-        <div className="option-grid">
-          {DEFAULT_INGREDIENTS.map((ing) => (
-            <button
-              key={ing.id}
-              className={`option-btn ${excluded.includes(ing.id) ? "active" : ""}`}
-              onClick={() => toggleExcluded(ing.id)}
-            >
-              {ing.name}
-            </button>
-          ))}
-        </div>
+            <h4 style={{ marginTop: 20 }}>Убери лишнее</h4>
+            <div className="option-grid">
+              {DEFAULT_INGREDIENTS.map((ing) => (
+                <button
+                  key={ing.id}
+                  className={`option-btn ${excluded.includes(ing.id) ? "active" : ""}`}
+                  onClick={() => toggleExcluded(ing.id)}
+                >
+                  {ing.name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         <div
           style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}

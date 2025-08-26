@@ -17,6 +17,7 @@ const API_BASE =
 type DishDTO = {
   id: string;
   categoryId?: string;
+  category?: string;
   name: string;
   nameKz?: string;
   description?: string;
@@ -28,7 +29,7 @@ type DishDTO = {
 };
 
 export default function Home() {
-  const [sections, setSections] = useState<{ name: string; dishes: DishDTO[] }[]>([]);
+  const [sections, setSections] = useState<{ name: string; slug: string; dishes: DishDTO[] }[]>([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
   const [slides, setSlides] = useState<PromoSlide[]>([]);
   const { branch } = useDelivery();
@@ -44,7 +45,8 @@ export default function Home() {
               .then((r) => r.json())
               .then((dishes: DishDTO[]) => ({
                 name: lang === "kz" && c.nameKz ? c.nameKz : c.name,
-                dishes,
+                slug: c.slug,
+                dishes: dishes.map((d) => ({ ...d, category: c.slug })),
               }))
           )
         );
