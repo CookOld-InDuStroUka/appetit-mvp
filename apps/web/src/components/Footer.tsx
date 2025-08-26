@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import AdminModal from "./AdminModal";
 import { useLang } from "./LangContext";
 
 export default function Footer() {
-  const [adminOpen, setAdminOpen] = useState(false);
   const [isSmall, setIsSmall] = useState(false);
   const { t } = useLang();
 
@@ -73,10 +71,9 @@ export default function Footer() {
           <Link href="/public-offer" style={{ color: "var(--nav-link)", textDecoration: "none" }}>
             {t("publicOffer")}
           </Link>
-          <button onClick={() => setAdminOpen(true)} style={{ background: "transparent", border: "1px solid var(--nav-link)", color: "var(--nav-link)", padding: "4px 8px", borderRadius: 6, cursor: "pointer" }}>{t("admin")}</button>
+          <Link href="/admin" style={{ color: "var(--nav-link)", textDecoration: "none", border: "1px solid var(--nav-link)", padding: "4px 8px", borderRadius: 6 }}>{t("admin")}</Link>
         </div>
       </div>
-      {adminOpen && <AdminModal onClose={() => setAdminOpen(false)} />}
     </footer>
   );
 }

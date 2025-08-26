@@ -9,6 +9,12 @@ async function main() {
   await prisma.zone.deleteMany();
   await prisma.branch.deleteMany();
 
+  await prisma.admin.upsert({
+    where: { email: "admin" },
+    update: { password: "admin", role: "super" },
+    create: { email: "admin", password: "admin", role: "super" },
+  });
+
   // --- Branches & Zones (стабильные id) ---
   const seedBranches = [
     {

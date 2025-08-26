@@ -6,19 +6,22 @@ import { ThemeProvider } from "../components/ThemeContext";
 import { DeliveryProvider } from "../components/DeliveryContext";
 import BackToTop from "../components/BackToTop";
 import { LangProvider } from "../components/LangContext";
+import { AdminAuthProvider } from "../components/AdminAuthContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider>
       <LangProvider>
-        <AuthProvider>
-          <DeliveryProvider>
-            <CartProvider>
-              <Component {...pageProps} />
-              <BackToTop />
-            </CartProvider>
-          </DeliveryProvider>
-        </AuthProvider>
+        <AdminAuthProvider>
+          <AuthProvider>
+            <DeliveryProvider>
+              <CartProvider>
+                <Component {...pageProps} />
+                <BackToTop />
+              </CartProvider>
+            </DeliveryProvider>
+          </AuthProvider>
+        </AdminAuthProvider>
       </LangProvider>
     </ThemeProvider>
   );

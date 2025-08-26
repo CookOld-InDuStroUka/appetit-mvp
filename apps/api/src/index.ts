@@ -228,19 +228,6 @@ app.post(`${BASE}/auth/login-email`, async (req: Request, res: Response) => {
   res.json({ user: { id: user.id, email: user.email, phone: user.phone, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
 });
 
-app.post(`${BASE}/admin/register`, async (req: Request, res: Response) => {
-  const parsed = AdminAuthSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-
-  const admin = await prisma.admin.upsert({
-    where: { email: parsed.data.email },
-    update: { password: parsed.data.password, role: parsed.data.role ?? undefined },
-    create: { email: parsed.data.email, password: parsed.data.password, role: parsed.data.role ?? "manager" }
-  });
-
-  res.json({ ok: true, id: admin.id, role: admin.role });
-});
-
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
   const parsed = AdminAuthSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
@@ -251,6 +238,44 @@ app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
   }
 
   res.json({ ok: true, id: admin.id, role: admin.role });
+});
+
+async function getAdminByHeader(req: Request) {
+  const id = req.header("x-admin-id");
+  if (!id) return null;
+  return prisma.admin.findUnique({ where: { id } });
+}
+
+app.get(`${BASE}/admin/accounts`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
+  const admins = await prisma.admin.findMany({ select: { id: true, email: true, role: true } });
+  res.json({ admins });
+});
+
+app.post(`${BASE}/admin/accounts`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
+  const parsed = AdminAuthSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const created = await prisma.admin.create({ data: { email: parsed.data.email, password: parsed.data.password, role: parsed.data.role ?? "manager" } });
+  res.json({ ok: true, admin: { id: created.id, email: created.email, role: created.role } });
+});
+
+app.patch(`${BASE}/admin/accounts/:id`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
+  const parsed = AdminAuthSchema.partial().safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  await prisma.admin.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json({ ok: true });
+});
+
+app.delete(`${BASE}/admin/accounts/:id`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
+  await prisma.admin.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
 });
 
 app.get(BASE, (_: Request, res: Response) => {

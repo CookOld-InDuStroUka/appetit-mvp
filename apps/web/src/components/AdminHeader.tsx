@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "./ThemeContext";
+import { useAdminAuth } from "./AdminAuthContext";
 
 export default function AdminHeader() {
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { admin, logout } = useAdminAuth();
+  const [links, setLinks] = useState<{ href: string; label: string }[]>([]);
 
-    const links = [
+  useEffect(() => {
+    const base = [
       { href: "/", label: "На сайт" },
       { href: "/admin", label: "Главная" },
       { href: "/admin/branches", label: "Филиалы" },
@@ -16,6 +20,9 @@ export default function AdminHeader() {
       { href: "/admin/analytics", label: "Аналитика" },
       { href: "/admin/profile", label: "Профиль" },
     ];
+    if (admin?.role === "super") base.push({ href: "/admin/admins", label: "Админы" });
+    setLinks(base);
+  }, [admin]);
 
   const linkEls = links.map((l) => (
     <Link key={l.href} href={l.href} className="admin-nav-btn" onClick={() => setOpen(false)}>
@@ -38,6 +45,7 @@ export default function AdminHeader() {
           >
             {theme === "light" ? "🌙" : "☀️"}
           </button>
+          <button onClick={logout} className="btn">Выйти</button>
           <button
             onClick={() => setOpen(!open)}
             aria-label="Меню"
