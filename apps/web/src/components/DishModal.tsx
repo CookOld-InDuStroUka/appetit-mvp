@@ -1,24 +1,20 @@
-import React, { useEffect, useState } from "react";
+// components/DishCard.tsx
+import React, { useState } from "react";
 import Image from "next/image";
 import { useCart } from "./CartContext";
 
-type DishLight = {
+type Dish = {
   id: string;
   name: string;
   description?: string;
   imageUrl?: string;
+  minPrice?: number;
   basePrice: number;
+  label?: "новинка" | "хит";
+  stickerUrl?: string;
 };
 
-type DishDetails = DishLight & {
-  addons?: { id: string; name: string; price: number }[];
-  exclusions?: { id: string; name: string }[];
-};
-
-type Props = { dish: DishLight | null; onClose: () => void };
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+type Props = { dish: Dish; onClick: () => void };
 
 const NAME_TO_ID: Record<string, string> = {
   // ==== уже были ====
@@ -53,7 +49,7 @@ const NAME_TO_ID: Record<string, string> = {
   "соус томатный 30г": "sous-tomatnyj-30g",
   "соус чесночный 30г": "sous-chesnochnyj-30g",
 
-  // ==== напитки (нормализация запятой!) ====
+  // ==== напитки ====
   "айран тет": "ajran-tet",
   "асу 05л": "asu-0-5l",
   "асу 1л": "asu-1l",
@@ -73,367 +69,168 @@ const NAME_TO_ID: Record<string, string> = {
 };
 
 const normalize = (s: string) =>
-  s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{Letter}\p{Number}\s-]+/gu, "").replace(/\s+/g, " ").trim();
+  s
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^\p{Letter}\p{Number}\s-]+/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const slugify = (s: string) =>
-  s.toLowerCase().replace(/ё/g, "e").replace(/[^a-z0-9\s-]+/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+  s
+    .toLowerCase()
+    .replace(/ё/g, "e")
+    .replace(/[^a-z0-9\s-]+/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
 const FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 675'>
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 480'>
      <rect width='100%' height='100%' fill='#ffffff'/>
      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
-           fill='#94a3b8' font-size='48' font-family='system-ui'>Нет фото</text>
+           fill='#9ca3af' font-size='20' font-family='system-ui'>Нет фото</text>
    </svg>`
 )}`;
 
-const fmt = new Intl.NumberFormat("ru-RU");
+const nfmt = new Intl.NumberFormat("ru-RU");
 
-export default function DishModal({ dish, onClose }: Props) {
-  const [details, setDetails] = useState<DishDetails | null>(null);
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
-  const [excluded, setExcluded] = useState<string[]>([]);
-  const [qty, setQty] = useState(1);
-  const [imgIdx, setImgIdx] = useState(0);
+export default function DishCard({ dish, onClick }: Props) {
   const { addItem } = useCart();
 
-  useEffect(() => {
-    if (!dish) return;
-    setSelectedAddons([]);
-    setExcluded([]);
-    setQty(1);
-    setImgIdx(0);
-    fetch(`${API_BASE}/dishes/${dish.id}`)
-      .then((r) => r.json())
-      .then(setDetails)
-      .catch(() => setDetails(null));
-  }, [dish]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  if (!dish) return null;
-
   const norm = normalize(dish.name);
-  const forcedId = NAME_TO_ID[norm] ?? slugify(dish.name);
+  const fileId = NAME_TO_ID[norm] ?? slugify(dish.name);
+  const candidates = [dish.imageUrl, `/dishes/${fileId}.webp`, `/dishes/${fileId}.jpg`, FALLBACK].filter(
+    Boolean
+  ) as string[];
 
-  const primaryUrl =
-    dish.imageUrl && (dish.imageUrl.startsWith("http") ? dish.imageUrl : dish.imageUrl);
+  const [imgIdx, setImgIdx] = useState(0);
+  const src: string = candidates[Math.min(imgIdx, candidates.length - 1)];
+  const price = `${nfmt.format(dish.minPrice ?? dish.basePrice)} ₸`;
 
-  const candidates = [primaryUrl, `/dishes/${forcedId}.webp`, `/dishes/${forcedId}.jpg`, FALLBACK].filter(Boolean) as string[];
-  const imgSrc = candidates[Math.min(imgIdx, candidates.length - 1)];
-
-  const toggleAddon = (id: string) =>
-    setSelectedAddons((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-  const toggleExcluded = (id: string) =>
-    setExcluded((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-
-  const addonsTotal = selectedAddons.reduce((sum, id) => {
-    const item = details?.addons?.find((a) => a.id === id);
-    return sum + (item ? item.price : 0);
-  }, 0);
-
-  const base = details?.basePrice ?? dish.basePrice;
-  const unitTotal = base + addonsTotal;
-  const totalForQty = unitTotal * qty;
-
-  const selectedAddonObjs = details?.addons?.filter((a) => selectedAddons.includes(a.id)) || [];
-  const selectedExcludedNames = details?.exclusions?.filter((e) => excluded.includes(e.id)).map((e) => e.name) || [];
+  const handleAdd = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    addItem({
+      id: dish.id,
+      name: dish.name,
+      price: dish.basePrice,
+      imageUrl: src,
+      qty: 1,
+    });
+  };
 
   return (
-    <div className="dm-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="dm" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="dm-close" aria-label="Закрыть">×</button>
+    <article className="card" onClick={onClick} role="button" tabIndex={0}>
+      <div className="media">
+        <Image
+          src={src}
+          alt={dish.name}
+          width={800}
+          height={600}
+          sizes="(max-width: 768px) 50vw, 280px"
+          style={{ height: "100%", width: "auto", objectFit: "contain" }}
+          onError={() => setImgIdx(i => Math.min(i + 1, candidates.length - 1))}
+        />
+      </div>
 
-        <div className="dm-head">
-          <div className="dm-figure">
-            <Image
-              src={imgSrc}
-              alt={dish.name}
-              fill
-              sizes="(max-width: 860px) 100vw, 480px"
-              style={{ objectFit: "contain" }}
-              onError={() => setImgIdx((i) => Math.min(i + 1, candidates.length - 1))}
-              priority
-            />
-          </div>
+      <h4 className="title">{dish.name}</h4>
+      {dish.description && <p className="desc">{dish.description}</p>}
 
-          <div className="dm-info">
-            <h2 className="dm-title">{dish.name}</h2>
-            <div className="dm-price-top">{fmt.format(base)} ₸</div>
-            {details?.description && <p className="dm-desc">{details.description}</p>}
-          </div>
-        </div>
-
-        {details?.addons?.length ? (
-          <>
-            <h4 className="dm-sub">Добавь вкуса</h4>
-            <p className="dm-hint">Максимум: 12</p>
-            <div className="dm-grid dm-grid--addons">
-              {details.addons.map((o) => {
-                const active = selectedAddons.includes(o.id);
-                return (
-                  <button
-                    key={o.id}
-                    onClick={() => toggleAddon(o.id)}
-                    className={`dm-opt-card ${active ? "is-active" : ""}`}
-                  >
-                    <div className="dm-opt-name">{o.name}</div>
-                    <div className="dm-opt-cta">+{fmt.format(o.price)} ₸</div>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        ) : null}
-
-        {details?.exclusions?.length ? (
-          <>
-            <h4 className="dm-sub">Убери лишнее</h4>
-            <div className="dm-grid">
-              {details.exclusions.map((ing) => {
-                const active = excluded.includes(ing.id);
-                return (
-                  <button
-                    key={ing.id}
-                    onClick={() => toggleExcluded(ing.id)}
-                    className={`dm-opt ${active ? "is-active" : ""}`}
-                  >
-                    {ing.name}
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        ) : null}
-
-        <div className="dm-footer">
-          <div className="dm-qty">
-            <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Уменьшить">−</button>
-            <span>{qty}</span>
-            <button onClick={() => setQty((q) => q + 1)} aria-label="Увеличить">+</button>
-          </div>
-
-          <div className="dm-total">{fmt.format(totalForQty)} ₸</div>
-
-          <button
-            onClick={() =>
-              addItem({
-                id: dish.id + JSON.stringify(selectedAddons) + JSON.stringify(selectedExcludedNames),
-                name: dish.name,
-                price: unitTotal,
-                imageUrl: imgSrc,
-                qty,
-                addons: selectedAddonObjs.map((a) => ({ name: a.name, price: a.price })),
-                excluded: selectedExcludedNames,
-              })
-            }
-            className="dm-add"
-          >
-            В корзину
-          </button>
-        </div>
+      <div className="row">
+        <div className="price">{price}</div>
+        <button type="button" className="btnAdd" onClick={handleAdd} aria-label="Добавить">
+          +
+        </button>
       </div>
 
       <style jsx>{`
-        /* ===== АНИМАЦИИ ОТКРЫТИЯ ===== */
-        @keyframes dmFadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes dmZoomIn {
-          from {
-            opacity: 0;
-            transform: translateY(8px) scale(.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .dm-backdrop{
-          position: fixed;
-          inset: 0;
-          background: rgba(15,23,42,.55);
-          display: grid;
-          place-items: center;
-          padding: 16px;
-          z-index: 1000;
-
-          /* плавный фейд фона */
-          animation: dmFadeIn .18s ease-out both;
-        }
-        .dm{
-          width: min(920px, 100%);
-          max-height: 92vh;
-
-          /* стабильная ширина + скролл */
-          overflow-y: auto;
-          scrollbar-gutter: stable both-edges;
-
+        .card {
+          width: 100%;
           background: #fff;
-          color: #0f172a;
-          border-radius: 16px;
-          padding: 16px 16px 80px;
-          box-shadow: 0 20px 60px rgba(2,6,23,.3);
-          position: relative;
-
-          /* плавный zoom/slide */
-          animation: dmZoomIn .22s cubic-bezier(.2,.7,.2,1) both;
-        }
-        @supports not (scrollbar-gutter: stable both-edges){
-          .dm{ overflow-y: scroll; }
-        }
-
-        /* уважение к reduced motion */
-        @media (prefers-reduced-motion: reduce){
-          .dm-backdrop, .dm{ animation: none !important; }
-        }
-
-        .dm-close{
-          position: sticky;
-          top: 0;
-          margin-left: auto;
-          display: inline-grid;
-          place-items: center;
-          width: 36px;
-          height: 36px;
-          border-radius: 9999px;
-          background: #f1f5f9;
-          border: 0;
-          color: #0f172a;
-          font-size: 20px;
+          border-radius: 12px;
+          padding: 12px;
+          border: 1px solid #eef2f7;
+          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+          transition: box-shadow 0.15s ease, transform 0.1s ease;
           cursor: pointer;
-          float: right;
+          display: flex;
+          flex-direction: column;
+        }
+        .card:hover {
+          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+          transform: translateY(-1px);
         }
 
-        .dm-head{
-          display: grid;
-          grid-template-columns: 1.2fr 1fr;
-          gap: 20px;
-          align-items: start;
-        }
-        .dm-figure{
+        .media {
           position: relative;
           width: 100%;
-          aspect-ratio: 3/2;
-          border-radius: 12px;
+          height: 190px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border-bottom: 1px solid rgba(17, 24, 39, 0.08);
           overflow: hidden;
         }
-        .dm-info{ padding-top: 6px; }
-        .dm-title{ margin: 0 0 6px; font-size: 28px; font-weight: 800; line-height: 1.15; }
-        .dm-price-top{ font-weight: 800; margin-bottom: 8px; }
-        .dm-desc{ margin: 0; color: #475569; }
 
-        .dm-sub{ margin: 18px 2px 6px; font-weight: 800; }
-        .dm-hint{ margin: -2px 2px 10px; color:#7c8aa0; font-size:12px; }
+        .title {
+          margin: 10px 2px 4px;
+          color: #0f172a;
+          font-weight: 700;
+          font-size: 15px;
+          line-height: 1.25;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .desc {
+          color: #6b7280;
+          font-size: 12px;
+          line-height: 1.25;
+          margin: 0 2px 8px;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          min-height: 28px;
+        }
 
-        .dm-grid{
+        .row {
+          margin-top: auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .price {
+          font-weight: 800;
+          font-size: 15px;
+          color: #0f172a;
+        }
+
+        .btnAdd {
+          background: #2b6cf8;
+          color: #fff;
+          border: 0;
+          border-radius: 8px;
+          width: 36px;
+          height: 28px;
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 10px;
+          place-items: center;
+          font-size: 16px;
+          line-height: 1;
+          cursor: pointer;
+          transition: filter 0.12s, transform 0.1s;
         }
-        .dm-grid--addons{ grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-
-        /* карточка добавки — стабильные размеры */
-        .dm-opt-card{
-          box-sizing: border-box;
-          min-height: 88px;
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-          padding:10px;
-          border-radius:12px;
-          border:1px solid #e2e8f0;
-          background:#fff;
-          text-align:left;
-          cursor:pointer;
-          transition:border-color .15s, box-shadow .15s, background .15s;
+        .btnAdd:hover {
+          filter: brightness(1.05);
+          transform: translateY(-1px);
         }
-        .dm-opt-card:hover{ border-color:#cbd5e1; background:#f8fafc; }
-        .dm-opt-card.is-active{ border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.15) inset; }
-
-        .dm-opt-name{
-          color:#0f172a;
-          font-size:14px;
-          line-height:1.15;
-          min-height:34px;
-          display:-webkit-box;
-          -webkit-line-clamp:2;
-          -webkit-box-orient:vertical;
-          overflow:hidden;
-        }
-        .dm-opt-cta{
-          margin-top:auto;
-          display:block;
-          width:100%;
-          text-align:center;
-          padding:8px 10px;
-          border-radius:10px;
-          background:#0f172a;
-          color:#fff;
-          font-weight:700;
-          line-height:1;
-          user-select:none;
-          transition:filter .15s;
-        }
-        .dm-opt-card:hover .dm-opt-cta{ filter:brightness(1.05); }
-        .dm-opt-card.is-active .dm-opt-cta{ box-shadow:0 0 0 2px rgba(34,197,94,.15) inset; }
-
-        .dm-opt{
-          display:flex; align-items:center; justify-content:center;
-          padding:10px 12px;
-          border-radius:12px;
-          border:1px solid #e2e8f0;
-          background:#fff;
-          cursor:pointer;
-          transition:.15s;
-        }
-        .dm-opt:hover{ border-color:#cbd5e1; background:#f8fafc; }
-        .dm-opt.is-active{ border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.15) inset; }
-
-        .dm-footer{
-          position: sticky;
-          bottom: -1px;
-          background:#fff;
-          padding-top:12px;
-          margin-top:16px;
-          display:flex;
-          align-items:center;
-          gap:12px;
-          border-top:1px solid #e2e8f0;
-        }
-        .dm-qty{
-          display:inline-flex; align-items:center; gap:8px;
-          border:1px solid #e2e8f0; border-radius:12px;
-          padding:4px 8px; background:#fafafa;
-        }
-        .dm-qty>button{
-          width:32px; height:32px; border:0; border-radius:10px;
-          background:#f1f5f9; color:#0f172a; cursor:pointer; font-size:18px;
-        }
-        .dm-total{ margin-left:auto; font-weight:800; font-size:18px; }
-        .dm-add{
-          background:#0f172a; color:#fff; border:0; border-radius:12px;
-          padding:12px 16px; font-weight:800; min-width:140px; cursor:pointer;
-        }
-
-        @media (max-width: 920px){
-          .dm-grid--addons{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-        }
-        @media (max-width: 560px){
-          .dm-grid--addons{ grid-template-columns: 1fr; }
-        }
-        @media (max-width: 860px){
-          .dm{ padding:12px 12px 80px; }
-          .dm-head{ grid-template-columns: 1fr; gap:12px; }
-          .dm-title{ font-size:22px; }
-          .dm-grid{ grid-template-columns: 1fr; }
+        .btnAdd:active {
+          transform: translateY(0);
         }
       `}</style>
-    </div>
+    </article>
   );
 }

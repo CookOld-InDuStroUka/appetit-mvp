@@ -1,5 +1,6 @@
+// components/CartContext.tsx
 import React, { createContext, useContext, useState } from "react";
-import type { CartItem } from "./CartModal";
+import type { CartItem } from "../types/cart";
 
 type CartContextValue = {
   items: CartItem[];
@@ -19,12 +20,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [promo, setPromo] = useState<string | null>(null);
 
   const addItem = (item: CartItem) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+    setItems(prev => {
+      const existing = prev.find(i => i.id === item.id);
       if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: i.qty + item.qty } : i
-        );
+        return prev.map(i => (i.id === item.id ? { ...i, qty: i.qty + item.qty } : i));
       }
       return [...prev, item];
     });
@@ -32,14 +31,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      setItems(prev => prev.filter(i => i.id !== id));
     } else {
-      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, qty } : i)));
+      setItems(prev => prev.map(i => (i.id === id ? { ...i, qty } : i)));
     }
   };
 
   const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems(prev => prev.filter(i => i.id !== id));
   };
 
   const clear = () => setItems([]);
@@ -60,4 +59,3 @@ export const useCart = () => {
   if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 };
-
