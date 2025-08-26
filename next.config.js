@@ -6,6 +6,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'placehold.co' },
       { protocol: 'http', hostname: 'localhost', port: '3001' },
     ],
+    unoptimized: true,
   },
 };
 module.exports = nextConfig;

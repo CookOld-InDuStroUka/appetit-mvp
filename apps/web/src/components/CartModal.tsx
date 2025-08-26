@@ -146,7 +146,10 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const sel = toMin(time);
     const start = toMin(open);
     const now = new Date();
-    const astana = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    const localOffset = now.getTimezoneOffset();
+    const astanaOffset = -5 * 60;
+    const diff = astanaOffset - localOffset;
+    const astana = new Date(now.getTime() + diff * 60 * 1000);
     let date = astana;
     const cur = astana.getHours() * 60 + astana.getMinutes();
     if ((overnight && sel < start) || sel < cur) {

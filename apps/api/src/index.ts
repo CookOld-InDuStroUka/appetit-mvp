@@ -985,7 +985,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     id: order.id,
     status: order.status,
     pickupTime: order.pickupTime,
-    promoCode: data.promoCode ?? null,
+    promoCode: promoCodeId ? data.promoCode ?? null : null,
     subtotal,
     deliveryFee,
     discount,
