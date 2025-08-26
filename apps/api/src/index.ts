@@ -903,7 +903,13 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     if (data.pickupTime) {
       pickupTime = new Date(data.pickupTime);
     }
-    pickupCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const last = await prisma.order.findFirst({
+      where: { pickupCode: { not: null } },
+      orderBy: { pickupCode: "desc" },
+      select: { pickupCode: true },
+    });
+    const next = last ? String(Number(last.pickupCode) + 1).padStart(6, "0") : "100000";
+    pickupCode = next;
   }
 
   if (data.promoCode) {
