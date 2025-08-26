@@ -155,19 +155,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const astanaNow = new Date(
       new Date().toLocaleString("en-US", { timeZone: "Asia/Almaty" })
     );
+    const offset = astanaNow.getTime() - Date.now();
     const cur = astanaNow.getHours() * 60 + astanaNow.getMinutes();
     let date = astanaNow;
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
-    const utc = Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      h - 6,
-      m
-    );
-    return new Date(utc).toISOString().replace("Z", "+06:00");
+    date.setHours(h, m, 0, 0);
+    return new Date(date.getTime() - offset).toISOString();
   };
 
   const submit = async () => {
