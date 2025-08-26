@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
+import { useLang } from "./LangContext";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -18,6 +19,7 @@ export default function Header() {
   const [isCartOpen, setCartOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
+  const { lang, setLang, t } = useLang();
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
@@ -123,25 +125,34 @@ export default function Header() {
           <div ref={searchRef} className="search">
             <input
               className="search__input"
-              placeholder="Поиск"
+              placeholder={t("search")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
             />
-            <button className="search__btn" onClick={searchSubmit} aria-label="Искать">
+            <button
+              className="search__btn"
+              onClick={searchSubmit}
+              aria-label={t("searchBtn")}
+            >
               <SearchIcon />
             </button>
           </div>
 
           {/* Правый блок */}
           <nav className="right">
-            <button className="link link--hide-sm" type="button" aria-label="Выбор языка">
-              <span>RU</span>
+            <button
+              className="link link--hide-sm"
+              type="button"
+              aria-label="Выбор языка"
+              onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
+            >
+              <span>{lang.toUpperCase()}</span>
               <ChevronDown />
             </button>
 
             <Link href="/contacts" className="link link--hide-sm">
-              Контакты
+              {t("contacts")}
             </Link>
 
             {user ? (
@@ -149,7 +160,7 @@ export default function Header() {
             ) : (
               <button onClick={openAuth} className="link link--auth">
                 <UserIcon />
-                <span>Войти</span>
+                <span>{t("login")}</span>
               </button>
             )}
 

@@ -218,45 +218,51 @@ export default function AnalyticsPage() {
           </table>
 
           <h3>{t("dailyChart")}</h3>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-            <span style={{ width: 12, height: 12, background: "#36a2eb", display: "inline-block" }} />
-            {t("orders")}
-            <span style={{ width: 12, height: 12, background: "#ff6384", display: "inline-block", marginLeft: 12 }} />
-            {t("expenses")}
-          </div>
-          <svg
-            viewBox={`0 0 ${data.daily.days.length * 40} 200`}
-            style={{ width: "100%", maxWidth: 600 }}
-          >
-            {data.daily.days.map((d, i) => {
-              const orderH =
-                (data.daily.orders[i] / Math.max(...data.daily.orders, 1)) * 180;
-              const expH =
-                (data.daily.expenses[i] / Math.max(...data.daily.expenses, 1)) * 180;
-              const x = i * 40;
-              return (
-                <g key={d}>
-                  <rect
-                    x={x + 5}
-                    y={190 - orderH}
-                    width={12}
-                    height={orderH}
-                    fill="#36a2eb"
-                  />
-                  <rect
-                    x={x + 23}
-                    y={190 - expH}
-                    width={12}
-                    height={expH}
-                    fill="#ff6384"
-                  />
-                  <text x={x + 20} y={195} fontSize={8} textAnchor="middle">
-                    {d.slice(5)}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
+          {data.daily.days.length === 0 ? (
+            <p style={{ color: "#94a3b8" }}>—</p>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                <span style={{ width: 12, height: 12, background: "#36a2eb", display: "inline-block" }} />
+                {t("orders")}
+                <span style={{ width: 12, height: 12, background: "#ff6384", display: "inline-block", marginLeft: 12 }} />
+                {t("expenses")}
+              </div>
+              <svg
+                viewBox={`0 0 ${data.daily.days.length * 40} 200`}
+                style={{ width: "100%", maxWidth: 600 }}
+              >
+                {data.daily.days.map((d, i) => {
+                  const orderH =
+                    (data.daily.orders[i] / Math.max(...data.daily.orders, 1)) * 180;
+                  const expH =
+                    (data.daily.expenses[i] / Math.max(...data.daily.expenses, 1)) * 180;
+                  const x = i * 40;
+                  return (
+                    <g key={d}>
+                      <rect
+                        x={x + 5}
+                        y={190 - orderH}
+                        width={12}
+                        height={orderH}
+                        fill="#36a2eb"
+                      />
+                      <rect
+                        x={x + 23}
+                        y={190 - expH}
+                        width={12}
+                        height={expH}
+                        fill="#ff6384"
+                      />
+                      <text x={x + 20} y={195} fontSize={8} textAnchor="middle">
+                        {d.slice(5)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </>
+          )}
 
         </>
       )}
