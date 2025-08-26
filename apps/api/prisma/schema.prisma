@@ -181,6 +181,7 @@ model PromoCode {
   id          String   @id @default(cuid())
   code        String   @unique
   discount    Int
+  appliesToDelivery Boolean @default(false)
   expiresAt   DateTime
   conditions  String?
   maxUses     Int?

@@ -8,6 +8,7 @@ type Promo = {
   id: string;
   code: string;
   discount: number;
+  appliesToDelivery: boolean;
   expiresAt: string;
   conditions?: string | null;
   maxUses?: number | null;
@@ -23,6 +24,7 @@ export default function PromoCodesAdmin() {
   const [form, setForm] = useState({
     code: "",
     discount: 0,
+    appliesToDelivery: false,
     expiresAt: "",
     maxUses: "",
     branchIds: [] as string[],
@@ -38,6 +40,7 @@ export default function PromoCodesAdmin() {
         id: c.id,
         code: c.code,
         discount: c.discount,
+        appliesToDelivery: c.appliesToDelivery,
         expiresAt: c.expiresAt,
         conditions: c.conditions,
         maxUses: c.maxUses,
@@ -68,6 +71,7 @@ export default function PromoCodesAdmin() {
       body: JSON.stringify({
         code: p.code.toUpperCase(),
         discount: Number(p.discount),
+        appliesToDelivery: p.appliesToDelivery,
         expiresAt: p.expiresAt,
         conditions: p.conditions ?? null,
         maxUses: p.maxUses ?? null,
@@ -90,12 +94,13 @@ export default function PromoCodesAdmin() {
       body: JSON.stringify({
         code: form.code.toUpperCase(),
         discount: Number(form.discount),
+        appliesToDelivery: form.appliesToDelivery,
         expiresAt: form.expiresAt,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
         branchIds: form.branchIds,
       }),
     });
-    setForm({ code: "", discount: 0, expiresAt: "", maxUses: "", branchIds: [] });
+    setForm({ code: "", discount: 0, appliesToDelivery: false, expiresAt: "", maxUses: "", branchIds: [] });
     load();
   };
 
@@ -109,6 +114,7 @@ export default function PromoCodesAdmin() {
             <th>Скидка %</th>
             <th>Действует до</th>
             <th>Макс. использований</th>
+            <th>На доставку</th>
             <th>Филиалы</th>
             <th>Использовано</th>
             <th></th>
@@ -143,6 +149,13 @@ export default function PromoCodesAdmin() {
                     change(p.id, "maxUses", e.target.value ? Number(e.target.value) : null)
                   }
                   style={{ width: 80 }}
+                />
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={p.appliesToDelivery}
+                  onChange={(e) => change(p.id, "appliesToDelivery", e.target.checked)}
                 />
               </td>
               <td>
@@ -204,6 +217,14 @@ export default function PromoCodesAdmin() {
           onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
           style={{ width: 80 }}
         />
+        <label>
+          <input
+            type="checkbox"
+            checked={form.appliesToDelivery}
+            onChange={(e) => setForm({ ...form, appliesToDelivery: e.target.checked })}
+          />
+          {" На доставку"}
+        </label>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {branches.map((b) => (
             <label key={b.id}>

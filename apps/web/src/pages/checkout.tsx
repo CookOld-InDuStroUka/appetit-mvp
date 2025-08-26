@@ -14,6 +14,7 @@ export default function Checkout() {
   });
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [applyToDelivery, setApplyToDelivery] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
 
@@ -50,16 +51,20 @@ export default function Checkout() {
       if (r.ok) {
         const data = await r.json();
         setDiscount(data.discount);
+        setApplyToDelivery(!!data.appliesToDelivery);
       } else {
         setDiscount(0);
+        setApplyToDelivery(false);
         alert("Промокод не найден");
       }
     } catch {
       setDiscount(0);
+      setApplyToDelivery(false);
     }
   };
 
-  const discountAmount = Math.round(subtotal * discount / 100);
+  const base = subtotal + (applyToDelivery && form.type === "delivery" ? deliveryFee : 0);
+  const discountAmount = Math.round((base * discount) / 100);
   const total = subtotal + (form.type === "delivery" ? deliveryFee : 0) - discountAmount;
 
   const submit = async () => {

@@ -234,6 +234,7 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
   res.json({
     code: promo.code,
     discount: promo.discount,
+    appliesToDelivery: promo.appliesToDelivery,
     expiresAt: promo.expiresAt,
     conditions: promo.conditions,
   });
@@ -253,6 +254,7 @@ app.post(`${BASE}/admin/promo-codes`, async (req: Request, res: Response) => {
     data: {
       code: data.code,
       discount: data.discount,
+      appliesToDelivery: data.appliesToDelivery,
       expiresAt: data.expiresAt,
       conditions: data.conditions ?? null,
       maxUses: data.maxUses ?? null,
@@ -274,6 +276,7 @@ app.put(`${BASE}/admin/promo-codes/:id`, async (req: Request, res: Response) => 
     data: {
       code: data.code,
       discount: data.discount,
+      appliesToDelivery: data.appliesToDelivery,
       expiresAt: data.expiresAt,
       conditions: data.conditions ?? null,
       maxUses: data.maxUses ?? null,
@@ -762,6 +765,7 @@ const PromoCodeSchema = z.object({
 const PromoCodeUpsertSchema = z.object({
   code: z.string().transform((s) => s.toUpperCase()),
   discount: z.number().int(),
+  appliesToDelivery: z.boolean().optional().default(false),
   expiresAt: z.coerce.date(),
   conditions: z.string().optional().nullable(),
   maxUses: z.number().int().optional().nullable(),
@@ -871,7 +875,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       (promo.maxUses === null || promo.usedCount < (promo.maxUses ?? 0)) &&
       (promo.branches.length === 0 || promo.branches.some((b: any) => b.id === branchId))
     ) {
-      discount = Math.round((subtotal * promo.discount) / 100);
+      const base = promo.appliesToDelivery ? subtotal + deliveryFee : subtotal;
+      discount = Math.round((base * promo.discount) / 100);
       promoCodeId = promo.id;
     }
   }

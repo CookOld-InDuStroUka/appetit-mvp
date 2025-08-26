@@ -63,33 +63,31 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     };
 
     try {
-      let data = await tryCheck(branch);
-      if (!data) {
-        data = await tryCheck();
-        if (data) {
-          setDiscount(data.discount);
-          if (!skipAlert.current) alert("Промокод применён");
+      const candidates: (string | undefined)[] = [];
+      if (branch) candidates.push(branch);
+      candidates.push(undefined);
+      for (const b of branches) if (b.id !== branch) candidates.push(b.id);
+
+      for (const candidate of candidates) {
+        const res = await tryCheck(candidate);
+        if (res) {
+          setDiscount(res.discount);
+          if (candidate && candidate !== branch) {
+            skipAlert.current = true;
+            setBranch(candidate);
+            const b = branches.find((br) => br.id === candidate);
+            alert(
+              `Промокод действует только для филиала ${b?.name ?? candidate}. Промокод применён.`
+            );
+          } else if (!skipAlert.current) {
+            alert("Промокод применён");
+          }
           skipAlert.current = false;
           return;
         }
-        for (const b of branches) {
-          if (b.id === branch) continue;
-          const res = await tryCheck(b.id);
-          if (res) {
-            skipAlert.current = true;
-            setDiscount(res.discount);
-            setBranch(b.id);
-            alert(`Промокод действует только для филиала ${b.name}. Промокод применён.`);
-            return;
-          }
-        }
-        setDiscount(0);
-        if (!skipAlert.current) alert("Промокод не найден");
-        skipAlert.current = false;
-        return;
       }
-      setDiscount(data.discount);
-      if (!skipAlert.current) alert("Промокод применён");
+      setDiscount(0);
+      if (!skipAlert.current) alert("Промокод не найден");
       skipAlert.current = false;
     } catch {
       setDiscount(0);
@@ -99,11 +97,11 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   };
 
   useEffect(() => {
-    if (promo) {
+    if (promo && (branch || branches.length)) {
       applyPromo(promo);
     }
     skipAlert.current = false;
-  }, [promo, branch]);
+  }, [promo, branch, branches.length]);
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discountAmount = Math.round((total * discount) / 100);
