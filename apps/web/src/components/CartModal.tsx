@@ -143,17 +143,15 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const { open, overnight } = parseHours(branchInfo?.hours);
     const sel = toMin(time);
     const start = toMin(open);
-    const astanaNow = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Almaty" })
-    );
-    const offset = astanaNow.getTime() - Date.now();
+    const ASTANA_OFFSET = 5 * 60 * 60000; // Asia/Almaty UTC+5
+    const astanaNow = new Date(Date.now() + ASTANA_OFFSET);
     const cur = astanaNow.getHours() * 60 + astanaNow.getMinutes();
     let date = astanaNow;
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
     date.setHours(h, m, 0, 0);
-    return new Date(date.getTime() - offset).toISOString();
+    return new Date(date.getTime() - ASTANA_OFFSET).toISOString();
   };
 
   const submit = async () => {

@@ -407,6 +407,18 @@ async function main() {
     },
   });
 
+  await prisma.promoCode.upsert({
+    where: { code: "TEST1" },
+    update: {},
+    create: {
+      code: "TEST1",
+      discount: 5,
+      expiresAt: new Date("2099-12-31"),
+      conditions: "Тестовый промокод",
+      maxUses: null,
+    },
+  });
+
   // --- CMS (upsert по slug) ---
   await prisma.cmsPage.upsert({
     where: { slug: "delivery-terms" },

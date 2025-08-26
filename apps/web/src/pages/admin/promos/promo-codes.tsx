@@ -114,8 +114,7 @@ export default function PromoCodesAdmin() {
             <th>Скидка %</th>
             <th>Действует до</th>
             <th>Макс. использований</th>
-            <th>На доставку</th>
-            <th>Филиалы</th>
+            <th>Филиалы / На доставку</th>
             <th>Использовано</th>
             <th></th>
           </tr>
@@ -152,13 +151,6 @@ export default function PromoCodesAdmin() {
                 />
               </td>
               <td>
-                <input
-                  type="checkbox"
-                  checked={p.appliesToDelivery}
-                  onChange={(e) => change(p.id, "appliesToDelivery", e.target.checked)}
-                />
-              </td>
-              <td>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {branches.map((b) => (
                     <label key={b.id}>
@@ -179,6 +171,16 @@ export default function PromoCodesAdmin() {
                       {b.name}
                     </label>
                   ))}
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={p.appliesToDelivery}
+                      onChange={(e) =>
+                        change(p.id, "appliesToDelivery", e.target.checked)
+                      }
+                    />
+                    {" На доставку"}
+                  </label>
                 </div>
               </td>
               <td>{p.usedCount}</td>
@@ -217,14 +219,6 @@ export default function PromoCodesAdmin() {
           onChange={(e) => setForm({ ...form, maxUses: e.target.value })}
           style={{ width: 80 }}
         />
-        <label>
-          <input
-            type="checkbox"
-            checked={form.appliesToDelivery}
-            onChange={(e) => setForm({ ...form, appliesToDelivery: e.target.checked })}
-          />
-          {" На доставку"}
-        </label>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {branches.map((b) => (
             <label key={b.id}>
@@ -244,6 +238,16 @@ export default function PromoCodesAdmin() {
               {b.name}
             </label>
           ))}
+          <label>
+            <input
+              type="checkbox"
+              checked={form.appliesToDelivery}
+              onChange={(e) =>
+                setForm({ ...form, appliesToDelivery: e.target.checked })
+              }
+            />
+            {" На доставку"}
+          </label>
         </div>
         <button onClick={create}>Создать</button>
       </div>
