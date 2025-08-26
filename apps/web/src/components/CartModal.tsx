@@ -145,24 +145,22 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const { open, overnight } = parseHours(branchInfo?.hours);
     const sel = toMin(time);
     const start = toMin(open);
+
+    // current time in Astana (UTC+6)
     const now = new Date();
-    const localOffset = now.getTimezoneOffset();
-    const astanaOffset = -5 * 60;
-    const diff = astanaOffset - localOffset;
-    const astana = new Date(now.getTime() + diff * 60 * 1000);
+    const astana = new Date(now.getTime() + (-6 * 60 - now.getTimezoneOffset()) * 60000);
+
     let date = astana;
     const cur = astana.getHours() * 60 + astana.getMinutes();
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
-    const utc = Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      h - 5,
-      m
-    );
-    return new Date(utc).toISOString();
+
+    // set chosen time
+    date.setHours(h, m, 0, 0);
+
+    // convert Astana local time back to UTC
+    return new Date(date.getTime() - 6 * 60 * 60000).toISOString();
   };
 
   const submit = async () => {

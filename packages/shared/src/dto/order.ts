@@ -12,8 +12,7 @@ export type CreateOrderInput = {
   zoneId?: string | null;
   address?: string | null;
   branchId?: string | null;
-    pickupTime?: string | null;
-  pickupCode?: string | null;
+  pickupTime?: string | null;
   pickupCode?: string | null;
   items: OrderItemInput[];
   paymentMethod: "cash" | "card";
