@@ -1035,6 +1035,7 @@ app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
       address: o.address,
       zoneId: o.zoneId,
       branchId: o.branchId,
+      pickupTime: o.pickupTime,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
       discount: Number(o.discount),
