@@ -164,6 +164,19 @@ async function main() {
     },
   });
 
+  const coffeeCat = await prisma.category.upsert({
+    where: { slug: "coffee" },
+    update: { name: "Кофе", nameKz: "Кофе" },
+    create: {
+      id: "cat-coffee",
+      slug: "coffee",
+      name: "Кофе",
+      nameKz: "Кофе",
+      sortOrder: 6,
+      isActive: true,
+    },
+  });
+
   // --- Dish statuses ---
   const hit = await prisma.dishStatus.upsert({
     where: { id: "status-hit" },
@@ -365,7 +378,10 @@ async function main() {
       { id: "drink-asu-0_5l", categoryId: drinksCat.id, name: "Асу 0,5л", slug: "asu-0-5l", basePrice: 490, imageUrl: "https://placehold.co/600x200?text=Asu0.5", isActive: true },
       { id: "drink-lavina-0_5l", categoryId: drinksCat.id, name: "Лавина 0,5л", slug: "lavina-0-5l", basePrice: 690, imageUrl: "https://placehold.co/600x200?text=Lavina0.5", isActive: true },
       { id: "drink-gorilla-0_5l", categoryId: drinksCat.id, name: "Горилла 0,5л", slug: "gorilla-0-5l", basePrice: 690, imageUrl: "https://placehold.co/600x200?text=Gorilla0.5", isActive: true },
-      { id: "drink-asu-1l", categoryId: drinksCat.id, name: "Асу 1л", slug: "asu-1l", basePrice: 490, imageUrl: "https://placehold.co/600x200?text=Asu1", isActive: true }
+      { id: "drink-asu-1l", categoryId: drinksCat.id, name: "Асу 1л", slug: "asu-1l", basePrice: 490, imageUrl: "https://placehold.co/600x200?text=Asu1", isActive: true },
+      // Coffee
+      { id: "coffee-latte", categoryId: coffeeCat.id, name: "Латте", slug: "latte", description: "Кофе с молоком", basePrice: 990, imageUrl: "https://placehold.co/600x200?text=Latte", isActive: true },
+      { id: "coffee-americano", categoryId: coffeeCat.id, name: "Американо", slug: "americano", description: "Классический чёрный кофе", basePrice: 790, imageUrl: "https://placehold.co/600x200?text=Americano", isActive: true }
     ],
     skipDuplicates: true
   });
@@ -409,6 +425,7 @@ async function main() {
           snacksCat.id,
           saucesCat.id,
           drinksCat.id,
+          coffeeCat.id,
         ],
       },
     },

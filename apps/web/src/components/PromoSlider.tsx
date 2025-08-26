@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import type { PromoSlide, PromoModal } from "../types/promo";
+import { useCart } from "./CartContext";
 
 type PromoSliderProps = {
   slides?: PromoSlide[];
@@ -25,6 +26,7 @@ export default function PromoSlider({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [imgs, setImgs] = useState<PromoSlide[]>(slides);
   const [modal, setModal] = useState<PromoModal | null>(null);
+  const { setPromo } = useCart();
 
   useEffect(() => setImgs(slides), [slides]);
 
@@ -190,11 +192,10 @@ export default function PromoSlider({
             {modal.promoCode && (
               <div style={{ marginTop: 12 }}>
                 <button
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(modal.promoCode!);
-                      alert("Промокод скопирован");
-                    } catch {}
+                  onClick={() => {
+                    setPromo(modal.promoCode!);
+                    setModal(null);
+                    alert("Промокод применён");
                   }}
                 >
                   Применить промокод
