@@ -286,6 +286,13 @@ function KPI({
       : previous === 0 && numeric > 0
       ? 100
       : undefined;
+  const y = (v: number) => 20 - (v / max) * 20;
+  const points =
+    spark.length > 1
+      ? spark
+          .map((sv, si) => `${(si / (spark.length - 1)) * 100},${y(sv)}`)
+          .join(" ")
+      : `0,${y(spark[0] ?? 0)} 100,${y(spark[0] ?? 0)}`;
   return (
     <div style={{ flex: 1, minWidth: 120 }}>
       <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
@@ -308,9 +315,7 @@ function KPI({
           fill="none"
           stroke="#36a2eb"
           strokeWidth="2"
-          points={spark
-            .map((sv, si) => `${(si / (spark.length - 1)) * 100},${20 - (sv / max) * 20}`)
-            .join(" ")}
+          points={points}
         />
       </svg>
     </div>
