@@ -51,6 +51,12 @@ const translations: Record<Lang, Record<string, string>> = {
       bonusUsed: "Списано бонусов",
       bonusEarn: "Начислим бонусов",
       toPay: "К оплате",
+      leaveReview: "Оставить отзыв",
+      yourName: "Ваше имя",
+      rating: "Оценка",
+      yourComment: "Комментарий",
+      submitReview: "Отправить",
+      noReviews: "Пока нет отзывов",
     },
     kz: {
       tagline: "дәмді шаурма",
@@ -94,6 +100,12 @@ const translations: Record<Lang, Record<string, string>> = {
       bonusUsed: "Жиналған бонус",
       bonusEarn: "Жиналатын бонус",
       toPay: "Төлеу",
+      leaveReview: "Пікір қалдыру",
+      yourName: "Атыңыз",
+      rating: "Баға",
+      yourComment: "Пікір",
+      submitReview: "Жіберу",
+      noReviews: "Әзірге пікір жоқ",
     },
   };
 

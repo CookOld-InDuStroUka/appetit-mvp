@@ -240,6 +240,25 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
   });
 });
 
+// --- Reviews ---
+app.get(`${BASE}/reviews`, async (_req: Request, res: Response) => {
+  const reviews = await prisma.review.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(reviews);
+});
+
+app.post(`${BASE}/reviews`, async (req: Request, res: Response) => {
+  const parsed = z
+    .object({
+      name: z.string().min(1),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().min(1),
+    })
+    .safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const review = await prisma.review.create({ data: parsed.data });
+  res.json(review);
+});
+
 // --- Admin promo codes CRUD ---
 app.get(`${BASE}/admin/promo-codes`, async (_req: Request, res: Response) => {
   const codes = await prisma.promoCode.findMany({ include: { branches: true } });

@@ -220,3 +220,11 @@ model Mailing {
   createdAt DateTime @default(now())
   sent      Boolean  @default(false)
 }
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}

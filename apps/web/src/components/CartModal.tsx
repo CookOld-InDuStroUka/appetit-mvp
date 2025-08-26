@@ -140,27 +140,47 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   };
 
   const toAstanaISO = (time: string, branchId: string) => {
-    const [h, m] = time.split(":").map((n) => parseInt(n, 10));
+    const tz = "Asia/Almaty";
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = fmt.formatToParts(now);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+    let dateStr = `${get("year")}-${get("month")}-${get("day")}`;
     const branchInfo = branches.find((b) => b.id === branchId);
     const { open, overnight } = parseHours(branchInfo?.hours);
     const sel = toMin(time);
     const start = toMin(open);
-
-    // current time in Astana (UTC+6)
-    const now = new Date();
-    const astana = new Date(now.getTime() + (-6 * 60 - now.getTimezoneOffset()) * 60000);
-
-    let date = astana;
-    const cur = astana.getHours() * 60 + astana.getMinutes();
-    if ((overnight && sel < start) || sel < cur) {
-      date = new Date(date.getTime() + 86400000);
+    const timeFmt = new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(now);
+    const cur =
+      parseInt(timeFmt.find((p) => p.type === "hour")?.value || "0") * 60 +
+      parseInt(timeFmt.find((p) => p.type === "minute")?.value || "0");
+    if (overnight && sel < start) {
+      const tomorrow = new Date(now.getTime() + 86400000);
+      const tp = fmt.formatToParts(tomorrow);
+      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
+    } else if (sel < cur) {
+      const tomorrow = new Date(now.getTime() + 86400000);
+      const tp = fmt.formatToParts(tomorrow);
+      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
     }
-
-    // set chosen time
-    date.setHours(h, m, 0, 0);
-
-    // convert Astana local time back to UTC
-    return new Date(date.getTime() - 6 * 60 * 60000).toISOString();
+    const local = new Date(`${dateStr}T${time}:00`);
+    const tzDate = new Date(local.toLocaleString("en-US", { timeZone: tz }));
+    const offsetMin = (tzDate.getTime() - local.getTime()) / 60000;
+    const sign = offsetMin >= 0 ? "+" : "-";
+    const abs = Math.abs(offsetMin);
+    const hh = String(Math.floor(abs / 60)).padStart(2, "0");
+    const mm = String(abs % 60).padStart(2, "0");
+    return `${dateStr}T${time}:00${sign}${hh}:${mm}`;
   };
 
   const submit = async () => {
