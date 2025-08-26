@@ -153,14 +153,20 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Almaty",
+      timeZoneName: "short",
+    }).formatToParts(date);
+    const tzName = parts.find((p) => p.type === "timeZoneName")?.value || "GMT+5";
+    const offsetHours = parseInt(tzName.replace("GMT", ""), 10);
     const utc = Date.UTC(
       date.getFullYear(),
       date.getMonth(),
       date.getDate(),
-      h - 6,
+      h - offsetHours,
       m
     );
-    return new Date(utc).toISOString().replace("Z", "+06:00");
+    return new Date(utc).toISOString();
   };
 
   const submit = async () => {

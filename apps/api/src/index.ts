@@ -967,9 +967,15 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
-  const o = await prisma.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
+  const o = await prisma.order.findUnique({
+    where: { id: req.params.id },
+    include: { items: true, promoCode: true },
+  });
   if (!o) return res.status(404).json({ error: "Not found" });
-  res.json(o);
+  res.json({
+    ...o,
+    promoCode: o.promoCode?.code ?? null,
+  });
 });
 
 app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
