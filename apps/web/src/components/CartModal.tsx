@@ -145,25 +145,18 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     const { open, overnight } = parseHours(branchInfo?.hours);
     const sel = toMin(time);
     const start = toMin(open);
-    const astanaNow = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Almaty" })
-    );
-    const cur = astanaNow.getHours() * 60 + astanaNow.getMinutes();
-    let date = astanaNow;
+    const now = new Date();
+    const astana = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    let date = astana;
+    const cur = astana.getHours() * 60 + astana.getMinutes();
     if ((overnight && sel < start) || sel < cur) {
       date = new Date(date.getTime() + 86400000);
     }
-    const parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Almaty",
-      timeZoneName: "short",
-    }).formatToParts(date);
-    const tzName = parts.find((p) => p.type === "timeZoneName")?.value || "GMT+5";
-    const offsetHours = parseInt(tzName.replace("GMT", ""), 10);
     const utc = Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      h - offsetHours,
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      h - 5,
       m
     );
     return new Date(utc).toISOString();

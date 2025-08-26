@@ -693,18 +693,22 @@ app.get(`${BASE}/dishes/search`, async (req: Request, res: Response) => {
   const raw = (req.query.q ?? req.query.query ?? req.query.term) as string | undefined;
   const q = raw?.trim() ?? "";
   if (!q) return res.json([]);
+  const lang = (req.query.lang as string) === "kz" ? "kz" : "ru";
+  const field = lang === "kz" ? "nameKz" : "name";
 
+  const where: any = {
+    isActive: true,
+    [field]: { contains: q, mode: "insensitive" },
+  };
+  const orderBy: any = { [field]: "asc" };
   const dishes = await prisma.dish.findMany({
-    where: {
-      isActive: true,
-      name: { contains: q, mode: "insensitive" }
-    },
+    where,
     select: { id: true, name: true, nameKz: true },
-    orderBy: { name: "asc" },
-    take: 10
+    orderBy,
+    take: 10,
   });
 
-  res.json(dishes);
+  res.json(dishes.map((d: any) => ({ id: d.id, name: lang === "kz" ? d.nameKz : d.name })));
 });
 
 app.get(`${BASE}/dishes/:id`, async (req: Request, res: Response) => {

@@ -15,10 +15,11 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [orig, setOrig] = useState({ name: "", email: "", phone: "" });
+  const [orig, setOrig] = useState({ name: "", email: "", phone: "", birthDate: "" });
 
   useEffect(() => {
     if (!user) return;
@@ -30,7 +31,13 @@ export default function ProfilePage() {
         setName(data.name || "");
         setEmail(data.email || "");
         setPhone(data.phone || "");
-        setOrig({ name: data.name || "", email: data.email || "", phone: data.phone || "" });
+        setBirthDate(data.birthDate ? data.birthDate.slice(0, 10) : "");
+        setOrig({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          birthDate: data.birthDate ? data.birthDate.slice(0, 10) : "",
+        });
       })
       .catch(() => {});
   }, [user]);
@@ -96,6 +103,10 @@ export default function ProfilePage() {
               Почта
               <input value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
             </label>
+            <label>
+              Дата рождения
+              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} style={{ width: "100%" }} />
+            </label>
             <label style={{ display: "flex", flexDirection: "column" }}>
               Пароль
               <div style={{ display: "flex", gap: 8 }}>
@@ -118,12 +129,17 @@ export default function ProfilePage() {
                     const res = await fetch(`${API_BASE}/users/${user.id}`, {
                       method: "PUT",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ name, email, phone, password: password || undefined }),
+                      body: JSON.stringify({ name, email, phone, birthDate: birthDate || null, password: password || undefined }),
                     });
                     if (res.ok) {
                       const u = await res.json();
                       setUser(u);
-                      setOrig({ name: u.name || "", email: u.email || "", phone: u.phone || "" });
+                      setOrig({
+                        name: u.name || "",
+                        email: u.email || "",
+                        phone: u.phone || "",
+                        birthDate: u.birthDate ? u.birthDate.slice(0, 10) : "",
+                      });
                       alert("Профиль обновлён");
                       setPassword("");
                       setEditing(false);
@@ -144,6 +160,7 @@ export default function ProfilePage() {
                   setName(orig.name);
                   setEmail(orig.email);
                   setPhone(orig.phone);
+                  setBirthDate(orig.birthDate);
                   setPassword("");
                   setEditing(false);
                 }}
@@ -158,6 +175,7 @@ export default function ProfilePage() {
             <div><strong>Имя:</strong> {name || "—"}</div>
             <div><strong>Телефон:</strong> {phone || "—"}</div>
             <div><strong>Почта:</strong> {email || "—"}</div>
+            <div><strong>Дата рождения:</strong> {birthDate || "—"}</div>
             <div><strong>Пароль:</strong> ********</div>
           </div>
         )}

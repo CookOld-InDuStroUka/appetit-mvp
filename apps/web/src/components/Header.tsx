@@ -55,7 +55,7 @@ export default function Header() {
     const t = setTimeout(async () => {
       try {
         const r = await fetch(
-          `${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}`,
+          `${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}&lang=${lang}`,
           { signal: ac.signal }
         );
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -70,7 +70,7 @@ export default function Header() {
       ac.abort();
       clearTimeout(t);
     };
-  }, [q, API_BASE]);
+  }, [q, API_BASE, lang]);
 
   useEffect(() => {
     if (!suggestions.length || !searchRef.current) return;
