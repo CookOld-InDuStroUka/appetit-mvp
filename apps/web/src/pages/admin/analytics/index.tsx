@@ -92,6 +92,7 @@ export default function AnalyticsPage() {
       {error && <p style={{ color: "red" }}>{error}</p>}
       {data && (
         <>
+          <h3>{t("keyMetrics")}</h3>
           <div
             style={{
               display: "flex",
@@ -139,6 +140,13 @@ export default function AnalyticsPage() {
             </tbody>
           </table>
 
+          <h3>{t("dailyChart")}</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <span style={{ width: 12, height: 12, background: "#36a2eb", display: "inline-block" }} />
+            {t("orders")}
+            <span style={{ width: 12, height: 12, background: "#ff6384", display: "inline-block", marginLeft: 12 }} />
+            {t("expenses")}
+          </div>
           <svg
             viewBox={`0 0 ${data.daily.days.length * 40} 200`}
             style={{ width: "100%", maxWidth: 600 }}
@@ -175,11 +183,15 @@ export default function AnalyticsPage() {
 
           <h3 style={{ marginTop: 16 }}>{t("savedReports")}</h3>
           <ul>
-            {saved.map((r, i) => (
-              <li key={i}>
-                {new Date(r.timestamp).toLocaleString()} – {r.branchId}
-              </li>
-            ))}
+            {saved.map((r, i) => {
+              const b = branches.find((br) => String(br.id) === String(r.branchId));
+              return (
+                <li key={i}>
+                  {new Date(r.timestamp).toLocaleString()} – {b ? b.name : t("allBranches")}
+                  {r.start && r.end ? ` (${r.start} → ${r.end})` : ""}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}
