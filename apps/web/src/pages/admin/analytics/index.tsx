@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import AdminLayout from "../../../components/AdminLayout";
 import { useLang } from "../../../components/LangContext";
 
@@ -89,6 +90,7 @@ export default function AnalyticsPage() {
   return (
     <AdminLayout>
       <h1>{t("analytics")}</h1>
+      <p style={{ maxWidth: 600 }}>{t("analyticsIntro")}</p>
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
           <option value="all">{t("allBranches")}</option>
@@ -119,6 +121,7 @@ export default function AnalyticsPage() {
           onChange={(e) => setUtm(e.target.value)}
         />
         <button onClick={save}>{t("saveReport")}</button>
+        <Link href="/admin/analytics/reports">{t("savedReports")}</Link>
       </div>
       {error && <p style={{ color: "red" }}>{error}</p>}
       {data && (
@@ -235,18 +238,6 @@ export default function AnalyticsPage() {
             })}
           </svg>
 
-          <h3 style={{ marginTop: 16 }}>{t("savedReports")}</h3>
-          <ul>
-            {saved.map((r, i) => {
-              const b = branches.find((br) => String(br.id) === String(r.branchId));
-              return (
-                <li key={i}>
-                  {new Date(r.timestamp).toLocaleString()} – {b ? b.name : t("allBranches")}
-                  {r.start && r.end ? ` (${r.start} → ${r.end})` : ""}
-                </li>
-              );
-            })}
-          </ul>
         </>
       )}
     </AdminLayout>

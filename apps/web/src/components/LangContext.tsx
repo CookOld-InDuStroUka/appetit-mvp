@@ -35,6 +35,10 @@ const translations: Record<Lang, Record<string, string>> = {
       direct: "Прямые",
       saveReport: "Сохранить отчёт",
       savedReports: "Сохранённые отчёты",
+      analyticsIntro:
+        "Раздел для анализа заказов и выручки. Выберите фильтры, при необходимости сравните с прошлым периодом и сохраните отчёт.",
+      download: "Скачать",
+      filter: "Фильтр",
       keyMetrics: "Ключевые показатели",
       dailyChart: "Заказы и расходы по дням",
       days7: "7 дней",
@@ -135,6 +139,10 @@ const translations: Record<Lang, Record<string, string>> = {
       direct: "Тікелей",
       saveReport: "Есепті сақтау",
       savedReports: "Сақталған есептер",
+      analyticsIntro:
+        "Бұл бөлімде тапсырыстар мен түсім статистикасы көрсетіледі. Периодты таңдаңыз, қажет болса салыстырыңыз және есепті сақтаңыз.",
+      download: "Жүктеу",
+      filter: "Сүзгі",
       keyMetrics: "Негізгі көрсеткіштер",
       dailyChart: "Күндер бойынша тапсырыстар мен шығындар",
       days7: "7 күн",
