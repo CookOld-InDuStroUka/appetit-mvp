@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import type { PromoSlide } from "../types/promo";
+import type { PromoSlide, PromoModal } from "../types/promo";
 
 type PromoSliderProps = {
   slides?: PromoSlide[];
@@ -24,6 +24,7 @@ export default function PromoSlider({
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [imgs, setImgs] = useState<PromoSlide[]>(slides);
+  const [modal, setModal] = useState<PromoModal | null>(null);
 
   useEffect(() => setImgs(slides), [slides]);
 
@@ -93,6 +94,10 @@ export default function PromoSlider({
         imgs.map((slide, i) => (
           <div
             key={`${slide.image}-${i}`}
+            onClick={() => {
+              if (slide.modal) setModal(slide.modal);
+              else if (slide.link) window.location.href = slide.link;
+            }}
             style={{
               position: "absolute",
               top: 0,
@@ -100,6 +105,7 @@ export default function PromoSlider({
               width: "100%",
               height: "100%",
               transition: prefersReducedMotion ? undefined : "left 0.5s ease-in-out",
+              cursor: slide.modal || slide.link ? "pointer" : "default",
             }}
           >
             <Image
@@ -150,6 +156,38 @@ export default function PromoSlider({
               }}
             />
           ))}
+        </div>
+      )}
+
+      {modal && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setModal(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              padding: 20,
+              borderRadius: 12,
+              maxWidth: 320,
+              width: "90%",
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>{modal.title}</h3>
+            <p>{modal.text}</p>
+            {modal.promoCode && <p>Промокод: {modal.promoCode}</p>}
+          </div>
         </div>
       )}
     </div>

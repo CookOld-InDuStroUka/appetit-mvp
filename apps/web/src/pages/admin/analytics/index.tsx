@@ -232,34 +232,39 @@ export default function AnalyticsPage() {
                 viewBox={`0 0 ${data.daily.days.length * 40} 200`}
                 style={{ width: "100%", maxWidth: 600 }}
               >
-                {data.daily.days.map((d, i) => {
-                  const orderH =
-                    (data.daily.orders[i] / Math.max(...data.daily.orders, 1)) * 180;
-                  const expH =
-                    (data.daily.expenses[i] / Math.max(...data.daily.expenses, 1)) * 180;
-                  const x = i * 40;
-                  return (
-                    <g key={d}>
-                      <rect
-                        x={x + 5}
-                        y={190 - orderH}
-                        width={12}
-                        height={orderH}
-                        fill="#36a2eb"
-                      />
-                      <rect
-                        x={x + 23}
-                        y={190 - expH}
-                        width={12}
-                        height={expH}
-                        fill="#ff6384"
-                      />
-                      <text x={x + 20} y={195} fontSize={8} textAnchor="middle">
-                        {d.slice(5)}
-                      </text>
-                    </g>
+                {(() => {
+                  const maxVal = Math.max(
+                    ...data.daily.orders,
+                    ...data.daily.expenses,
+                    1
                   );
-                })}
+                  return data.daily.days.map((d, i) => {
+                    const orderH = (data.daily.orders[i] / maxVal) * 180;
+                    const expH = (data.daily.expenses[i] / maxVal) * 180;
+                    const x = i * 40;
+                    return (
+                      <g key={d}>
+                        <rect
+                          x={x + 5}
+                          y={190 - orderH}
+                          width={12}
+                          height={orderH}
+                          fill="#36a2eb"
+                        />
+                        <rect
+                          x={x + 23}
+                          y={190 - expH}
+                          width={12}
+                          height={expH}
+                          fill="#ff6384"
+                        />
+                        <text x={x + 20} y={195} fontSize={8} textAnchor="middle">
+                          {d.slice(5)}
+                        </text>
+                      </g>
+                    );
+                  });
+                })()}
               </svg>
             </>
           )}

@@ -5,6 +5,7 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useLang } from "./LangContext";
+import UserInfoModal from "./UserInfoModal";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -18,8 +19,9 @@ export default function Header() {
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
-  const { user, open: openAuth } = useAuth();
+  const { user, open: openAuth, setUser } = useAuth();
   const { lang, setLang, t } = useLang();
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
@@ -154,9 +156,15 @@ export default function Header() {
             <Link href="/contacts" className="link link--hide-sm">
               {t("contacts")}
             </Link>
+            <Link href="/orders" className="link link--hide-sm">
+              {t("orders")}
+            </Link>
 
             {user ? (
-              <span className="link muted link--auth">{user.phone || user.email}</span>
+              <button onClick={() => setInfoOpen(true)} className="link link--auth">
+                <UserIcon />
+                <span>{user.phone || user.email}</span>
+              </button>
             ) : (
               <button onClick={openAuth} className="link link--auth">
                 <UserIcon />
@@ -303,6 +311,16 @@ export default function Header() {
           onClear={clear}
           updateQty={updateQty}
           removeItem={removeItem}
+        />
+      )}
+      {infoOpen && user && (
+        <UserInfoModal
+          user={user}
+          onClose={() => setInfoOpen(false)}
+          onSaved={(u) => {
+            setUser(u);
+            setInfoOpen(false);
+          }}
         />
       )}
     </>

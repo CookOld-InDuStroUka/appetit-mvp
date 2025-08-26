@@ -1,5 +1,9 @@
 ## 2025-08-26
 - fix: guard dish modal against null dish selection
+- feat: restore profile modal and orders link in header
+- feat: allow adding toppings and excluding ingredients in dish modal
+- feat: open promo slide details in modal window
+- fix: scale analytics bars using shared max to prevent oversized columns
 
 ## 2025-08-23
 - feat: fetch branch list from API in delivery modal to sync menu with admin changes

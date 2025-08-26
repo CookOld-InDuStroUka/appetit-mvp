@@ -4,20 +4,10 @@ import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import UserInfoModal from "./UserInfoModal";
 import { useLang } from "./LangContext";
+import type { CartItem } from "../types/cart";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
-
-export type CartItem = {
-  id: string; // уникальный ключ позиции в корзине
-  name: string;
-  price: number;
-  imageUrl?: string;
-  qty: number;
-  dishId?: string;
-  addons?: { id: string; name: string; price: number }[];
-  excluded?: { id: string; name: string }[];
-};
 
 type Props = {
   items: CartItem[];

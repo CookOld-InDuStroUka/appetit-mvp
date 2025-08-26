@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useCart } from "./CartContext";
 
 type Dish = {
   id: string;
@@ -13,17 +14,62 @@ type Props = {
   onClose: () => void;
 };
 
-const DEFAULT_INGREDIENTS = ["Лук", "Помидоры", "Сыр"];
+type Ing = { id: string; name: string };
+type Topping = { id: string; name: string; price: number };
+
+const DEFAULT_INGREDIENTS: Ing[] = [
+  { id: "onion", name: "Лук" },
+  { id: "tomato", name: "Помидоры" },
+  { id: "cheese", name: "Сыр" },
+];
+
+const TOPPINGS: Topping[] = [
+  { id: "extra_cheese", name: "Доп. сыр", price: 200 },
+  { id: "sauce", name: "Доп. соус", price: 100 },
+];
 
 export default function DishModal({ dish, onClose }: Props) {
+  const { addItem } = useCart();
   const [excluded, setExcluded] = useState<string[]>([]);
+  const [toppings, setToppings] = useState<string[]>([]);
 
   if (!dish) return null;
 
-  const toggle = (ing: string) => {
+  const toggleExcluded = (id: string) => {
     setExcluded((prev) =>
-      prev.includes(ing) ? prev.filter((i) => i !== ing) : [...prev, ing]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
+  };
+
+  const toggleTopping = (id: string) => {
+    setToppings((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const total = toppings.reduce((sum, id) => {
+    const t = TOPPINGS.find((x) => x.id === id);
+    return t ? sum + t.price : sum;
+  }, dish.basePrice);
+
+  const addToCart = () => {
+    addItem({
+      id: `${dish.id}-${Date.now()}`,
+      dishId: dish.id,
+      name: dish.name,
+      price: total,
+      qty: 1,
+      imageUrl: dish.imageUrl,
+      addons: toppings.map((id) => {
+        const t = TOPPINGS.find((x) => x.id === id)!;
+        return { id: t.id, name: t.name, price: t.price };
+      }),
+      excluded: excluded.map((id) => {
+        const ing = DEFAULT_INGREDIENTS.find((x) => x.id === id)!;
+        return { id: ing.id, name: ing.name };
+      }),
+    });
+    onClose();
   };
 
   return (
@@ -47,20 +93,51 @@ export default function DishModal({ dish, onClose }: Props) {
         <h4 style={{ marginTop: 20 }}>Ингредиенты</h4>
         <ul style={{ listStyle: "none", padding: 0 }}>
           {DEFAULT_INGREDIENTS.map((ing) => (
-            <li key={ing} style={{ marginBottom: 8 }}>
+            <li key={ing.id} style={{ marginBottom: 8 }}>
               <label>
                 <input
                   type="checkbox"
-                  checked={!excluded.includes(ing)}
-                  onChange={() => toggle(ing)}
+                  checked={!excluded.includes(ing.id)}
+                  onChange={() => toggleExcluded(ing.id)}
                 />{" "}
-                {ing}
+                {ing.name}
               </label>
             </li>
           ))}
         </ul>
 
-        <p style={{ fontWeight: 600 }}>Цена: {dish.basePrice} ₸</p>
+        <h4 style={{ marginTop: 20 }}>Топпинги</h4>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {TOPPINGS.map((top) => (
+            <li key={top.id} style={{ marginBottom: 8 }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={toppings.includes(top.id)}
+                  onChange={() => toggleTopping(top.id)}
+                />{" "}
+                {top.name} (+{top.price} ₸)
+              </label>
+            </li>
+          ))}
+        </ul>
+
+        <p style={{ fontWeight: 600 }}>Цена: {total} ₸</p>
+        <button
+          onClick={addToCart}
+          style={{
+            marginTop: 12,
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: "var(--accent)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Добавить в корзину
+        </button>
       </div>
 
       <style jsx>{`
