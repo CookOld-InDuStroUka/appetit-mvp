@@ -5,6 +5,7 @@ import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
+import bcrypt from "bcryptjs";
 
 const app = express();
 const prisma = new PrismaClient();
@@ -233,7 +234,7 @@ app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
   const admin = await prisma.admin.findUnique({ where: { email: parsed.data.email } });
-  if (!admin || admin.password !== parsed.data.password) {
+  if (!admin || !(await bcrypt.compare(parsed.data.password, admin.password))) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 

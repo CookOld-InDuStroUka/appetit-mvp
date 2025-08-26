@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -9,10 +10,11 @@ async function main() {
   await prisma.zone.deleteMany();
   await prisma.branch.deleteMany();
 
+  const hashed = await bcrypt.hash("admin", 10);
   await prisma.admin.upsert({
-    where: { email: "admin" },
-    update: { password: "admin", role: "super" },
-    create: { email: "admin", password: "admin", role: "super" },
+    where: { email: "admin@admin.com" },
+    update: { password: hashed, role: "super" },
+    create: { email: "admin@admin.com", password: hashed, role: "super" },
   });
 
   // --- Branches & Zones (стабильные id) ---
