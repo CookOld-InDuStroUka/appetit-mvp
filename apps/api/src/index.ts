@@ -165,12 +165,15 @@ app.post(`${BASE}/admin/upload`, (req: Request, res: Response) => {
 const AuthRequestSchema = z.object({ phone: z.string().min(5) });
 const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
 const AuthEmailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
-const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(6) });
+// allow shorter passwords so the seeded "admin" credentials work
+const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const existing = await prisma.user.findUnique({ where: { phone: parsed.data.phone } });
+  if (!existing) return res.status(404).json({ error: "User not found" });
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -194,11 +197,8 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid code" });
   }
 
-  let user = await prisma.user.upsert({
-    where: { phone: parsed.data.phone },
-    update: {},
-    create: { phone: parsed.data.phone }
-  });
+  const user = await prisma.user.findUnique({ where: { phone: parsed.data.phone } });
+  if (!user) return res.status(400).json({ error: "Account not found" });
 
   await prisma.authCode.delete({ where: { phone: parsed.data.phone } });
 
