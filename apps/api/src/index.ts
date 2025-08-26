@@ -863,6 +863,7 @@ const OrderSchema = z.object({
   address: z.string().optional().nullable(),
   branchId: z.string().optional().nullable(),
   pickupTime: z.string().optional().nullable(),
+  utmSource: z.string().optional().nullable(),
   items: z.array(z.object({
     dishId: z.string(),
     variantId: z.string().optional().nullable(),

@@ -10,6 +10,7 @@ type Analytics = {
   ordersCount: number;
   averageCheck: number;
   repeatRate: number;
+  conversion?: number;
   sources: Record<string, number>;
   expensesTotal: number;
   profit: number;
@@ -20,6 +21,9 @@ export default function AnalyticsPage() {
   const { t } = useLang();
   const [branchId, setBranchId] = useState("all");
   const [branches, setBranches] = useState<any[]>([]);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [utm, setUtm] = useState("");
   const [data, setData] = useState<Analytics | null>(null);
   const [saved, setSaved] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +34,13 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    const q = branchId === "all" ? "" : `?branchId=${branchId}`;
-    fetch(`${API_BASE}/admin/analytics${q}`)
+    const params = new URLSearchParams();
+    if (branchId !== "all") params.append("branchId", branchId);
+    if (start) params.append("from", start);
+    if (end) params.append("to", end);
+    if (utm) params.append("utmSource", utm);
+    const q = params.toString();
+    fetch(`${API_BASE}/admin/analytics${q ? `?${q}` : ""}`)
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
@@ -44,11 +53,11 @@ export default function AnalyticsPage() {
         setData(null);
         setError("Не удалось загрузить данные");
       });
-  }, [branchId]);
+  }, [branchId, start, end, utm]);
 
   const save = () => {
     if (!data) return;
-    const report = { timestamp: Date.now(), branchId, data };
+    const report = { timestamp: Date.now(), branchId, start, end, utm, data };
     const next = [...saved, report];
     setSaved(next);
     localStorage.setItem("reports", JSON.stringify(next));
@@ -57,50 +66,88 @@ export default function AnalyticsPage() {
   return (
     <AdminLayout>
       <h1>{t("analytics")}</h1>
-      <select
-        value={branchId}
-        onChange={(e) => setBranchId(e.target.value)}
-        style={{ marginBottom: 12 }}
-      >
-        <option value="all">{t("allBranches")}</option>
-        {branches.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.name}
-          </option>
-        ))}
-      </select>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        <select value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+          <option value="all">{t("allBranches")}</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+        <input
+          type="date"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+        />
+        <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+        <input
+          type="text"
+          placeholder="utm_source"
+          value={utm}
+          onChange={(e) => setUtm(e.target.value)}
+        />
+        <button onClick={save}>{t("saveReport")}</button>
+      </div>
       {error && <p style={{ color: "red" }}>{error}</p>}
       {data && (
         <>
-          <div>
-            {t("orders")}: {data.ordersCount} / {data.ordersTotal} ₸
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 16,
+            }}
+          >
+            <KPI label={t("orders")} value={String(data.ordersCount)} spark={data.daily.orders} />
+            <KPI label={t("revenue")} value={`${data.ordersTotal} ₸`} spark={data.daily.orders} />
+            <KPI
+              label={t("averageCheck")}
+              value={`${Math.round(data.averageCheck)} ₸`}
+              spark={data.daily.orders}
+            />
+            <KPI
+              label={t("repeatRate")}
+              value={`${(data.repeatRate * 100).toFixed(1)}%`}
+              spark={data.daily.orders}
+            />
+            {data.conversion !== undefined && (
+              <KPI
+                label={t("conversion")}
+                value={`${(data.conversion * 100).toFixed(1)}%`}
+                spark={data.daily.orders}
+              />
+            )}
           </div>
-          <div>
-            {t("averageCheck")}: {Math.round(data.averageCheck)} ₸
-          </div>
-          <div>
-            {t("repeatRate")}: {(data.repeatRate * 100).toFixed(1)}%
-          </div>
-          <div>
-            {t("sources")}: 
-            <ul>
+
+          <h3>{t("sources")}</h3>
+          <table style={{ width: "100%", maxWidth: 600, marginBottom: 20 }}>
+            <thead>
+              <tr>
+                <th>{t("source")}</th>
+                <th>{t("orders")}</th>
+              </tr>
+            </thead>
+            <tbody>
               {Object.entries(data.sources).map(([src, count]) => (
-                <li key={src}>
-                  {t(src)}: {count}
-                </li>
+                <tr key={src}>
+                  <td>{t(src)}</td>
+                  <td>{count}</td>
+                </tr>
               ))}
-            </ul>
-          </div>
-          <div>
-            {t("expenses")}: {data.expensesTotal} ₸
-          </div>
-          <div>
-            {t("profit")}: {data.profit} ₸
-          </div>
-          <svg viewBox={`0 0 ${data.daily.days.length * 40} 200`} style={{ width: "100%", maxWidth: 600 }}>
+            </tbody>
+          </table>
+
+          <svg
+            viewBox={`0 0 ${data.daily.days.length * 40} 200`}
+            style={{ width: "100%", maxWidth: 600 }}
+          >
             {data.daily.days.map((d, i) => {
-              const orderH = (data.daily.orders[i] / Math.max(...data.daily.orders, 1)) * 180;
-              const expH = (data.daily.expenses[i] / Math.max(...data.daily.expenses, 1)) * 180;
+              const orderH =
+                (data.daily.orders[i] / Math.max(...data.daily.orders, 1)) * 180;
+              const expH =
+                (data.daily.expenses[i] / Math.max(...data.daily.expenses, 1)) * 180;
               const x = i * 40;
               return (
                 <g key={d}>
@@ -125,24 +172,46 @@ export default function AnalyticsPage() {
               );
             })}
           </svg>
-          <button onClick={save} style={{ marginTop: 12 }}>
-            {t("saveReport")}
-          </button>
+
           <h3 style={{ marginTop: 16 }}>{t("savedReports")}</h3>
           <ul>
             {saved.map((r, i) => (
               <li key={i}>
-                {new Date(r.timestamp).toLocaleString()} –
-                {" "}
-                {r.branchId === "all"
-                  ? t("allBranches")
-                  : branches.find((b) => b.id === r.branchId)?.name}
+                {new Date(r.timestamp).toLocaleString()} – {r.branchId}
               </li>
             ))}
           </ul>
         </>
       )}
     </AdminLayout>
+  );
+}
+
+function KPI({
+  label,
+  value,
+  spark,
+}: {
+  label: string;
+  value: string;
+  spark: number[];
+}) {
+  const max = Math.max(...spark, 1);
+  return (
+    <div style={{ flex: 1, minWidth: 120 }}>
+      <div style={{ fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: 24 }}>{value}</div>
+      <svg viewBox="0 0 100 20" style={{ width: "100%", height: 20 }}>
+        <polyline
+          fill="none"
+          stroke="#36a2eb"
+          strokeWidth="2"
+          points={spark
+            .map((sv, si) => `${(si / (spark.length - 1)) * 100},${20 - (sv / max) * 20}`)
+            .join(" ")}
+        />
+      </svg>
+    </div>
   );
 }
 
