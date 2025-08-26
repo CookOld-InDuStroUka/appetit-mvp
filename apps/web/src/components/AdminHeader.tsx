@@ -6,15 +6,16 @@ export default function AdminHeader() {
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
-  const links = [
-    { href: "/", label: "На сайт" },
-    { href: "/admin", label: "Главная" },
-    { href: "/admin/branches", label: "Филиалы" },
-    { href: "/admin/menu", label: "Меню" },
-    { href: "/admin/orders", label: "Заказы" },
-    { href: "/admin/promos", label: "Маркетинг" },
-    { href: "/admin/analytics", label: "Аналитика" },
-  ];
+    const links = [
+      { href: "/", label: "На сайт" },
+      { href: "/admin", label: "Главная" },
+      { href: "/admin/branches", label: "Филиалы" },
+      { href: "/admin/menu", label: "Меню" },
+      { href: "/admin/orders", label: "Заказы" },
+      { href: "/admin/promos", label: "Маркетинг" },
+      { href: "/admin/analytics", label: "Аналитика" },
+      { href: "/admin/profile", label: "Профиль" },
+    ];
 
   const linkEls = links.map((l) => (
     <Link key={l.href} href={l.href} className="admin-nav-btn" onClick={() => setOpen(false)}>

@@ -9,6 +9,50 @@ import path from "path";
 const app = express();
 const prisma = new PrismaClient();
 
+async function expireBonus(userId: string) {
+  const now = new Date();
+  const entries = await prisma.bonusTransaction.findMany({
+    where: { userId, expiresAt: { lt: now } },
+  });
+  let toRemove = 0;
+  for (const e of entries) {
+    const remaining = e.amount - e.used;
+    if (remaining > 0) {
+      toRemove += remaining;
+      await prisma.bonusTransaction.update({
+        where: { id: e.id },
+        data: { used: e.amount },
+      });
+    }
+  }
+  if (toRemove > 0) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { bonus: { decrement: toRemove } },
+    });
+  }
+}
+
+async function applyBonusUsage(userId: string, amount: number) {
+  let remaining = amount;
+  const now = new Date();
+  const entries = await prisma.bonusTransaction.findMany({
+    where: { userId, expiresAt: { gt: now } },
+    orderBy: { expiresAt: "asc" },
+  });
+  for (const e of entries) {
+    if (remaining <= 0) break;
+    const available = e.amount - e.used;
+    if (available <= 0) continue;
+    const use = Math.min(available, remaining);
+    await prisma.bonusTransaction.update({
+      where: { id: e.id },
+      data: { used: { increment: use } },
+    });
+    remaining -= use;
+  }
+}
+
 // log errors to file under project root /logs
 const logDir = path.join(__dirname, "../../logs");
 fs.mkdirSync(logDir, { recursive: true });
@@ -120,7 +164,7 @@ app.post(`${BASE}/admin/upload`, (req: Request, res: Response) => {
 const AuthRequestSchema = z.object({ phone: z.string().min(5) });
 const AuthVerifySchema = z.object({ phone: z.string().min(5), code: z.string().min(4).max(6) });
 const AuthEmailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
-const AdminAuthSchema = AuthEmailSchema;
+const AdminAuthSchema = AuthEmailSchema.extend({ role: z.string().optional() });
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
@@ -190,11 +234,11 @@ app.post(`${BASE}/admin/register`, async (req: Request, res: Response) => {
 
   const admin = await prisma.admin.upsert({
     where: { email: parsed.data.email },
-    update: { password: parsed.data.password },
-    create: { email: parsed.data.email, password: parsed.data.password }
+    update: { password: parsed.data.password, role: parsed.data.role ?? undefined },
+    create: { email: parsed.data.email, password: parsed.data.password, role: parsed.data.role ?? "manager" }
   });
 
-  res.json({ ok: true, id: admin.id });
+  res.json({ ok: true, id: admin.id, role: admin.role });
 });
 
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
@@ -206,7 +250,7 @@ app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid credentials" });
   }
 
-  res.json({ ok: true, id: admin.id });
+  res.json({ ok: true, id: admin.id, role: admin.role });
 });
 
 app.get(BASE, (_: Request, res: Response) => {
@@ -958,22 +1002,24 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     if (data.customer.name && !user.name) {
       user = await prisma.user.update({ where: { id: user.id }, data: { name: data.customer.name } });
     }
+    await expireBonus(user.id);
   } else if (data.customer.phone) {
     user = await prisma.user.upsert({
       where: { phone: data.customer.phone },
       create: { phone: data.customer.phone, name: data.customer.name ?? null },
       update: { name: data.customer.name ?? undefined },
     });
+    await expireBonus(user.id);
   } else {
     return res.status(400).json({ error: "userId or customer.phone required" });
   }
 
   const availableBonus = user?.bonus ?? 0;
-  const maxBonus = Math.max(subtotal + deliveryFee - discount - 10, 0);
+  const maxBonus = Math.floor(Math.max(subtotal - discount, 0) * 0.3);
   const bonusUsed = Math.min(data.bonusToUse ?? 0, availableBonus, maxBonus);
   const total = subtotal + deliveryFee - discount - bonusUsed;
 
-  const bonusEarned = Math.floor((subtotal - discount - bonusUsed) * 0.1);
+  const bonusEarned = Math.floor((subtotal - discount) * 0.1);
   const bonusDelta = bonusEarned - bonusUsed;
 
   await prisma.user.update({
@@ -984,6 +1030,19 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       phone: data.customer.phone ?? undefined,
     },
   });
+
+  if (bonusUsed > 0) {
+    await applyBonusUsage(user.id, bonusUsed);
+  }
+  if (bonusEarned > 0) {
+    await prisma.bonusTransaction.create({
+      data: {
+        userId: user.id,
+        amount: bonusEarned,
+        expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 
   const customerPhone = data.customer.phone ?? user.phone;
   if (!customerPhone) return res.status(400).json({ error: "phone required" });
@@ -1186,6 +1245,7 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
+  await expireBonus(req.params.id);
   const user = await prisma.user.findUnique({
     where: { id: req.params.id },
     include: {

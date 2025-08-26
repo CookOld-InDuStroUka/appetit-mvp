@@ -1,10 +1,12 @@
 import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { useLang } from "../components/LangContext";
 
 export default function ReportError() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const { t } = useLang();
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,14 +20,14 @@ export default function ReportError() {
     <>
       <Header />
       <main style={{ maxWidth: 600, margin: "20px auto", padding: "0 16px" }}>
-        <h1>Сообщить об ошибке</h1>
+        <h1>{t("reportErrorTitle")}</h1>
         <form
           onSubmit={submit}
           style={{ display: "flex", flexDirection: "column", gap: 12 }}
         >
           <input
             type="email"
-            placeholder="Ваш email (необязательно)"
+            placeholder={t("emailOptional")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={{
@@ -36,7 +38,7 @@ export default function ReportError() {
           />
           <textarea
             required
-            placeholder="Опишите проблему"
+            placeholder={t("problemPlaceholder")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             style={{
@@ -57,13 +59,10 @@ export default function ReportError() {
               cursor: "pointer",
             }}
           >
-            Отправить
+            {t("send")}
           </button>
         </form>
-        <p style={{ marginTop: 16 }}>
-          После нажатия кнопки откроется окно отправки письма в вашем почтовом
-          клиенте.
-        </p>
+        <p style={{ marginTop: 16 }}>{t("afterSend")}</p>
       </main>
       <Footer />
     </>

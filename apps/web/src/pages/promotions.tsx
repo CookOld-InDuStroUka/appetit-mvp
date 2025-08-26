@@ -1,13 +1,15 @@
 import Image from "next/image";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { useLang } from "../components/LangContext";
 
 export default function PromotionsPage() {
+  const { t } = useLang();
   return (
     <>
       <Header />
       <main style={{ maxWidth: 800, margin: "0 auto", padding: 20 }}>
-        <h1>Акции</h1>
+        <h1>{t("promotionsTitle")}</h1>
 
         <div
           style={{
@@ -40,15 +42,13 @@ export default function PromotionsPage() {
             >
               <Image
                 src="/promo1.jpg"
-                alt="Скидка 1000₸ на первый заказ"
+                alt={t("promo1")}
                 fill
                 sizes="(max-width: 800px) 100vw, 360px"
                 priority
               />
             </div>
-            <p style={{ marginTop: 8 }}>
-              Скидка 1000 тенге на первый заказ через сайт и приложение
-            </p>
+            <p style={{ marginTop: 8 }}>{t("promo1")}</p>
           </div>
 
           {/* Карточка 2 */}
@@ -73,14 +73,12 @@ export default function PromotionsPage() {
             >
               <Image
                 src="/promo2.jpg"
-                alt="Подарите другу 2000₸"
+                alt={t("promo2")}
                 fill
                 sizes="(max-width: 800px) 100vw, 360px"
               />
             </div>
-            <p style={{ marginTop: 8 }}>
-              Подарите другу 2000т по промо-коду и получите 1000т себе
-            </p>
+            <p style={{ marginTop: 8 }}>{t("promo2")}</p>
           </div>
         </div>
       </main>
