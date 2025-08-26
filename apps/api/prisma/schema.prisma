@@ -226,5 +226,6 @@ model Review {
   name      String
   rating    Int
   comment   String
+  pinned    Boolean  @default(false)
   createdAt DateTime @default(now())
 }

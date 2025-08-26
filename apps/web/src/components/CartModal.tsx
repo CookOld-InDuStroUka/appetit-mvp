@@ -139,48 +139,12 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     return overnight ? sel >= start || sel <= end : sel >= start && sel <= end;
   };
 
-  const toAstanaISO = (time: string, branchId: string) => {
-    const tz = "Asia/Almaty";
+  const toAstanaISO = (time: string) => {
     const now = new Date();
-    const fmt = new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    const parts = fmt.formatToParts(now);
-    const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
-    let dateStr = `${get("year")}-${get("month")}-${get("day")}`;
-    const branchInfo = branches.find((b) => b.id === branchId);
-    const { open, overnight } = parseHours(branchInfo?.hours);
-    const sel = toMin(time);
-    const start = toMin(open);
-    const timeFmt = new Intl.DateTimeFormat("en-GB", {
-      timeZone: tz,
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    }).formatToParts(now);
-    const cur =
-      parseInt(timeFmt.find((p) => p.type === "hour")?.value || "0") * 60 +
-      parseInt(timeFmt.find((p) => p.type === "minute")?.value || "0");
-    if (overnight && sel < start) {
-      const tomorrow = new Date(now.getTime() + 86400000);
-      const tp = fmt.formatToParts(tomorrow);
-      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
-    } else if (sel < cur) {
-      const tomorrow = new Date(now.getTime() + 86400000);
-      const tp = fmt.formatToParts(tomorrow);
-      dateStr = `${tp.find((p) => p.type === "year")?.value}-${tp.find((p) => p.type === "month")?.value}-${tp.find((p) => p.type === "day")?.value}`;
-    }
-    const local = new Date(`${dateStr}T${time}:00`);
-    const tzDate = new Date(local.toLocaleString("en-US", { timeZone: tz }));
-    const offsetMin = (tzDate.getTime() - local.getTime()) / 60000;
-    const sign = offsetMin >= 0 ? "+" : "-";
-    const abs = Math.abs(offsetMin);
-    const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-    const mm = String(abs % 60).padStart(2, "0");
-    return `${dateStr}T${time}:00${sign}${hh}:${mm}`;
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}T${time}:00+05:00`;
   };
 
   const submit = async () => {
@@ -229,7 +193,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
       branchId: branch,
       pickupTime:
         mode === "pickup" && pickupTime
-          ? toAstanaISO(pickupTime, branch)
+          ? toAstanaISO(pickupTime)
           : null,
       items: items.map((i) => ({
         dishId: i.dishId,

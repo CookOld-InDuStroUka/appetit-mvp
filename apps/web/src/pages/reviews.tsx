@@ -11,6 +11,7 @@ type Review = {
   rating: number;
   comment: string;
   createdAt: string;
+  pinned: boolean;
 };
 
 export default function ReviewsPage() {

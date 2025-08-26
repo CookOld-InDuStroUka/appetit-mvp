@@ -242,7 +242,7 @@ app.post(`${BASE}/promo-codes/check`, async (req: Request, res: Response) => {
 
 // --- Reviews ---
 app.get(`${BASE}/reviews`, async (_req: Request, res: Response) => {
-  const reviews = await prisma.review.findMany({ orderBy: { createdAt: "desc" } });
+  const reviews = await prisma.review.findMany({ orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] });
   res.json(reviews);
 });
 
@@ -1256,6 +1256,23 @@ app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
   if (data.birthDate) data.birthDate = new Date(data.birthDate);
   const user = await prisma.user.update({ where: { id: req.params.id }, data });
   res.json({ id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus });
+});
+
+app.get(`${BASE}/admin/reviews`, async (_req: Request, res: Response) => {
+  const reviews = await prisma.review.findMany({ orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] });
+  res.json(reviews);
+});
+
+app.patch(`${BASE}/admin/reviews/:id`, async (req: Request, res: Response) => {
+  const parsed = z.object({ pinned: z.boolean() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const review = await prisma.review.update({ where: { id: req.params.id }, data: { pinned: parsed.data.pinned } });
+  res.json(review);
+});
+
+app.delete(`${BASE}/admin/reviews/:id`, async (req: Request, res: Response) => {
+  await prisma.review.delete({ where: { id: req.params.id } });
+  res.json({ success: true });
 });
 
 const OrderStatusUpdateSchema = z.object({
