@@ -19,6 +19,7 @@ export type CreateOrderInput = {
   promoCode?: string | null;
   userId?: string;
   bonusToUse?: number;
+  utmSource?: string | null;
 };
 
 export type OrderStatus =
@@ -63,6 +64,7 @@ export type OrderDTO = {
   pickupTime?: string | null;
   pickupCode?: string | null;
   promoCode?: string | null;
+  utmSource?: string | null;
   subtotal: number;
   deliveryFee: number;
   discount: number;

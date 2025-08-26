@@ -136,6 +136,7 @@ model Order {
   bonusUsed     Int         @default(0)
   promoCodeId   String?
   promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
+  utmSource     String?
   userId        String?
   user          User?       @relation(fields: [userId], references: [id])
   createdAt     DateTime    @default(now())

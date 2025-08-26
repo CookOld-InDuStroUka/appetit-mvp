@@ -8,6 +8,9 @@ const API_BASE =
 type Analytics = {
   ordersTotal: number;
   ordersCount: number;
+  averageCheck: number;
+  repeatRate: number;
+  sources: Record<string, number>;
   expensesTotal: number;
   profit: number;
   daily: { days: string[]; orders: number[]; expenses: number[] };
@@ -71,6 +74,22 @@ export default function AnalyticsPage() {
         <>
           <div>
             {t("orders")}: {data.ordersCount} / {data.ordersTotal} ₸
+          </div>
+          <div>
+            {t("averageCheck")}: {Math.round(data.averageCheck)} ₸
+          </div>
+          <div>
+            {t("repeatRate")}: {(data.repeatRate * 100).toFixed(1)}%
+          </div>
+          <div>
+            {t("sources")}: 
+            <ul>
+              {Object.entries(data.sources).map(([src, count]) => (
+                <li key={src}>
+                  {t(src)}: {count}
+                </li>
+              ))}
+            </ul>
           </div>
           <div>
             {t("expenses")}: {data.expensesTotal} ₸

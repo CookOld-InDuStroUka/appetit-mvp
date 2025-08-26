@@ -1066,6 +1066,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       userId: user.id,
       pickupTime,
       pickupCode,
+      utmSource: data.utmSource ?? null,
       items: {
         create: prepared.map((p) => ({
           dishId: p.item.dishId,
@@ -1212,6 +1213,21 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     0
   );
   const ordersCount = orders.length;
+  const averageCheck = ordersCount ? ordersTotal / ordersCount : 0;
+  const sources: Record<string, number> = {};
+  const userCounts: Record<string, number> = {};
+  for (const o of orders) {
+    const src = o.utmSource ?? "direct";
+    sources[src] = (sources[src] || 0) + 1;
+    if (o.userId) {
+      userCounts[o.userId] = (userCounts[o.userId] || 0) + 1;
+    }
+  }
+  let repeatOrders = 0;
+  for (const o of orders) {
+    if (o.userId && userCounts[o.userId] > 1) repeatOrders++;
+  }
+  const repeatRate = ordersCount ? repeatOrders / ordersCount : 0;
   const expensesTotal = expenses.reduce(
     (s: number, e: any) => s + Number(e.amount),
     0
@@ -1243,6 +1259,9 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
   res.json({
     ordersTotal,
     ordersCount,
+    averageCheck,
+    repeatRate,
+    sources,
     expensesTotal,
     profit,
     daily: { days, orders: ordersDaily, expenses: expensesDaily },
