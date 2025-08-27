@@ -210,7 +210,7 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   return (
     <>
       <div className="modal-backdrop" onClick={handleBackdrop}>
-        <div className="modal" style={{ maxWidth: 420 }} onClick={stopProp}>
+        <div className="modal cart-modal" style={{ maxWidth: 420 }} onClick={stopProp}>
           <div style={{ display: "flex", justifyContent: "center", position: "relative", marginBottom: 16 }}>
           <h2 style={{ margin: 0 }}>Корзина</h2>
           <div style={{ position: "absolute", right: 0, top: 0, display: "flex", gap: 8 }}>
@@ -480,6 +480,13 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
         }}
       />
     )}
+    <style jsx>{`
+      .cart-modal {
+        background: #0f1b2a;
+        color: #cbd5e1;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+    `}</style>
   </>
   );
 }

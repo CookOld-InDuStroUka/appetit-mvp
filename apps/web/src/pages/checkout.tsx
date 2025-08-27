@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const DELIVERY_SURCHARGE = 900;
 
 export default function Checkout() {
   const [zones, setZones] = useState<any[]>([]);
@@ -16,7 +17,7 @@ export default function Checkout() {
   const [discount, setDiscount] = useState(0);
   const [applyToDelivery, setApplyToDelivery] = useState(false);
   const [subtotal, setSubtotal] = useState(0);
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(DELIVERY_SURCHARGE);
 
   useEffect(() => {
     fetch(`${API_BASE}/zones`)
@@ -36,8 +37,8 @@ export default function Checkout() {
 
   useEffect(() => {
     const z = zones.find((z) => z.id === form.zoneId);
-    if (z) setDeliveryFee(Number(z.deliveryFee));
-    else setDeliveryFee(0);
+    if (z) setDeliveryFee(DELIVERY_SURCHARGE + Number(z.deliveryFee));
+    else setDeliveryFee(DELIVERY_SURCHARGE);
   }, [form.zoneId, zones]);
 
   const applyPromo = async () => {

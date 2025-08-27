@@ -88,7 +88,6 @@ export default function DishCard({ dish, onClick, size = "md" }: Props) {
   const candidates = useMemo(
     () =>
       [
-        `/dishes/${fileId}.webp`,
         `/dishes/${fileId}.jpg`,
         `/dishes/${fileId}.jpeg`,
         `/dishes/${fileId}.png`,

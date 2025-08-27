@@ -25,7 +25,7 @@ export default function PromoSlider({
   const [paused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [imgs, setImgs] = useState<PromoSlide[]>(slides);
-  const [modal, setModal] = useState<PromoModal | null>(null);
+  const [modal, setModal] = useState<(PromoModal & { image: string }) | null>(null);
   const { setPromo } = useCart();
 
   useEffect(() => setImgs(slides), [slides]);
@@ -97,7 +97,7 @@ export default function PromoSlider({
           <div
             key={`${slide.image}-${i}`}
             onClick={() => {
-              if (slide.modal) setModal(slide.modal);
+              if (slide.modal) setModal({ ...slide.modal, image: slide.image });
               else if (slide.link) window.location.href = slide.link;
             }}
             style={{
@@ -187,40 +187,52 @@ export default function PromoSlider({
               textAlign: "center",
             }}
           >
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: 200,
+                marginBottom: 16,
+              }}
+            >
+              <Image src={modal.image} alt={modal.title} fill sizes="(max-width: 400px) 100vw, 400px" style={{ objectFit: "cover" }} />
+            </div>
             <h3 style={{ marginTop: 0 }}>{modal.title}</h3>
             <p>{modal.text}</p>
             {modal.promoCode && (
-              <div style={{ marginTop: 12 }}>
-                <button
-                  onClick={() => {
-                    setPromo(modal.promoCode!);
-                    setModal(null);
-                  }}
-                >
-                  Применить промокод
-                </button>
-                <div style={{ marginTop: 8, fontWeight: 700 }}>{modal.promoCode}</div>
-              </div>
+              <>
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    onClick={() => {
+                      setPromo(modal.promoCode!);
+                      setModal(null);
+                    }}
+                  >
+                    Применить промокод
+                  </button>
+                  <div style={{ marginTop: 8, fontWeight: 700 }}>{modal.promoCode}</div>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    onClick={async () => {
+                      const text = modal.shareText || modal.promoCode || "";
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({ text });
+                        } catch {}
+                      } else {
+                        try {
+                          await navigator.clipboard.writeText(text);
+                          alert("Ссылка скопирована");
+                        } catch {}
+                      }
+                    }}
+                  >
+                    Поделиться промокодом
+                  </button>
+                </div>
+              </>
             )}
-            <div style={{ marginTop: 12 }}>
-              <button
-                onClick={async () => {
-                  const text = modal.shareText || modal.promoCode || "";
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({ text });
-                    } catch {}
-                  } else {
-                    try {
-                      await navigator.clipboard.writeText(text);
-                      alert("Ссылка скопирована");
-                    } catch {}
-                  }
-                }}
-              >
-                Поделиться промокодом
-              </button>
-            </div>
           </div>
         </div>
       )}
