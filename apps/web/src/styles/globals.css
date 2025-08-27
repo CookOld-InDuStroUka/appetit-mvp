@@ -379,3 +379,120 @@ button,
     border-radius: 0;
   }
 }
+
+/* ===== Footer styles ===== */
+
+/* фон как у хедера (тёмно-синий градиент). если у тебя уже есть переменная под шапку — можно подставить её */
+:root {
+  --nav-bg: linear-gradient(180deg, #0c1a27 0%, #0b1520 100%);
+  --footer-link-color: #cbd5e1;         /* светло-серый для ссылок */
+  --footer-text-muted: rgba(255,255,255,0.70);
+  --footer-badge-bg: #3a3f45;           /* серые кнопки */
+  --footer-badge-border: #4a5056;
+}
+
+.site-footer {
+  background: var(--nav-bg);             /* фон как у головы */
+  color: rgba(255,255,255,0.92);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  width: 100%;
+  margin-top: 40px;
+}
+
+.footer-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px clamp(16px,5vw,48px);
+  box-sizing: border-box;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 720px) { .footer-top { grid-template-columns: 1fr; } }
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 24px;
+}
+@media (max-width: 720px) { .footer-links { columns: 1; } }
+
+/* фикс фиолетового visited */
+.site-footer .footer-link,
+.site-footer .footer-link:visited {
+  display: inline-block;
+  padding: 6px 0;
+  color: var(--footer-link-color) !important;
+  text-decoration: none;
+  transition: color .2s ease, transform .15s ease;
+}
+.site-footer .footer-link:hover { color: #fff !important; transform: translateX(2px); }
+
+.footer-apps { text-align: right; }
+@media (max-width: 720px) { .footer-apps { text-align: left; } }
+
+.footer-promo { margin: 0 0 12px 0; color: var(--footer-text-muted); }
+
+.footer-badges {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+@media (max-width: 720px) { .footer-badges { justify-content: flex-start; } }
+
+/* серые кнопки */
+.footer-badge,
+.footer-badge:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--footer-badge-bg);
+  border: 1px solid var(--footer-badge-border);
+  color: #e5e7eb !important;
+  font-size: 13px;
+  text-decoration: none;
+  transition: transform .15s ease, background .2s ease, border-color .2s ease;
+}
+.footer-badge:hover {
+  background: #4a5056;
+  border-color: #5a6168;
+  transform: translateY(-1px);
+}
+
+.footer-bottom {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  font-size: 12px;
+}
+.footer-muted { color: var(--footer-text-muted); }
+
+/* ссылки снизу тоже серые, без фиолетового */
+.footer-bottom .footer-link,
+.footer-bottom .footer-link:visited { color: var(--footer-link-color) !important; }
+.footer-bottom .footer-link:hover { color: #fff !important; text-decoration: underline; }
+
+/* кнопка админки тоже серая */
+.footer-admin,
+.footer-admin:visited {
+  margin-left: auto;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--footer-badge-bg);
+  border: 1px solid var(--footer-badge-border);
+  color: #e5e7eb !important;
+  text-decoration: none;
+  transition: background .2s ease, border-color .2s ease, transform .15s ease;
+}
+@media (max-width: 720px) { .footer-admin { margin-left: 0; } }
+.footer-admin:hover { background: #4a5056; border-color: #5a6168; transform: translateY(-1px); }

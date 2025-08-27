@@ -34,7 +34,7 @@ export default function Header() {
       return;
     }
     const ac = new AbortController();
-    const t = setTimeout(async () => {
+    const tmr = setTimeout(async () => {
       try {
         const r = await fetch(
           `${API_BASE}/dishes/search?term=${encodeURIComponent(q.trim())}`,
@@ -48,7 +48,7 @@ export default function Header() {
     }, 200);
     return () => {
       ac.abort();
-      clearTimeout(t);
+      clearTimeout(tmr);
     };
   }, [q, API_BASE]);
 
@@ -118,10 +118,8 @@ export default function Header() {
     <>
       <header className="hdr">
         <div className="row">
-          {/* Бренд оставляем как есть */}
           <Brand />
 
-          {/* Поиск — серый прямоугольник c иконкой справа */}
           <div ref={searchRef} className="search">
             <input
               className="search__input"
@@ -139,7 +137,6 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Правый блок */}
           <nav className="right">
             <button
               className="link link--hide-sm"
@@ -151,17 +148,20 @@ export default function Header() {
               <ChevronDown />
             </button>
 
-            <Link href="/contacts" className="link link--hide-sm">
-              {t("contacts")}
+            {/* Используем legacyBehavior, чтобы класс гарантированно попал на <a> в Next <13 */}
+            <Link href="/contacts" legacyBehavior>
+              <a className="link link--hide-sm">{t("contacts")}</a>
             </Link>
-            <Link href="/orders" className="link link--hide-sm">
-              {t("orders")}
+            <Link href="/orders" legacyBehavior>
+              <a className="link link--hide-sm">{t("orders")}</a>
             </Link>
 
             {user ? (
-              <Link href="/profile" className="link link--auth">
-                <UserIcon />
-                <span>{user.name || user.phone || user.email}</span>
+              <Link href="/profile" legacyBehavior>
+                <a className="link link--auth">
+                  <UserIcon />
+                  <span>{user.name || user.phone || user.email}</span>
+                </a>
               </Link>
             ) : (
               <button onClick={openAuth} className="link link--auth">
@@ -182,7 +182,7 @@ export default function Header() {
             position: sticky;
             top: 0;
             z-index: 50;
-            background: #0f1b2a; /* как на референсе */
+            background: #0f1b2a;
             color: #cbd5e1;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           }
@@ -190,7 +190,7 @@ export default function Header() {
           .row {
             max-width: 1280px;
             margin: 0 auto;
-            height: 56px;              /* компактная высота как на макете */
+            height: 56px;
             padding: 0 16px;
             display: grid;
             grid-template-columns: 1fr minmax(420px, 560px) 1fr;
@@ -198,15 +198,15 @@ export default function Header() {
             gap: 16px;
           }
 
-          /* === Поиск: «холодный серый» прямоугольник === */
+          /* Поиск */
           .search {
             display: flex;
             align-items: center;
             height: 34px;
             padding: 0 2px 0 10px;
             border-radius: 8px;
-            background: #5a6773;            /* глухой серый как на скрине */
-            border: 1px solid #6a7783;      /* лёгкий кант */
+            background: #5a6773;
+            border: 1px solid #6a7783;
           }
           .search__input {
             flex: 1;
@@ -234,14 +234,17 @@ export default function Header() {
             background: rgba(0, 0, 0, 0.1);
           }
 
-          /* === Правый блок === */
+          /* Правый блок */
           .right {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 18px; /* как на референсе — не слишком широко */
+            gap: 18px;
           }
-          .link {
+
+          /* Базовый вид ссылок-кнопок */
+          .link,
+          .link:visited {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -252,30 +255,41 @@ export default function Header() {
             border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
-            font-weight: 500; /* убрали жирность, чтобы выглядело тоньше */
+            font-weight: 500;
             line-height: 1;
           }
-          .link:hover {
+          .link:hover,
+          .link:focus-visible {
             color: #ffffff;
             background: rgba(255, 255, 255, 0.06);
+            text-decoration: none;
+            outline: none;
           }
-          .link--auth :global(svg) {
-            margin-right: 2px;
+          .link:active {
+            transform: translateY(0.5px);
+            opacity: 0.95;
           }
-          .link--cart .price {
-            font-variant-numeric: tabular-nums;
-            letter-spacing: 0.2px;
-          }
-          .muted {
-            color: #9fb3c8;
-            font-weight: 500;
-          }
+
+          .link--auth :global(svg) { margin-right: 2px; }
+          .link--cart .price { font-variant-numeric: tabular-nums; letter-spacing: 0.2px; }
 
           :global(svg) {
             width: 20px;
             height: 20px;
             stroke-width: 1.6;
             color: currentColor;
+          }
+
+          /* --- ГЛАВНАЯ «ПРОСЕЧКА» против фиолетовых visited и подчёркиваний --- */
+          :global(header.hdr a),
+          :global(header.hdr a:visited) {
+            color: #cbd5e1 !important;
+            text-decoration: none !important;
+          }
+          :global(header.hdr a:hover) {
+            color: #ffffff !important;
+            background: rgba(255,255,255,0.06) !important;
+            text-decoration: none !important;
           }
 
           /* Мобилка */
@@ -286,16 +300,9 @@ export default function Header() {
               height: auto;
               padding: 8px 12px;
             }
-            .search {
-              grid-column: 1 / -1;
-              height: 36px;
-            }
-            .link--hide-sm {
-              display: none;
-            }
-            .right {
-              gap: 10px;
-            }
+            .search { grid-column: 1 / -1; height: 36px; }
+            .link--hide-sm { display: none; }
+            .right { gap: 10px; }
           }
         `}</style>
       </header>
@@ -315,64 +322,65 @@ export default function Header() {
   );
 }
 
-/* ===== Бренд: (не меняем) ===== */
+/* ===== Бренд ===== */
 function Brand() {
   return (
-    <Link
-      href="/"
-      data-app-brand
-      aria-label="APPETIT — вкусная шаурма"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        whiteSpace: "nowrap",
-        textDecoration: "none",
-        color: "inherit",
-        minWidth: 200,
-      }}
-    >
-      <span
+    <Link href="/" legacyBehavior>
+      <a
+        data-app-brand
+        aria-label="APPETIT — вкусная шаурма"
         style={{
-          display: "inline-flex",
+          display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          height: 36,
-          padding: "0 16px",
-          borderRadius: 14,
-          background: "#fff",
-          border: "1px solid rgba(0,0,0,.06)",
-          boxShadow: "0 1px 2px rgba(0,0,0,.06)",
-          lineHeight: 1,
+          gap: 8,
+          whiteSpace: "nowrap",
+          textDecoration: "none",
+          color: "inherit",
+          minWidth: 200,
         }}
       >
-        <strong
+        <span
           style={{
-            fontSize: 19,
-            fontWeight: 800,
-            letterSpacing: 0.6,
-            color: "#EF4444",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 36,
+            padding: "0 16px",
+            borderRadius: 14,
+            background: "#fff",
+            border: "1px solid rgba(0,0,0,.06)",
+            boxShadow: "0 1px 2px rgba(0,0,0,.06)",
             lineHeight: 1,
           }}
         >
-          APPETIT
-        </strong>
-      </span>
+          <strong
+            style={{
+              fontSize: 19,
+              fontWeight: 800,
+              letterSpacing: 0.6,
+              color: "#EF4444",
+              lineHeight: 1,
+            }}
+          >
+            APPETIT
+          </strong>
+        </span>
 
-      <span
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          lineHeight: 1.15,
-          fontSize: 13,
-          fontWeight: 700,
-          color: "rgba(255,255,255,.92)",
-        }}
-      >
-        <span>вкусная</span>
-        <span>шаурма</span>
-      </span>
+        <span
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            lineHeight: 1.15,
+            fontSize: 13,
+            fontWeight: 700,
+            color: "rgba(255,255,255,.92)",
+          }}
+        >
+          <span>вкусная</span>
+          <span>шаурма</span>
+        </span>
+      </a>
     </Link>
   );
 }
