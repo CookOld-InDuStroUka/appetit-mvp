@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 
 const app = express();
 const prisma = new PrismaClient();
+const DELIVERY_SURCHARGE = 900;
 
 async function expireBonus(userId: string) {
   const now = new Date();
@@ -959,7 +960,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     0
   );
 
-  let deliveryFee = 0;
+  let deliveryFee = data.type === "delivery" ? DELIVERY_SURCHARGE : 0;
   let zoneId: string | undefined;
   let branchId: string | undefined;
   let discount = 0;
@@ -972,7 +973,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     if (data.zoneId) {
       const zone = await prisma.zone.findUnique({ where: { id: data.zoneId } });
       if (!zone) return res.status(400).json({ error: "zone not found" });
-      deliveryFee = Number(zone.deliveryFee);
+      deliveryFee += Number(zone.deliveryFee);
       zoneId = zone.id;
       branchId = zone.branchId;
     } else if (data.branchId) {
