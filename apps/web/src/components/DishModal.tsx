@@ -21,7 +21,7 @@ type Props = { dish: DishLight | null; onClose: () => void };
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
-// Оставлены ТОЛЬКО те слаги, под которые у тебя есть фото в /public/dishes
+// Слуги ТОЛЬКО под реально лежащие файлы в /public/dishes
 const NAME_TO_ID: Record<string, string> = {
   "комбо для одного": "combo-dlya-odnogo",
   "комбо для двоих": "combo-dlya-dvoih",
@@ -45,13 +45,12 @@ const NAME_TO_ID: Record<string, string> = {
   "дольки": "dolki",
   "хот-дог": "hot-dog",
 
-  // напитки/морсы/пепси — только те, что есть
   "морс смородина 03л": "mors-smorodina-0-3l",
   "морс смородина 05л": "mors-smorodina-0-5l",
   "пепси 05л": "pepsi-0-5l",
   "пепси 1л": "pepsi-1l",
 
-  // соусы (и перчик — без 'g', как у тебя в файле)
+  // файл без "g"
   "перчик острый 15г": "perchik-ostryj-15",
   "соус барбекю 30г": "sous-barbekyu-30g",
   "соус горчичный 30г": "sous-gorchichnyj-30g",
@@ -96,7 +95,7 @@ export default function DishModal({ dish, onClose }: Props) {
   const [imgIdx, setImgIdx] = useState(0);
   const { addItem } = useCart();
 
-  // загрузка деталей
+  // грузим детали
   useEffect(() => {
     if (!dish) return;
     setSelectedAddons([]);
@@ -110,7 +109,7 @@ export default function DishModal({ dish, onClose }: Props) {
       .catch(() => setDetails(null));
   }, [dish]);
 
-  // Escape закрытие
+  // ESC для закрытия
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (typeof window !== "undefined") {
@@ -121,20 +120,24 @@ export default function DishModal({ dish, onClose }: Props) {
 
   if (!dish) return null;
 
-  // slug под имена файлов из /public/dishes
   const norm = normalize(dish.name);
   const forcedId = NAME_TO_ID[norm] ?? slugify(dish.name);
 
-  // порядок источников изображения
+  // imageUrl из API может прийти как "dishes/xxx.jpg"
   const primaryUrl =
-    dish.imageUrl && (dish.imageUrl.startsWith("http") ? dish.imageUrl : dish.imageUrl);
+    dish.imageUrl && (dish.imageUrl.startsWith("http") || dish.imageUrl.startsWith("/"))
+      ? dish.imageUrl
+      : dish.imageUrl
+      ? `/${dish.imageUrl}`
+      : undefined;
 
+  // ЛОКАЛЬНЫЕ изображения — впереди!
   const candidates = [
-    primaryUrl,
     `/dishes/${forcedId}.webp`,
     `/dishes/${forcedId}.jpg`,
     `/dishes/${forcedId}.jpeg`,
     `/dishes/${forcedId}.png`,
+    primaryUrl,
     FALLBACK,
   ].filter(Boolean) as string[];
 
@@ -154,7 +157,6 @@ export default function DishModal({ dish, onClose }: Props) {
   const unitTotal = base + addonsTotal;
   const totalForQty = unitTotal * qty;
 
-  // явный тип — чтобы TS не ныл
   const selectedAddonObjs: { id: string; name: string; price: number }[] =
     details?.addons?.filter((a) => selectedAddons.includes(a.id)) ?? [];
   const selectedExcludedNames =
@@ -168,16 +170,15 @@ export default function DishModal({ dish, onClose }: Props) {
         <div className="dm-head">
           <div className="dm-figure">
             <Image
-  src={imgSrc}
-  alt={dish.name}
-  fill
-  sizes="(max-width: 860px) 100vw, 480px"
-  style={{ objectFit: "contain" }}
-  onError={() => setImgIdx((i) => Math.min(i + 1, candidates.length - 1))}
-  priority
-  unoptimized   // <— ключевая строка
-/>
-
+              src={imgSrc}
+              alt={dish.name}
+              fill
+              sizes="(max-width: 860px) 100vw, 480px"
+              style={{ objectFit: "contain" }}
+              onError={() => setImgIdx((i) => (i < candidates.length - 1 ? i + 1 : i))}
+              priority
+              unoptimized
+            />
           </div>
 
           <div className="dm-info">
@@ -248,7 +249,7 @@ export default function DishModal({ dish, onClose }: Props) {
                 price: unitTotal,
                 imageUrl: imgSrc,
                 qty,
-                // В твоём CartItem, похоже, этих полей нет — поэтому глушим TS:
+                // если CartItem не знает про эти поля — игнорим TS
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 addons: selectedAddonObjs.map((a) => ({ name: a.name, price: a.price })),
@@ -266,14 +267,35 @@ export default function DishModal({ dish, onClose }: Props) {
 
       <style jsx>{`
         @keyframes dmFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes dmZoomIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes dmZoomIn {
+          from { opacity: 0; transform: translateY(8px) scale(.98); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
 
-        .dm-backdrop{ position: fixed; inset: 0; background: rgba(15,23,42,.55); display: grid; place-items: center; padding: 16px; z-index: 1000; animation: dmFadeIn .18s ease-out both; }
-        .dm{ width: min(920px, 100%); max-height: 92vh; overflow-y: auto; scrollbar-gutter: stable both-edges; background: #fff; color: #0f172a; border-radius: 16px; padding: 16px 16px 80px; box-shadow: 0 20px 60px rgba(2,6,23,.3); position: relative; animation: dmZoomIn .22s cubic-bezier(.2,.7,.2,1) both; }
+        .dm-backdrop{
+          position: fixed; inset: 0;
+          background: rgba(15,23,42,.55);
+          display: grid; place-items: center;
+          padding: 16px; z-index: 1000;
+          animation: dmFadeIn .18s ease-out both;
+        }
+        .dm{
+          width: min(920px, 100%);
+          max-height: 92vh; overflow-y: auto; scrollbar-gutter: stable both-edges;
+          background: #fff; color: #0f172a; border-radius: 16px;
+          padding: 16px 16px 80px; box-shadow: 0 20px 60px rgba(2,6,23,.3);
+          position: relative; animation: dmZoomIn .22s cubic-bezier(.2,.7,.2,1) both;
+        }
         @supports not (scrollbar-gutter: stable both-edges){ .dm{ overflow-y: scroll; } }
         @media (prefers-reduced-motion: reduce){ .dm-backdrop, .dm{ animation: none !important; } }
 
-        .dm-close{ position: sticky; top: 0; margin-left: auto; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 9999px; background: #f1f5f9; border: 0; color: #0f172a; font-size: 20px; cursor: pointer; float: right; }
+        .dm-close{
+          position: sticky; top: 0; margin-left: auto;
+          display: inline-grid; place-items: center;
+          width: 36px; height: 36px; border-radius: 9999px;
+          background: #f1f5f9; border: 0; color: #0f172a; font-size: 20px; cursor: pointer;
+          float: right;
+        }
 
         .dm-head{ display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
         .dm-figure{ position: relative; width: 100%; aspect-ratio: 3/2; border-radius: 12px; overflow: hidden; }
@@ -288,21 +310,34 @@ export default function DishModal({ dish, onClose }: Props) {
         .dm-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
         .dm-grid--addons{ grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
 
-        .dm-opt-card{ box-sizing: border-box; min-height: 88px; display:flex; flex-direction:column; gap:8px; padding:10px; border-radius:12px; border:1px solid #e2e8f0; background:#fff; text-align:left; cursor:pointer; transition:border-color .15s, box-shadow .15s, background .15s; }
+        .dm-opt-card{
+          box-sizing: border-box; min-height: 88px; display:flex; flex-direction:column; gap:8px;
+          padding:10px; border-radius:12px; border:1px solid #e2e8f0; background:#fff; text-align:left;
+          cursor:pointer; transition:border-color .15s, box-shadow .15s, background .15s;
+        }
         .dm-opt-card:hover{ border-color:#cbd5e1; background:#f8fafc; }
         .dm-opt-card.is-active{ border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.15) inset; }
-        .dm-opt-name{ color:#0f172a; font-size:14px; line-height:1.15; min-height:34px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-        .dm-opt-cta{ margin-top:auto; display:block; width:100%; text-align:center; padding:8px 10px; border-radius:10px; background:#0f172a; color:#fff; font-weight:700; line-height:1; }
+        .dm-opt-name{ color:#0f172a; font-size:14px; line-height:1.15; min-height:34px;
+                      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .dm-opt-cta{ margin-top:auto; display:block; width:100%; text-align:center; padding:8px 10px;
+                     border-radius:10px; background:#0f172a; color:#fff; font-weight:700; line-height:1; }
 
-        .dm-opt{ display:flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:12px; border:1px solid #e2e8f0; background:#fff; cursor:pointer; transition:.15s; }
+        .dm-opt{ display:flex; align-items:center; justify-content:center; padding:10px 12px;
+                 border-radius:12px; border:1px solid #e2e8f0; background:#fff; cursor:pointer; transition:.15s; }
         .dm-opt:hover{ border-color:#cbd5e1; background:#f8fafc; }
         .dm-opt.is-active{ border-color:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.15) inset; }
 
-        .dm-footer{ position: sticky; bottom: -1px; background:#fff; padding-top:12px; margin-top:16px; display:flex; align-items:center; gap:12px; border-top:1px solid #e2e8f0; }
-        .dm-qty{ display:inline-flex; align-items:center; gap:8px; border:1px solid #e2e8f0; border-radius:12px; padding:4px 8px; background:#fafafa; }
-        .dm-qty>button{ width:32px; height:32px; border:0; border-radius:10px; background:#f1f5f9; color:#0f172a; cursor:pointer; font-size:18px; }
+        .dm-footer{
+          position: sticky; bottom: -1px; background:#fff; padding-top:12px; margin-top:16px;
+          display:flex; align-items:center; gap:12px; border-top:1px solid #e2e8f0;
+        }
+        .dm-qty{ display:inline-flex; align-items:center; gap:8px; border:1px solid #e2e8f0;
+                 border-radius:12px; padding:4px 8px; background:#fafafa; }
+        .dm-qty>button{ width:32px; height:32px; border:0; border-radius:10px; background:#f1f5f9;
+                        color:#0f172a; cursor:pointer; font-size:18px; }
         .dm-total{ margin-left:auto; font-weight:800; font-size:18px; }
-        .dm-add{ background:#0f172a; color:#fff; border:0; border-radius:12px; padding:12px 16px; font-weight:800; min-width:140px; cursor:pointer; }
+        .dm-add{ background:#0f172a; color:#fff; border:0; border-radius:12px; padding:12px 16px;
+                 font-weight:800; min-width:140px; cursor:pointer; }
 
         @media (max-width: 920px){ .dm-grid--addons{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
         @media (max-width: 560px){ .dm-grid--addons{ grid-template-columns: 1fr; } }
