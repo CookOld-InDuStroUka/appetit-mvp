@@ -1,5 +1,6 @@
-// components/DishCard.tsx
-import React, { useState } from "react";
+// components/DishModal.tsx
+import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useCart } from "./CartContext";
 
@@ -10,14 +11,11 @@ type Dish = {
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
-  label?: "новинка" | "хит";
-  stickerUrl?: string;
 };
 
-type Props = { dish: Dish; onClick: () => void };
+type Props = { dish: Dish | null; onClose: () => void };
 
 const NAME_TO_ID: Record<string, string> = {
-  // ==== уже были ====
   "комбо для одного": "combo-dlya-odnogo",
   "комбо для двоих": "combo-dlya-dvoih",
   "комбо для компании": "combo-dlya-kompanii",
@@ -27,20 +25,14 @@ const NAME_TO_ID: Record<string, string> = {
   "классическая большая шаурма": "klassicheskaya-bolshaya-shaurma",
   "донер с курицей": "doner-s-kuricej",
   "хот-дог": "hot-dog",
-
-  // ==== новые (горячие блюда) ====
   "донер с говядиной": "doner-s-govyadinoj",
   "куриная большая шаурма": "kurinaya-bolshaya-shaurma",
   "мраморная большая шаурма": "mramornaya-bolshaya-shaurma",
-
-  // ==== снеки ====
   "наггетсы": "naggetsy",
   "фри": "fri",
   "чебурек": "cheburek",
   "шекер": "sheker",
   "дольки": "dolki",
-
-  // ==== соусы ====
   "перчик острый 15г": "perchik-ostryj-15g",
   "соус барбекю 30г": "sous-barbekyu-30g",
   "соус горчичный 30г": "sous-gorchichnyj-30g",
@@ -48,8 +40,6 @@ const NAME_TO_ID: Record<string, string> = {
   "соус сырный 30г": "sous-syrnyj-30g",
   "соус томатный 30г": "sous-tomatnyj-30g",
   "соус чесночный 30г": "sous-chesnochnyj-30g",
-
-  // ==== напитки ====
   "айран тет": "ajran-tet",
   "асу 05л": "asu-0-5l",
   "асу 1л": "asu-1l",
@@ -69,168 +59,99 @@ const NAME_TO_ID: Record<string, string> = {
 };
 
 const normalize = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/ё/g, "е")
-    .replace(/[^\p{Letter}\p{Number}\s-]+/gu, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{Letter}\p{Number}\s-]+/gu, "")
+    .replace(/\s+/g, " ").trim();
 
 const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/ё/g, "e")
-    .replace(/[^a-z0-9\s-]+/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+  s.toLowerCase().replace(/ё/g, "e").replace(/[^a-z0-9\s-]+/g, "")
+    .trim().replace(/\s+/g, "-").replace(/-+/g, "-");
 
 const FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
   `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 480'>
-     <rect width='100%' height='100%' fill='#ffffff'/>
+     <rect width='100%' height='100%' fill='#fff'/>
      <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
            fill='#9ca3af' font-size='20' font-family='system-ui'>Нет фото</text>
    </svg>`
 )}`;
 
-const nfmt = new Intl.NumberFormat("ru-RU");
-
-export default function DishCard({ dish, onClick }: Props) {
+export default function DishModal({ dish, onClose }: Props) {
   const { addItem } = useCart();
 
-  const norm = normalize(dish.name);
-  const fileId = NAME_TO_ID[norm] ?? slugify(dish.name);
-  const candidates = [dish.imageUrl, `/dishes/${fileId}.webp`, `/dishes/${fileId}.jpg`, FALLBACK].filter(
-    Boolean
-  ) as string[];
+  // модалка не монтируется без блюда — никакого падения на dish.name
+  if (!dish) return null;
+
+  const safeName = dish.name ?? "Без названия";
+  const norm = useMemo(() => normalize(safeName), [safeName]);
+  const mapOrSlug = useMemo(() => NAME_TO_ID[norm] ?? slugify(safeName), [norm, safeName]);
+
+  // порядок поиска картинки: imageUrl → map/slug → id → fallback
+  const candidates = useMemo(() => {
+    const list: string[] = [];
+    if (dish.imageUrl) list.push(dish.imageUrl);
+    list.push(`/dishes/${mapOrSlug}.webp`, `/dishes/${mapOrSlug}.jpg`);
+    list.push(`/dishes/${dish.id}.webp`, `/dishes/${dish.id}.jpg`);
+    list.push(FALLBACK);
+    return list;
+  }, [dish.imageUrl, dish.id, mapOrSlug]);
 
   const [imgIdx, setImgIdx] = useState(0);
-  const src: string = candidates[Math.min(imgIdx, candidates.length - 1)];
-  const price = `${nfmt.format(dish.minPrice ?? dish.basePrice)} ₸`;
+  const src = candidates[Math.min(imgIdx, candidates.length - 1)];
 
-  const handleAdd = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    addItem({
-      id: dish.id,
-      name: dish.name,
-      price: dish.basePrice,
-      imageUrl: src,
-      qty: 1,
-    });
-  };
+  // Рендерим в body, чтобы гарантированно быть поверх всего
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="close" onClick={onClose} aria-label="Закрыть">×</button>
 
-  return (
-    <article className="card" onClick={onClick} role="button" tabIndex={0}>
-      <div className="media">
-        <Image
-          src={src}
-          alt={dish.name}
-          width={800}
-          height={600}
-          sizes="(max-width: 768px) 50vw, 280px"
-          style={{ height: "100%", width: "auto", objectFit: "contain" }}
-          onError={() => setImgIdx(i => Math.min(i + 1, candidates.length - 1))}
-        />
-      </div>
+        <div className="media">
+          <Image
+            src={src}
+            alt={safeName}
+            width={1000}
+            height={750}
+            sizes="(max-width: 768px) 90vw, 720px"
+            style={{ width: "100%", height: "auto", objectFit: "contain" }}
+            onError={() => setImgIdx(i => Math.min(i + 1, candidates.length - 1))}
+          />
+        </div>
 
-      <h4 className="title">{dish.name}</h4>
-      {dish.description && <p className="desc">{dish.description}</p>}
+        <h2 className="title">{safeName}</h2>
+        {dish.description && <p className="desc">{dish.description}</p>}
 
-      <div className="row">
-        <div className="price">{price}</div>
-        <button type="button" className="btnAdd" onClick={handleAdd} aria-label="Добавить">
-          +
-        </button>
+        <div className="actions">
+          <button
+            className="add"
+            onClick={() => addItem({ id: dish.id, name: safeName, price: dish.basePrice, imageUrl: src, qty: 1 })}
+          >
+            В корзину
+          </button>
+        </div>
       </div>
 
       <style jsx>{`
-        .card {
-          width: 100%;
-          background: #fff;
-          border-radius: 12px;
-          padding: 12px;
-          border: 1px solid #eef2f7;
-          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
-          transition: box-shadow 0.15s ease, transform 0.1s ease;
-          cursor: pointer;
-          display: flex;
-          flex-direction: column;
+        .backdrop {
+          position: fixed; inset: 0; background: rgba(0,0,0,.35);
+          display: flex; align-items: flex-start; justify-content: center;
+          padding: 24px; z-index: 9999;
         }
-        .card:hover {
-          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-          transform: translateY(-1px);
+        .modal {
+          width: min(980px, 100%);
+          background: #fff; border-radius: 16px; padding: 16px 16px 20px; position: relative;
+          box-shadow: 0 18px 60px rgba(0,0,0,.2);
         }
-
-        .media {
-          position: relative;
-          width: 100%;
-          height: 190px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #fff;
-          border-bottom: 1px solid rgba(17, 24, 39, 0.08);
-          overflow: hidden;
+        .close {
+          position: absolute; top: 8px; right: 8px;
+          border: 0; background: #f1f5f9; width: 32px; height: 32px; border-radius: 999px; cursor: pointer;
+          font-size: 20px; line-height: 1;
         }
-
-        .title {
-          margin: 10px 2px 4px;
-          color: #0f172a;
-          font-weight: 700;
-          font-size: 15px;
-          line-height: 1.25;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .desc {
-          color: #6b7280;
-          font-size: 12px;
-          line-height: 1.25;
-          margin: 0 2px 8px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          min-height: 28px;
-        }
-
-        .row {
-          margin-top: auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-        }
-        .price {
-          font-weight: 800;
-          font-size: 15px;
-          color: #0f172a;
-        }
-
-        .btnAdd {
-          background: #2b6cf8;
-          color: #fff;
-          border: 0;
-          border-radius: 8px;
-          width: 36px;
-          height: 28px;
-          display: grid;
-          place-items: center;
-          font-size: 16px;
-          line-height: 1;
-          cursor: pointer;
-          transition: filter 0.12s, transform 0.1s;
-        }
-        .btnAdd:hover {
-          filter: brightness(1.05);
-          transform: translateY(-1px);
-        }
-        .btnAdd:active {
-          transform: translateY(0);
-        }
+        .media { margin: 8px 0 16px; }
+        .title { margin: 0 0 6px; font-size: 24px; font-weight: 800; }
+        .desc { color:#475569; margin:0 0 12px; }
+        .actions { display:flex; justify-content:flex-end; }
+        .add { background:#0f172a; color:#fff; border:0; padding:10px 16px; border-radius:10px; cursor:pointer; }
       `}</style>
-    </article>
+    </div>,
+    document.body
   );
 }
