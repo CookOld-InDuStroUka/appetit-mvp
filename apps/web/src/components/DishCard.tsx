@@ -67,7 +67,6 @@ const NAME_TO_ID: Record<string, string> = {
   "сок лимонный 10л": "sok-limonnyj-1-0l",
 };
 
-
 const normalize = (s: string) =>
   s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{Letter}\p{Number}\s-]+/gu, "").replace(/\s+/g, " ").trim();
 
@@ -125,16 +124,16 @@ export default function DishCard({ dish, onClick }: Props) {
 
       <style jsx>{`
         .card{
-          width: 100%;                 /* FIX: заполняем столбец, убираем лишние поля вокруг */
+          width: 100%;
           background:#fff;
           border-radius:12px;
-          padding:12px;                /* можешь поставить 10px, если ещё плотнее нужно */
+          padding:12px;
           border:1px solid #eef2f7;
           box-shadow:0 6px 16px rgba(15,23,42,.06);
           transition:box-shadow .15s ease, transform .1s ease;
           cursor:pointer;
-          display:flex;                /* FIX: выравниваем высоту */
-          flex-direction:column;       /* FIX: чтобы футер был у низа */
+          display:flex;
+          flex-direction:column;
         }
         .card:hover{ box-shadow:0 10px 22px rgba(15,23,42,.08); transform:translateY(-1px); }
 
@@ -168,7 +167,7 @@ export default function DishCard({ dish, onClick }: Props) {
         }
 
         .row{
-          margin-top:auto;            /* FIX: прижимает низ карточки вниз — ряды становятся ровнее */
+          margin-top:auto;
           display:flex; align-items:center; justify-content:space-between; gap:8px;
         }
         .price{ font-weight:800; font-size:15px; color:#0f172a; }

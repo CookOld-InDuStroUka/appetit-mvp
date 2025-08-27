@@ -1,12 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // Используем remotePatterns вместо устаревшего domains
+    // Глобально отключаем оптимизацию — пусть грузит из /public как есть
+    unoptimized: true,
+
+    // НУЖНО только если у тебя бывают внешние картинки:
     remotePatterns: [
       { protocol: 'https', hostname: 'placehold.co' },
       { protocol: 'http', hostname: 'localhost', port: '3001' },
+      // добавляй свои домены/CDN по мере необходимости
     ],
-    unoptimized: true,
   },
 };
+
 module.exports = nextConfig;
