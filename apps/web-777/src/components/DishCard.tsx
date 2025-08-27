@@ -1,72 +1,56 @@
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useMemo, useState } from "react";
 import { useCart } from "./CartContext";
 
 type Dish = {
   id: string;
   name: string;
   description?: string;
-  imageUrl?: string;
+  imageUrl?: string;     // может быть заглушкой
   minPrice?: number;
   basePrice: number;
   label?: "новинка" | "хит";
   stickerUrl?: string;
 };
 
-type Props = { dish: Dish; onClick: () => void };
+type Props = { dish: Dish; onClick: () => void; size?: "sm" | "md" | "lg" };
 
+// Слаги под реально лежащие файлы в /public/dishes
 const NAME_TO_ID: Record<string, string> = {
-  // ==== уже были ====
   "комбо для одного": "combo-dlya-odnogo",
   "комбо для двоих": "combo-dlya-dvoih",
   "комбо для компании": "combo-dlya-kompanii",
+
   "фирменная средняя шаурма": "firmennaya-srednyaya-shaurma",
   "фирменная большая шаурма": "firmennaya-bolshaya-shaurma",
+
   "классическая средняя шаурма": "klassicheskaya-srednyaya-shaurma",
   "классическая большая шаурма": "klassicheskaya-bolshaya-shaurma",
-  "донер с курицей": "doner-s-kuricej",
-  "хот-дог": "hot-dog",
 
-  // ==== новые (горячие блюда) ====
+  "донер с курицей": "doner-s-kuricej",
   "донер с говядиной": "doner-s-govyadinoj",
   "куриная большая шаурма": "kurinaya-bolshaya-shaurma",
   "мраморная большая шаурма": "mramornaya-bolshaya-shaurma",
 
-  // ==== снеки ====
   "наггетсы": "naggetsy",
   "фри": "fri",
   "чебурек": "cheburek",
   "шекер": "sheker",
   "дольки": "dolki",
+  "хот-дог": "hot-dog",
 
-  // ==== соусы ====
-  "перчик острый 15г": "perchik-ostryj-15g",
+  "морс смородина 03л": "mors-smorodina-0-3l",
+  "морс смородина 05л": "mors-smorodina-0-5l",
+  "пепси 05л": "pepsi-0-5l",
+  "пепси 1л": "pepsi-1l",
+
+  "перчик острый 15г": "perchik-ostryj-15",
   "соус барбекю 30г": "sous-barbekyu-30g",
   "соус горчичный 30г": "sous-gorchichnyj-30g",
   "соус острый 30г": "sous-ostryj-30g",
   "соус сырный 30г": "sous-syrnyj-30g",
   "соус томатный 30г": "sous-tomatnyj-30g",
   "соус чесночный 30г": "sous-chesnochnyj-30g",
-
-  // ==== напитки (нормализация запятой!) ====
-  "айран тет": "ajran-tet",
-  "асу 05л": "asu-0-5l",
-  "асу 1л": "asu-1l",
-  "горилла 05л": "gorilla-0-5l",
-  "дада 1л": "dada-1l",
-  "лавина 05л": "lavina-0-5l",
-  "липтон чай 05л": "lipton-chaj-0-5l",
-  "липтон чай 1л": "lipton-chaj-1l",
-  "морс смородина 03л": "mors-smorodina-0-3l",
-  "морс смородина 05л": "mors-smorodina-0-5l",
-  "пепси 05л": "pepsi-0-5l",
-  "пепси 15л": "pepsi-1-5l",
-  "пепси 1л": "pepsi-1l",
-  "сок дадо 02л": "sok-dado-0-2l",
-  "сок лимонный 03л": "sok-limonnyj-0-3l",
-  "сок лимонный 10л": "sok-limonnyj-1-0l",
 };
-
 
 const normalize = (s: string) =>
   s.toLowerCase().replace(/ё/g, "е").replace(/[^\p{Letter}\p{Number}\s-]+/gu, "").replace(/\s+/g, " ").trim();
@@ -84,12 +68,35 @@ const FALLBACK = `data:image/svg+xml;utf8,${encodeURIComponent(
 
 const nfmt = new Intl.NumberFormat("ru-RU");
 
-export default function DishCard({ dish, onClick }: Props) {
+export default function DishCard({ dish, onClick, size = "md" }: Props) {
   const { addItem } = useCart();
 
-  const norm = normalize(dish.name);
-  const fileId = NAME_TO_ID[norm] ?? slugify(dish.name);
-  const candidates = [dish.imageUrl, `/dishes/${fileId}.webp`, `/dishes/${fileId}.jpg`, FALLBACK].filter(Boolean) as string[];
+  const fileId = useMemo(() => {
+    const norm = normalize(dish.name);
+    return NAME_TO_ID[norm] ?? slugify(dish.name);
+  }, [dish.name]);
+
+  // нормализуем imageUrl, если пришёл без слеша
+  const fromApi = useMemo(() => {
+    const u = dish.imageUrl || "";
+    if (!u) return undefined;
+    if (u.startsWith("http") || u.startsWith("/")) return u;
+    return `/${u}`;
+  }, [dish.imageUrl]);
+
+  // ВАЖНО: локальные — ПЕРВЫМИ, затем API, затем fallback
+  const candidates = useMemo(
+    () =>
+      [
+        `/dishes/${fileId}.webp`,
+        `/dishes/${fileId}.jpg`,
+        `/dishes/${fileId}.jpeg`,
+        `/dishes/${fileId}.png`,
+        fromApi,
+        FALLBACK,
+      ].filter(Boolean) as string[],
+    [fileId, fromApi]
+  );
 
   const [imgIdx, setImgIdx] = useState(0);
   const src = candidates[Math.min(imgIdx, candidates.length - 1)];
@@ -101,17 +108,15 @@ export default function DishCard({ dish, onClick }: Props) {
   };
 
   return (
-    <article className="card" onClick={onClick} role="button" tabIndex={0}>
-      {/* ===== MEDIA: картинка по высоте контейнера ===== */}
+    <article className={`card card--${size}`} onClick={onClick} role="button" tabIndex={0}>
       <div className="media">
-        <Image
+        <img
           src={src}
           alt={dish.name}
-          width={800}
-          height={600}
-          sizes="(max-width: 768px) 50vw, 280px"
-          style={{ height: "100%", width: "auto", objectFit: "contain" }}
-          onError={() => setImgIdx((i) => Math.min(i + 1, candidates.length - 1))}
+          loading="lazy"
+          decoding="async"
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          onError={() => setImgIdx((i) => (i < candidates.length - 1 ? i + 1 : i))}
         />
       </div>
 
@@ -124,59 +129,86 @@ export default function DishCard({ dish, onClick }: Props) {
       </div>
 
       <style jsx>{`
+        /* БАЗОВЫЕ ПОЛЗУНКИ (переменные) */
         .card{
-          width: 100%;                 /* FIX: заполняем столбец, убираем лишние поля вокруг */
+          --pad: 12px;
+          --rad: 12px;
+          --media-h: 190px;
+          --fs-title: 15px;
+          --fs-desc: 12px;
+          --fs-price: 15px;
+          --btn-w: 36px;
+          --btn-h: 28px;
+
+          width: 100%;
           background:#fff;
-          border-radius:12px;
-          padding:12px;                /* можешь поставить 10px, если ещё плотнее нужно */
+          border-radius: var(--rad);
+          padding: var(--pad);
           border:1px solid #eef2f7;
           box-shadow:0 6px 16px rgba(15,23,42,.06);
           transition:box-shadow .15s ease, transform .1s ease;
           cursor:pointer;
-          display:flex;                /* FIX: выравниваем высоту */
-          flex-direction:column;       /* FIX: чтобы футер был у низа */
+          display:flex;
+          flex-direction:column;
         }
         .card:hover{ box-shadow:0 10px 22px rgba(15,23,42,.08); transform:translateY(-1px); }
+
+        /* Варианты размеров */
+        .card--sm{
+          --pad: 10px; --rad: 12px; --media-h: 180px;
+          --fs-title: 14.5px; --fs-desc: 11.5px; --fs-price: 14.5px;
+          --btn-w: 34px; --btn-h: 26px;
+        }
+        .card--md{
+          --pad: 16px; --rad: 14px; --media-h: 230px;
+          --fs-title: 16.5px; --fs-desc: 13px; --fs-price: 16px;
+          --btn-w: 42px; --btn-h: 34px;
+        }
+        .card--lg{
+          --pad: 18px; --rad: 16px; --media-h: 260px;
+          --fs-title: 18px; --fs-desc: 14px; --fs-price: 17px;
+          --btn-w: 48px; --btn-h: 38px;
+        }
 
         .media{
           position:relative;
           width:100%;
-          height:190px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
+          height: var(--media-h);
+          display:flex; align-items:center; justify-content:center;
           background:#fff;
           border-bottom:1px solid rgba(17,24,39,.08);
           overflow:hidden;
         }
 
         .title{
-          margin:10px 2px 4px;
+          margin:12px 2px 6px;
           color:#0f172a;
-          font-weight:700;
-          font-size:15px;
+          font-weight:800;
+          font-size: var(--fs-title);
           line-height:1.25;
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
         }
         .desc{
           color:#6b7280;
-          font-size:12px;
+          font-size: var(--fs-desc);
           line-height:1.25;
-          margin:0 2px 8px;
+          margin:0 2px 10px;
           display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
           min-height:28px;
         }
 
         .row{
-          margin-top:auto;            /* FIX: прижимает низ карточки вниз — ряды становятся ровнее */
-          display:flex; align-items:center; justify-content:space-between; gap:8px;
+          margin-top:auto;
+          display:flex; align-items:center; justify-content:space-between; gap:10px;
         }
-        .price{ font-weight:800; font-size:15px; color:#0f172a; }
+        .price{ font-weight:800; font-size: var(--fs-price); color:#0f172a; }
 
         .btnAdd{
-          background:#2b6cf8; color:#fff; border:0; border-radius:8px;
-          width:36px; height:28px; display:grid; place-items:center;
-          font-size:16px; line-height:1; cursor:pointer;
+          background:#2b6cf8; color:#fff; border:0; border-radius:10px;
+          width: var(--btn-w); height: var(--btn-h);
+          display:grid; place-items:center;
+          font-size: calc(var(--fs-price) + 1px);
+          line-height:1; cursor:pointer;
           transition:filter .12s, transform .1s;
         }
         .btnAdd:hover{ filter:brightness(1.05); transform:translateY(-1px); }
