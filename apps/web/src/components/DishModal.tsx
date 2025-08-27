@@ -133,7 +133,6 @@ export default function DishModal({ dish, onClose }: Props) {
 
   // ЛОКАЛЬНЫЕ изображения — впереди!
   const candidates = [
-    `/dishes/${forcedId}.webp`,
     `/dishes/${forcedId}.jpg`,
     `/dishes/${forcedId}.jpeg`,
     `/dishes/${forcedId}.png`,
