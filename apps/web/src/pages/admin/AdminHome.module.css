@@ -1,0 +1,170 @@
+/* Переменные проекта уже есть. Мы деликатно усиливаем визуал без ломки тем. */
+.dash {
+  padding: 18px clamp(12px, 3vw, 24px) 40px;
+  background:
+    radial-gradient(1100px 380px at 0% 0%, color-mix(in oklab, var(--accent) 22%, transparent) 0%, transparent 65%),
+    radial-gradient(900px 420px at 100% 0%, rgba(12,26,39,0.12) 0%, transparent 60%),
+    var(--bg);
+}
+
+.grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(560px, 1.7fr) 1fr;
+  gap: 18px;
+}
+
+/* Стекло */
+.glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+    var(--card-bg);
+  border: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  border-radius: 16px;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.12),
+    inset 0 0 0 1px rgba(255,255,255,0.03);
+  backdrop-filter: blur(6px) saturate(1.05);
+}
+
+/* HERO — на пол экрана */
+.hero {
+  position: relative;
+  min-height: 50vh;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+.heroInner { text-align: center; padding: 34px; }
+.heroTitle {
+  margin: 0 0 12px;
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 1.03;
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: .2px;
+  text-wrap: balance;
+}
+.heroSub {
+  margin: 0;
+  font-size: clamp(15px, 1.8vw, 19px);
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+/* Навигация слайда */
+.navBtn {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+.left { left: 12px; } .right { right: 12px; }
+.navBtn:hover { transform: scale(1.06); background: rgba(0,0,0,0.45); }
+.navBtn:focus-visible { outline: 3px solid color-mix(in oklab, var(--accent) 65%, transparent); outline-offset: 2px; }
+
+/* Точки */
+.dots {
+  position: absolute;
+  inset-block-end: 14px;
+  inset-inline: 0;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  grid-auto-flow: column;
+}
+.dot {
+  inline-size: 10px; block-size: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.3);
+  cursor: pointer;
+}
+.active { background: var(--accent); border-color: var(--accent); }
+
+/* Плитки */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-content: start;
+}
+.tile, .tile:visited {
+  color: var(--text);
+  text-decoration: none !important;   /* без подчёркиваний и фиолетового */
+}
+.tile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease,
+    background-color .16s ease;
+}
+.tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px rgba(0,0,0,0.16);
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, transparent), transparent),
+    var(--card-bg);
+}
+.tile:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+.badge {
+  inline-size: 56px;
+  block-size: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #fff;
+  background:
+    radial-gradient(60% 60% at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%),
+    linear-gradient(135deg, color-mix(in oklab, var(--accent) 85%, #0c1a27), #0c1a27);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+  flex-shrink: 0;
+}
+
+.text { display: flex; flex-direction: column; min-width: 0; }
+.title { font-weight: 700; font-size: 16px; letter-spacing: .2px; color: var(--text); }
+.sub   { font-size: 13px; color: var(--muted-text); }
+
+.arrow {
+  font-weight: 700;
+  opacity: .65;
+  transition: transform .16s ease, opacity .16s ease;
+}
+.tile:hover .arrow { transform: translateX(4px); opacity: 1; }
+
+/* Адаптивы */
+@media (max-width: 980px) {
+  .grid { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .hero { min-height: 46vh; }
+}
+@media (max-width: 560px) {
+  .tiles { grid-template-columns: 1fr; }
+  .badge { inline-size: 52px; block-size: 52px; }
+}
+
+/* Уважение к пользователю */
+@media (prefers-reduced-motion: reduce) {
+  .tile, .navBtn, .arrow { transition: none !important; }
+}

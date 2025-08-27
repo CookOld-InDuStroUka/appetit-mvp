@@ -176,20 +176,59 @@ button,
   color: #fff;
 }
 
-.admin-nav-btn {
-  text-decoration: none;
-  color: var(--header-text);
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  transition: background-color 0.2s, color 0.2s;
+/* Кнопки в шапке — стиль «пилюля» */
+.admin-nav-btn,
+.admin-nav-btn:visited {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  color: var(--header-text) !important;
+  text-decoration: none !important;
+
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .15s ease,
+    box-shadow .15s ease,
+    opacity .15s ease;
 }
 
+/* наведение */
 .admin-nav-btn:hover {
-  background: var(--hover-bg);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.18);
 }
+
+/* активное нажатие */
+.admin-nav-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  opacity: .95;
+}
+
+/* клавиатурный фокус — аккуратное свечение акцентом */
+.admin-nav-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 55%, transparent),
+    0 6px 14px rgba(0,0,0,0.18);
+  border-color: color-mix(in oklab, var(--accent) 55%, rgba(255,255,255,0.2));
+}
+
+/* «текущая» страница (если добавляешь класс .is-active) */
+.admin-nav-btn.is-active {
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+  border-color: rgba(255,255,255,.26);
+}
+
 
 .admin-home-links {
   display: flex;

@@ -34,93 +34,137 @@ export default function AdminHeader() {
   return (
     <header className="admin-header">
       <div className="inner">
-        <Link href="/admin" className="logo">
-          APPETIT
-        </Link>
+        <Link href="/admin" className="logo">APPETIT</Link>
+
         <nav className="nav">{linkEls}</nav>
+
         <div className="actions">
           <button
             onClick={toggleTheme}
             aria-label="Переключить тему"
-            className="btn"
+            className="btn icon-btn"
+            title={theme === "light" ? "Тёмная тема" : "Светлая тема"}
           >
             {theme === "light" ? "🌙" : "☀️"}
           </button>
           <button onClick={logout} className="btn">Выйти</button>
-          <button
-            onClick={() => setOpen(!open)}
-            aria-label="Меню"
-            className="btn menu-btn"
-          >
-            ☰
-          </button>
+          <button onClick={() => setOpen(!open)} aria-label="Меню" className="btn menu-btn">☰</button>
         </div>
       </div>
+
       {open && <nav className="mobile-nav">{linkEls}</nav>}
+
       <style jsx>{`
+        /* фон как в футере */
         .admin-header {
           position: sticky;
           top: 0;
           z-index: 50;
-          background: var(--header-bg);
-          color: var(--header-text);
-          border-bottom: 1px solid var(--header-border);
           width: 100%;
+          background: var(--nav-bg); /* <— тот же градиент, что и снизу */
+          color: var(--footer-text);
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         }
+
         .inner {
           max-width: 1280px;
           margin: 0 auto;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 10px clamp(8px, 4vw, 24px);
+          padding: 12px clamp(12px, 3vw, 24px);
+          gap: 12px;
         }
+
         .logo {
           font-family: Roboto, sans-serif;
           font-weight: 700;
-          font-size: 24px;
+          font-size: 22px;
+          letter-spacing: .3px;
           text-decoration: none;
-          color: var(--header-text);
+          color: var(--footer-text);
+          padding: 6px 10px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.10);
         }
+
+        /* фикс фиолетового visited в шапке */
+        .admin-header a,
+        .admin-header a:visited {
+          color: var(--footer-text);
+          text-decoration: none;
+        }
+
         .nav {
           display: flex;
-          gap: 12px;
+          gap: 6px;
+          flex-wrap: wrap;
         }
+
         .actions {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
         }
+
+        /* тёмные «пилюли» для ссылок */
+        .admin-nav-btn {
+          display: inline-flex;
+          align-items: center;
+          height: 36px;
+          padding: 0 12px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: var(--footer-text);
+          transition: background .15s ease, border-color .15s ease, transform .15s ease, opacity .15s ease;
+        }
+        .admin-nav-btn:hover {
+          background: rgba(255,255,255,0.10);   /* никакого жёлтого/зелёного */
+          border-color: rgba(255,255,255,0.18);
+          transform: translateY(-1px);
+          opacity: 1;
+        }
+
+        /* кнопки справа */
         .btn {
-          background: transparent;
-          border: 1px solid var(--header-text);
-          color: var(--header-text);
-          padding: 6px 10px;
-          border-radius: 6px;
+          height: 36px;
+          padding: 0 12px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: var(--footer-text);
           cursor: pointer;
+          transition: background .15s ease, border-color .15s ease, transform .15s ease, opacity .15s ease;
         }
-        .menu-btn {
-          display: none;
+        .btn:hover {
+          background: rgba(255,255,255,0.10);
+          border-color: rgba(255,255,255,0.18);
+          transform: translateY(-1px);
         }
-        @media (max-width: 600px) {
-          .nav {
-            display: none;
-          }
-          .menu-btn {
-            display: inline-block;
-          }
+        .icon-btn { width: 40px; padding: 0; text-align: center; }
+
+        .menu-btn { display: none; }
+
+        @media (max-width: 920px) {
+          .nav { display: none; }
+          .menu-btn { display: inline-flex; }
           .mobile-nav {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
-            padding: 8px clamp(8px, 4vw, 24px);
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--header-border);
-            width: 100%;
+            padding: 10px clamp(12px, 4vw, 24px) 14px;
+            background: var(--nav-bg); /* такой же фон в мобильном меню */
+            border-top: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+          }
+          .mobile-nav :global(.admin-nav-btn) {
+            justify-content: center;
           }
         }
       `}</style>
     </header>
   );
 }
-
