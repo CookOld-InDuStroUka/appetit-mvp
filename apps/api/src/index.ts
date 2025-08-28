@@ -1,14 +1,15 @@
 import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
+import { OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcryptjs";
+import authRouter from "./routes/auth";
+import { prisma } from "./prisma";
 
 const app = express();
-const prisma = new PrismaClient();
 const DELIVERY_SURCHARGE = 900;
 
 async function expireBonus(userId: string) {
@@ -273,6 +274,7 @@ ensureDefaultModifiers().catch((e) =>
 );
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+app.use(authRouter);
 
 const uploadDir = path.join(__dirname, "../uploads");
 fs.mkdirSync(uploadDir, { recursive: true });

@@ -1,9 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AuthModal from "./AuthModal";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
-
 export type User = { id: string; phone?: string | null; email?: string | null; name?: string | null; birthDate?: string | null; notificationsEnabled?: boolean; bonus: number };
 
 type AuthCtx = {
@@ -12,8 +9,6 @@ type AuthCtx = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  requestCode: (contact: string) => Promise<void>;
-  verifyCode: (contact: string, code: string, password?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -41,35 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const open = () => setOpen(true);
   const close = () => setOpen(false);
 
-  const requestCode = async (contact: string) => {
-    const payload = contact.includes("@") ? { email: contact } : { phone: contact };
-    await fetch(`${API_BASE}/auth/request-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-  };
-
-  const verifyCode = async (contact: string, code: string, password?: string) => {
-    const payload = contact.includes("@")
-      ? { email: contact, code, password }
-      : { phone: contact, code, password };
-    const res = await fetch(`${API_BASE}/auth/verify-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data.user);
-      close();
-    }
-  };
-
   const logout = () => setUser(null);
 
   return (
-    <Ctx.Provider value={{ user, setUser, isOpen, open, close, requestCode, verifyCode, logout }}>
+    <Ctx.Provider value={{ user, setUser, isOpen, open, close, logout }}>
       {children}
       {isOpen && <AuthModal />}
     </Ctx.Provider>

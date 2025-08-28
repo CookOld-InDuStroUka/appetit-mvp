@@ -1,4 +1,5 @@
 ## 2025-08-28
+- feat(auth): add Telegram Login (widget + HMAC backend + JWT session)
 - feat: show branch-specific new order banner and add button to advance order status
 - feat: send verification codes to phone or email during login
 - feat: unify auth modal for SMS and email code flow
