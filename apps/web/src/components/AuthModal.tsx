@@ -49,13 +49,28 @@ export default function AuthModal() {
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            marginBottom: 16,
+            border: "1px solid var(--header-bg)",
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+        >
           <button
             onClick={() => {
               setMode("phone");
               setStep("input");
             }}
-            style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid var(--border)", background: mode === "phone" ? "var(--accent)" : "var(--card-bg)", color: mode === "phone" ? "#fff" : "var(--text)", cursor: "pointer" }}
+            style={{
+              flex: 1,
+              padding: "8px 0",
+              background: mode === "phone" ? "var(--header-bg)" : "transparent",
+              color: mode === "phone" ? "var(--header-text)" : "var(--text)",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Телефон
           </button>
@@ -64,7 +79,14 @@ export default function AuthModal() {
               setMode("email");
               setStep("input");
             }}
-            style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: "1px solid var(--border)", background: mode === "email" ? "var(--accent)" : "var(--card-bg)", color: mode === "email" ? "#fff" : "var(--text)", cursor: "pointer" }}
+            style={{
+              flex: 1,
+              padding: "8px 0",
+              background: mode === "email" ? "var(--header-bg)" : "transparent",
+              color: mode === "email" ? "var(--header-text)" : "var(--text)",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             Email
           </button>
@@ -86,7 +108,17 @@ export default function AuthModal() {
                     <input type="checkbox" defaultChecked />
                     <span style={{ fontSize: 14 }}>Я принимаю оферту и условия обработки персональных данных</span>
                   </label>
-                  <button onClick={start} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
+                  <button
+                    onClick={start}
+                    style={{
+                      padding: "10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--header-bg)",
+                      background: "var(--header-bg)",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                    }}
+                  >
                     Получить код по SMS
                   </button>
                 </div>
@@ -100,7 +132,17 @@ export default function AuthModal() {
                     onChange={e => setCode(e.target.value)}
                     style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
                   />
-                  <button onClick={confirm} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
+                  <button
+                    onClick={confirm}
+                    style={{
+                      padding: "10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--header-bg)",
+                      background: "var(--header-bg)",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                    }}
+                  >
                     Подтвердить
                   </button>
                 </div>
@@ -116,7 +158,17 @@ export default function AuthModal() {
                     style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
                     placeholder="Email"
                   />
-                  <button onClick={start} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
+                  <button
+                    onClick={start}
+                    style={{
+                      padding: "10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--header-bg)",
+                      background: "var(--header-bg)",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                    }}
+                  >
                     Получить код по email
                   </button>
                 </div>
@@ -130,7 +182,17 @@ export default function AuthModal() {
                     onChange={e => setCode(e.target.value)}
                     style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
                   />
-                  <button onClick={confirm} style={{ padding: "10px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer" }}>
+                  <button
+                    onClick={confirm}
+                    style={{
+                      padding: "10px",
+                      borderRadius: 8,
+                      border: "1px solid var(--header-bg)",
+                      background: "var(--header-bg)",
+                      color: "var(--header-text)",
+                      cursor: "pointer",
+                    }}
+                  >
                     Подтвердить
                   </button>
                 </div>
