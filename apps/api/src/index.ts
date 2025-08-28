@@ -920,7 +920,7 @@ const OrderSchema = z.object({
     addonIds: z.array(z.string()).optional(),
     exclusionIds: z.array(z.string()).optional(),
   })).min(1),
-  paymentMethod: z.enum(["cash", "card"]),
+  paymentMethod: z.enum(["cash", "card", "kaspi"]),
   promoCode: z
     .string()
     .optional()
@@ -948,6 +948,19 @@ const PromoCodeUpsertSchema = z.object({
 const MailingSchema = z.object({
   message: z.string().min(1),
   sendAt: z.string().optional().nullable(),
+});
+
+const KaspiInitSchema = z.object({
+  orderId: z.string(),
+});
+
+const KaspiWebhookSchema = z.object({
+  id: z.string(),
+  status: z.enum(["PAID", "CANCELED", "FAILED"]),
+});
+
+const RefundRequestSchema = z.object({
+  amountKzt: z.number().int().positive().optional(),
 });
 
 app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
@@ -1145,6 +1158,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       address: data.address ?? null,
       zoneId: zoneId ?? null,
       branchId: branchId ?? null,
+      paymentMethod: data.paymentMethod as any,
       subtotal,
       deliveryFee,
       discount,
@@ -1198,6 +1212,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     total,
     bonusEarned,
     bonusUsed,
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
     createdAt: order.createdAt,
   });
 });
@@ -1236,6 +1252,8 @@ app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
       branchId: o.branchId,
       pickupTime: o.pickupTime,
       pickupCode: o.pickupCode,
+      paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus,
       promoCode: o.promoCode?.code,
       subtotal: Number(o.subtotal),
       deliveryFee: Number(o.deliveryFee),
@@ -1540,6 +1558,100 @@ app.patch(`${BASE}/admin/reviews/:id`, async (req: Request, res: Response) => {
 app.delete(`${BASE}/admin/reviews/:id`, async (req: Request, res: Response) => {
   await prisma.review.delete({ where: { id: req.params.id } });
   res.json({ success: true });
+});
+
+app.post(`${BASE}/payments/kaspi/init`, async (req: Request, res: Response) => {
+  const parsed = KaspiInitSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const { orderId } = parsed.data;
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  let payment = await prisma.payment.findFirst({
+    where: { orderId, provider: 'kaspi', status: 'PENDING' },
+  });
+  if (!payment) {
+    const amountKzt = Math.round(Number(order.total) * 100);
+    payment = await prisma.payment.create({
+      data: {
+        orderId,
+        provider: 'kaspi',
+        amountKzt,
+      },
+    });
+  }
+  res.json({
+    paymentId: payment.id,
+    status: payment.status,
+    qrImageUrl: payment.qrImageUrl,
+    paymentUrl: payment.paymentUrl,
+  });
+});
+
+app.post(`${BASE}/payments/kaspi/webhook`, async (req: Request, res: Response) => {
+  const parsed = KaspiWebhookSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const { id, status } = parsed.data;
+  const payment = await prisma.payment.findFirst({ where: { externalId: id } });
+  if (!payment) return res.status(404).json({ error: "Not found" });
+  let newStatus: string = 'FAILED';
+  if (status === "PAID") newStatus = 'SUCCEEDED';
+  else if (status === "CANCELED") newStatus = 'CANCELED';
+  const updated = await prisma.payment.update({
+    where: { id: payment.id },
+    data: { status: newStatus, rawPayload: req.body },
+  });
+  if (newStatus === 'SUCCEEDED') {
+    await prisma.order.update({
+      where: { id: payment.orderId },
+      data: { paymentStatus: 'paid', paidAt: new Date() },
+    });
+  } else if (newStatus === 'CANCELED') {
+    await prisma.order.update({
+      where: { id: payment.orderId },
+      data: { paymentStatus: 'canceled' },
+    });
+  }
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/payments/:id/status`, async (req: Request, res: Response) => {
+  const payment = await prisma.payment.findUnique({ where: { id: req.params.id } });
+  if (!payment) return res.status(404).json({ error: "Not found" });
+  res.json({ status: payment.status });
+});
+
+app.post(`${BASE}/payments/:id/cancel`, async (req: Request, res: Response) => {
+  const payment = await prisma.payment.findUnique({ where: { id: req.params.id } });
+  if (!payment) return res.status(404).json({ error: "Not found" });
+  if (payment.status !== 'PENDING')
+    return res.status(400).json({ error: "Cannot cancel" });
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { status: 'CANCELED' },
+  });
+  await prisma.order.update({
+    where: { id: payment.orderId },
+    data: { paymentStatus: 'canceled' },
+  });
+  res.json({ status: 'CANCELED' });
+});
+
+app.post(`${BASE}/payments/:id/refund`, async (req: Request, res: Response) => {
+  const parsed = RefundRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const payment = await prisma.payment.findUnique({ where: { id: req.params.id } });
+  if (!payment) return res.status(404).json({ error: "Not found" });
+  if (payment.status !== 'SUCCEEDED')
+    return res.status(400).json({ error: "Cannot refund" });
+  const amount = parsed.data.amountKzt ?? payment.amountKzt - payment.refundedAmountKzt;
+  const refund = await prisma.refund.create({
+    data: { paymentId: payment.id, amountKzt: amount, status: 'PENDING' },
+  });
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { refundedAmountKzt: { increment: amount } },
+  });
+  res.json({ refundId: refund.id, status: "REFUND_PENDING" });
 });
 
 const OrderStatusUpdateSchema = z.object({

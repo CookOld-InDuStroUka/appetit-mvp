@@ -20,7 +20,7 @@ type Props = {
 export default function CartModal({ items, onClose, onClear, updateQty, removeItem }: Props) {
   const { promo, setPromo } = useCart();
   const [discount, setDiscount] = useState(0);
-  const [payment, setPayment] = useState<"cash" | "card">("cash");
+  const [payment, setPayment] = useState<"cash" | "card" | "kaspi">("cash");
   const [useBonus, setUseBonus] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user, open: openAuth, setUser } = useAuth();
@@ -460,6 +460,15 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                   onChange={() => setPayment("card")}
                 />
                 Картой
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={payment === "kaspi"}
+                  onChange={() => setPayment("kaspi")}
+                />
+                Kaspi QR
               </label>
             </div>
 

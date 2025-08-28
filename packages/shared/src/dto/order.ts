@@ -15,7 +15,7 @@ export type CreateOrderInput = {
   pickupTime?: string | null;
   pickupCode?: string | null;
   items: OrderItemInput[];
-  paymentMethod: "cash" | "card";
+  paymentMethod: "cash" | "card" | "kaspi";
   promoCode?: string | null;
   userId?: string;
   bonusToUse?: number;
@@ -85,5 +85,7 @@ export type OrderDTO = {
   bonusUsed: number;
   createdAt: string;
   paidAt?: string | null;
+  paymentMethod: "cash" | "card" | "kaspi";
+  paymentStatus: "pending" | "paid" | "canceled" | "failed";
   items: OrderItemDTO[];
 };
