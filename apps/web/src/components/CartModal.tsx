@@ -255,8 +255,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 display: "inline-block",
                 padding: "12px 24px",
                 borderRadius: 8,
-                background: "var(--input-bg)",
-                color: "var(--header-text)",
+                background: "var(--accent)",
+                color: "#fff",
                 textDecoration: "none",
               }}
             >
@@ -482,9 +482,9 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
     )}
     <style jsx>{`
       .cart-modal {
-        background: #0f1b2a;
-        color: #cbd5e1;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--modal-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
       }
     `}</style>
   </>
