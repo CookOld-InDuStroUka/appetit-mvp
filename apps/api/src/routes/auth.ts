@@ -1,29 +1,25 @@
 import express, { Request, Response } from "express";
-import crypto from "node:crypto";
-import jwt from "jsonwebtoken";
 import { prisma } from "../prisma";
+import { signJwt } from "../jwt";
+import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
+import bcrypt from "bcryptjs";
 
 const router = express.Router();
-const BOT_TOKEN = process.env.TG_BOT_TOKEN!;
 const JWT_SECRET = process.env.JWT_SECRET!;
-const COOKIE_DOMAIN = new URL(process.env.PUBLIC_ORIGIN!).hostname;
 
-function checkTelegramAuth(data: Record<string, string>): boolean {
-  const { hash, auth_date } = data;
-  const checkString = Object.keys(data)
-    .filter((k) => k !== "hash")
-    .sort()
-    .map((k) => `${k}=${data[k]}`)
-    .join("\n");
-  const secretKey = crypto.createHash("sha256").update(BOT_TOKEN).digest();
-  const hmac = crypto.createHmac("sha256", secretKey).update(checkString).digest("hex");
-  const ttlOk = (Date.now() / 1000 - Number(auth_date)) < 120;
-  return hmac === hash && ttlOk;
+function normalizePhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const normalized = digits.startsWith("8")
+    ? "7" + digits.slice(1)
+    : digits.startsWith("7")
+    ? digits
+    : "7" + digits;
+  return "+" + normalized;
 }
 
 router.post("/auth/telegram", async (req: Request, res: Response) => {
-  const data = req.body as Record<string, string>;
-  if (!checkTelegramAuth(data)) return res.status(401).json({ ok: false });
+  const data = req.body as TelegramAuthData;
+  if (!verifyTelegramAuth(data)) return res.status(401).json({ ok: false });
 
   const telegramId = String(data.id);
   const name =
@@ -32,24 +28,78 @@ router.post("/auth/telegram", async (req: Request, res: Response) => {
     "User";
 
   const user = await prisma.user.upsert({
-    where: { telegramId },
-    create: { telegramId, name },
+    where: { telegramId } as any,
+    create: { telegramId, name } as any,
     update: { name },
-    select: { id: true, name: true, telegramId: true, phone: true },
+    select: { id: true, name: true, telegramId: true, phone: true } as any,
   });
 
-  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
 
-  res.cookie("appetit_jwt", token, {
+  const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
+  const host = new URL(origin).hostname;
+  const cookieOptions: express.CookieOptions = {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: origin.startsWith("https://"),
     path: "/",
-    domain: COOKIE_DOMAIN,
     maxAge: 30 * 24 * 3600 * 1000,
-  });
+  };
+  if (host !== "localhost") cookieOptions.domain = host;
+
+  res.cookie("appetit_jwt", token, cookieOptions);
 
   return res.json({ ok: true, user });
+});
+
+router.post("/auth/phone", async (req: Request, res: Response) => {
+  const { phone, name, password } = req.body as {
+    phone?: string;
+    name?: string;
+    password?: string;
+  };
+  if (!phone || !password)
+    return res.status(400).json({ ok: false, error: "phone and password required" });
+
+  const normalized = normalizePhone(phone);
+  let user = await prisma.user.findUnique({ where: { phone: normalized } });
+
+  if (!user) {
+    const hashed = await bcrypt.hash(password, 10);
+    user = await prisma.user.create({
+      data: { phone: normalized, name, password: hashed } as any,
+    });
+  } else {
+    if (!user.password) {
+      const hashed = await bcrypt.hash(password, 10);
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashed, name: name || user.name },
+      });
+    } else if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(400).json({ ok: false, error: "wrong password" });
+    } else if (name && !user.name) {
+      user = await prisma.user.update({ where: { id: user.id }, data: { name } });
+    }
+  }
+
+  const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+
+  const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
+  const host = new URL(origin).hostname;
+  const cookieOptions: express.CookieOptions = {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: origin.startsWith("https://"),
+    path: "/",
+    maxAge: 30 * 24 * 3600 * 1000,
+  };
+  if (host !== "localhost") cookieOptions.domain = host;
+
+  res.cookie("appetit_jwt", token, cookieOptions);
+
+  const { id, name: userName, telegramId, phone: userPhone } = user;
+  return res.json({ ok: true, user: { id, name: userName, telegramId, phone: userPhone } });
 });
 
 export default router;

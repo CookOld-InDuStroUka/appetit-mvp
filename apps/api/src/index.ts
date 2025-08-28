@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { OrderStatus, OrderType } from "@prisma/client";
+import { OrderStatus, OrderType, PaymentStatus } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
@@ -12,7 +12,11 @@ import { prisma } from "./prisma";
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(cors({ origin: process.env.PUBLIC_ORIGIN, credentials: true }));
+const allowedOrigins = [
+  process.env.PUBLIC_ORIGIN,
+  "http://localhost:3000",
+].filter(Boolean);
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use('/api/v1', authRouter);
@@ -1740,9 +1744,9 @@ app.post(`${BASE}/payments/kaspi/webhook`, async (req: Request, res: Response) =
   const { id, status } = parsed.data;
   const payment = await prisma.payment.findFirst({ where: { externalId: id } });
   if (!payment) return res.status(404).json({ error: "Not found" });
-  let newStatus: string = 'FAILED';
-  if (status === "PAID") newStatus = 'SUCCEEDED';
-  else if (status === "CANCELED") newStatus = 'CANCELED';
+  let newStatus: PaymentStatus = PaymentStatus.FAILED;
+  if (status === "PAID") newStatus = PaymentStatus.SUCCEEDED;
+  else if (status === "CANCELED") newStatus = PaymentStatus.CANCELED;
   const updated = await prisma.payment.update({
     where: { id: payment.id },
     data: { status: newStatus, rawPayload: req.body },

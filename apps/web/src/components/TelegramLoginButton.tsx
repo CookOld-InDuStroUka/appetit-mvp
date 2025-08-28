@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 declare global {
   interface Window {
@@ -7,17 +8,22 @@ declare global {
 }
 
 export default function TelegramLoginButton() {
+  const { setUser, close } = useAuth();
   useEffect(() => {
     window.onTelegramAuth = async (user) => {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/telegram`, {
+      const r = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/telegram`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(user),
       });
-      location.reload();
+      if (r.ok) {
+        const data = await r.json();
+        setUser(data.user);
+        close();
+      }
     };
-  }, []);
+  }, [setUser, close]);
 
   if (!process.env.NEXT_PUBLIC_TG_BOT_NAME) return null;
 

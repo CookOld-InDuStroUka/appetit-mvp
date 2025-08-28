@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "./AuthContext";
 import TelegramLoginButton from "./TelegramLoginButton";
+import PhoneLoginForm from "./PhoneLoginForm";
 
 export default function AuthModal() {
   const { close } = useAuth();
+  const [tab, setTab] = useState<"telegram" | "phone">("telegram");
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
@@ -32,7 +34,31 @@ export default function AuthModal() {
             ×
           </button>
         </div>
-        <TelegramLoginButton />
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+          <button
+            onClick={() => setTab("telegram")}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid #ccc",
+              background: tab === "telegram" ? "#eee" : "transparent",
+              cursor: "pointer",
+            }}
+          >
+            Telegram
+          </button>
+          <button
+            onClick={() => setTab("phone")}
+            style={{
+              padding: "4px 8px",
+              border: "1px solid #ccc",
+              background: tab === "phone" ? "#eee" : "transparent",
+              cursor: "pointer",
+            }}
+          >
+            Телефон
+          </button>
+        </div>
+        {tab === "telegram" ? <TelegramLoginButton /> : <PhoneLoginForm />}
       </div>
     </div>
   );
