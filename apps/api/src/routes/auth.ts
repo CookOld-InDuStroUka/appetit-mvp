@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import crypto from "node:crypto";
-import jwt from "jsonwebtoken";
 import { prisma } from "../prisma";
+import { signJwt } from "../jwt";
 
 const router = express.Router();
 const BOT_TOKEN = process.env.TG_BOT_TOKEN!;
@@ -32,13 +32,13 @@ router.post("/auth/telegram", async (req: Request, res: Response) => {
     "User";
 
   const user = await prisma.user.upsert({
-    where: { telegramId },
-    create: { telegramId, name },
+    where: { telegramId } as any,
+    create: { telegramId, name } as any,
     update: { name },
-    select: { id: true, name: true, telegramId: true, phone: true },
+    select: { id: true, name: true, telegramId: true, phone: true } as any,
   });
 
-  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
 
   res.cookie("appetit_jwt", token, {
     httpOnly: true,

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { OrderStatus, OrderType } from "@prisma/client";
+import { OrderStatus, OrderType, PaymentStatus } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
@@ -1740,9 +1740,9 @@ app.post(`${BASE}/payments/kaspi/webhook`, async (req: Request, res: Response) =
   const { id, status } = parsed.data;
   const payment = await prisma.payment.findFirst({ where: { externalId: id } });
   if (!payment) return res.status(404).json({ error: "Not found" });
-  let newStatus: string = 'FAILED';
-  if (status === "PAID") newStatus = 'SUCCEEDED';
-  else if (status === "CANCELED") newStatus = 'CANCELED';
+  let newStatus: PaymentStatus = PaymentStatus.FAILED;
+  if (status === "PAID") newStatus = PaymentStatus.SUCCEEDED;
+  else if (status === "CANCELED") newStatus = PaymentStatus.CANCELED;
   const updated = await prisma.payment.update({
     where: { id: payment.id },
     data: { status: newStatus, rawPayload: req.body },
