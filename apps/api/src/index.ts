@@ -287,8 +287,10 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Invalid code" });
   }
 
-  const user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
-  if (!user) return res.status(400).json({ error: "Account not found" });
+  let user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
+  if (!user) {
+    user = await prisma.user.create({ data: phone ? { phone } : { email: email! } });
+  }
 
   await prisma.authCode.delete({ where: { contact } });
 
