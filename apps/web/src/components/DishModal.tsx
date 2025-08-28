@@ -8,6 +8,7 @@ type DishLight = {
   description?: string;
   imageUrl?: string;
   basePrice: number;
+  category?: string;
 };
 
 type DishDetails = DishLight & {
@@ -242,10 +243,12 @@ export default function DishModal({ dish, onClose }: Props) {
             onClick={() =>
               addItem({
                 id: dish.id + JSON.stringify(selectedAddons) + JSON.stringify(selectedExcludedNames),
+                dishId: dish.id,
                 name: dish.name,
                 price: unitTotal,
                 imageUrl: imgSrc,
                 qty,
+                category: dish.category,
                 // @ts-ignore — доп.поля для корзины
                 addons: selectedAddonObjs.map((a: any) => ({ name: a.name, price: a.price })),
                 // @ts-ignore

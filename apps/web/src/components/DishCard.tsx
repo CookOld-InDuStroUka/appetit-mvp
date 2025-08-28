@@ -9,6 +9,7 @@ type Dish = {
   minPrice?: number;
   basePrice: number;
   status?: { name: string; color: string };
+  category?: string;
 };
 
 type Props = { dish: Dish; onClick: () => void; size?: "sm" | "md" | "lg" };
@@ -135,7 +136,7 @@ export default function DishCard({ dish, onClick, size = "md" }: Props) {
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addItem({ id: dish.id, name: displayName, price: dish.basePrice, imageUrl: src, qty: 1 });
+    addItem({ id: dish.id, dishId: dish.id, name: displayName, price: dish.basePrice, imageUrl: src, qty: 1, category: dish.category });
   };
 
   return (

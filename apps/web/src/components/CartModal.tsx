@@ -86,9 +86,14 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
   const discountAmount = Math.round((total * discount) / 100);
   const totalAfterDiscount = total - discountAmount;
   const availableBonus = user?.bonus ?? 0;
-  const maxBonus = Math.max(totalAfterDiscount - 10, 0);
+  const eligibleTotal = items
+    .filter((i) => i.category !== "drinks")
+    .reduce((sum, i) => sum + i.price * i.qty, 0);
+  const discountOnEligible = total > 0 ? Math.round(discountAmount * (eligibleTotal / total)) : 0;
+  const eligibleAfterDiscount = eligibleTotal - discountOnEligible;
+  const maxBonus = Math.floor(Math.max(eligibleAfterDiscount, 0) * 0.3);
   const bonusToApply = useBonus ? Math.min(availableBonus, maxBonus) : 0;
-  const bonusEarned = Math.floor((totalAfterDiscount - bonusToApply) * 0.1);
+  const bonusEarned = Math.floor((eligibleAfterDiscount - bonusToApply) * 0.1);
 
   const handleBackdrop = () => onClose();
   const stopProp = (e: React.MouseEvent) => e.stopPropagation();

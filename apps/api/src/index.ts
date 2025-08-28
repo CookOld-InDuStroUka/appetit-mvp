@@ -958,7 +958,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   // fetch all dishes/variants referenced
   const dishes = await prisma.dish.findMany({
     where: { id: { in: data.items.map((i) => i.dishId) } },
-    include: { variants: true },
+    include: { variants: true, category: true },
   });
 
   const modifierIds = data.items.flatMap((i) => [
@@ -974,6 +974,7 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     unit: number;
     addonNames: string[];
     exclusionNames: string[];
+    isDrink: boolean;
   }[];
 
   for (const item of data.items) {
@@ -1002,7 +1003,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
       .filter((m) => m.type === "addon")
       .reduce((sum, m) => sum + Number(m.price), 0);
     const unit = base + variantDelta + addonTotal;
-    prepared.push({ item, unit, addonNames, exclusionNames });
+    const isDrink = d.category?.slug === "drinks";
+    prepared.push({ item, unit, addonNames, exclusionNames, isDrink });
   }
 
   const subtotal = prepared.reduce(
@@ -1010,10 +1012,16 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     0
   );
 
+  const eligibleSubtotal = prepared.reduce(
+    (sum, p) => (p.isDrink ? sum : sum + p.unit * p.item.qty),
+    0
+  );
+
   let deliveryFee = data.type === "delivery" ? DELIVERY_SURCHARGE : 0;
   let zoneId: string | undefined;
   let branchId: string | undefined;
   let discount = 0;
+  let discountRate = 0;
   let promoCodeId: string | undefined;
   let pickupCode: string | undefined;
   let pickupTime: Date | null = null;
@@ -1063,9 +1071,15 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     ) {
       const base = promo.appliesToDelivery ? subtotal + deliveryFee : subtotal;
       discount = Math.round((base * promo.discount) / 100);
+      discountRate = promo.discount / 100;
       promoCodeId = promo.id;
     }
   }
+
+  const eligibleAfterDiscount = Math.max(
+    eligibleSubtotal - Math.round(eligibleSubtotal * discountRate),
+    0
+  );
 
   let user = null as any;
   if (data.userId) {
@@ -1090,11 +1104,11 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
   }
 
   const availableBonus = user?.bonus ?? 0;
-  const maxBonus = Math.floor(Math.max(subtotal - discount, 0) * 0.3);
+  const maxBonus = Math.floor(eligibleAfterDiscount * 0.3);
   const bonusUsed = Math.min(data.bonusToUse ?? 0, availableBonus, maxBonus);
   const total = subtotal + deliveryFee - discount - bonusUsed;
 
-  const bonusEarned = Math.floor((subtotal - discount) * 0.1);
+  const bonusEarned = Math.floor((eligibleAfterDiscount - bonusUsed) * 0.1);
   const bonusDelta = bonusEarned - bonusUsed;
 
   await prisma.user.update({
