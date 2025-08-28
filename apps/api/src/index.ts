@@ -12,7 +12,11 @@ import { prisma } from "./prisma";
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(cors({ origin: process.env.PUBLIC_ORIGIN, credentials: true }));
+const allowedOrigins = [
+  process.env.PUBLIC_ORIGIN,
+  "http://localhost:3000",
+].filter(Boolean);
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use('/api/v1', authRouter);
