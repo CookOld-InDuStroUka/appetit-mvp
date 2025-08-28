@@ -12,7 +12,7 @@ export default function DeliveryToggle({ value, onChange, style }: Props) {
       style={{
         position: "relative",
         display: "flex",
-        border: "1px solid var(--border)",
+        border: "1px solid var(--header-bg)",
         borderRadius: 8,
         overflow: "hidden",
         ...style,
@@ -25,7 +25,7 @@ export default function DeliveryToggle({ value, onChange, style }: Props) {
           bottom: 0,
           width: "50%",
           left: value === "delivery" ? 0 : "50%",
-          background: "var(--accent)",
+          background: "var(--header-bg)",
           transition: "left 0.2s",
         }}
       />
@@ -37,7 +37,8 @@ export default function DeliveryToggle({ value, onChange, style }: Props) {
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: value === "delivery" ? "#fff" : "var(--text)",
+          color:
+            value === "delivery" ? "var(--header-text)" : "var(--text)",
           zIndex: 1,
           display: "flex",
           alignItems: "center",
@@ -56,7 +57,8 @@ export default function DeliveryToggle({ value, onChange, style }: Props) {
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: value === "pickup" ? "#fff" : "var(--text)",
+          color:
+            value === "pickup" ? "var(--header-text)" : "var(--text)",
           zIndex: 1,
           display: "flex",
           alignItems: "center",
