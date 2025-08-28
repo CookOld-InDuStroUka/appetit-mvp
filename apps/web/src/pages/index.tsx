@@ -6,7 +6,8 @@ import MainMenu, { MenuItem } from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 import { PromoSlide } from "../types/promo";
-import MobileMenu from "../components/MobileMenu";
+import MobileMenu, { MobileMenuItem } from "../components/MobileMenu";
+import DeliveryToggle from "../components/DeliveryToggle";
 import { useDelivery } from "../components/DeliveryContext";
 import { useLang } from "../components/LangContext";
 
@@ -52,7 +53,7 @@ export default function Home() {
   >([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
   const [slides, setSlides] = useState<PromoSlide[]>([]);
-  const { branch } = useDelivery();
+  const { branch, mode, setMode, open } = useDelivery();
   const { lang } = useLang();
 
   // грузим категории и блюда
@@ -103,9 +104,15 @@ export default function Home() {
     }
   }, []);
 
+  const mobileItems: MobileMenuItem[] = sections.map((sec) => ({
+    title: sec.name,
+    href: `#${sec.slug}`,
+  }));
+
   return (
     <>
       <Header />
+      <MobileMenu items={mobileItems} />
       <div className="page-layout">
         <MainMenu
           items={sections.map<MenuItem>((sec) => ({
@@ -115,10 +122,10 @@ export default function Home() {
         />
 
         <main className="main">
+          <div className="mobile-toggle">
+            <DeliveryToggle value={mode} onChange={(v) => { setMode(v); open(); }} />
+          </div>
           <PromoSlider slides={slides.length ? slides : undefined} />
-
-          {/* мобильное меню оставляем как есть */}
-          <MobileMenu items={sections.map((sec) => sec.name)} />
 
           {sections.map((sec) => (
             <section key={sec.slug} id={sec.slug} className="sec">
@@ -176,6 +183,11 @@ export default function Home() {
           overflow-x: hidden;
         }
 
+        .mobile-toggle {
+          display: none;
+          margin-bottom: 12px;
+        }
+
         .sec {
           margin: 28px 0 36px;
           scroll-margin-top: 90px; /* отступ при фикс. шапке/меню */
@@ -215,6 +227,9 @@ export default function Home() {
           }
         }
         @media (max-width: 560px) {
+          .mobile-toggle {
+            display: flex;
+          }
           .grid-cards {
             grid-template-columns: repeat(
               auto-fill,

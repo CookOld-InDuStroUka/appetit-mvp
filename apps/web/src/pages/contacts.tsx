@@ -1,6 +1,7 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useLang } from "../components/LangContext";
+import SupportChat from "../components/SupportChat";
 
 export default function ContactsPage() {
   const { t } = useLang();
@@ -12,6 +13,8 @@ export default function ContactsPage() {
         <p>
           {t("contactPhone")} <a href="tel:+77713755711">{t("contactsPagePhone")}</a>
         </p>
+        <h2>{t("supportChat")}</h2>
+        <SupportChat />
       </main>
       <Footer />
     </>

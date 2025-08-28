@@ -119,6 +119,11 @@ const translations: Record<Lang, Record<string, string>> = {
         afterSend: "После нажатия кнопки откроется окно отправки письма в вашем почтовом клиенте.",
         vacanciesTitle: "Вакансии",
         contactsPagePhone: "+7 771 375 57 11",
+        menu: "Меню",
+        cart: "Корзина",
+        support: "Поддержка",
+        supportChat: "Чат с поддержкой",
+        messagePlaceholder: "Сообщение...",
       },
       kz: {
         tagline: "дәмді шаурма",
@@ -230,6 +235,11 @@ const translations: Record<Lang, Record<string, string>> = {
         afterSend: "Түймені басқаннан кейін пошта клиентінде хат жіберу терезесі ашылады.",
         vacanciesTitle: "Вакансиялар",
         contactsPagePhone: "+7 771 375 57 11",
+        menu: "Мәзір",
+        cart: "Себет",
+        support: "Қолдау",
+        supportChat: "Қолдау чаты",
+        messagePlaceholder: "Хабарлама...",
       },
     };
 

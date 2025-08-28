@@ -11,6 +11,12 @@ export default function ProfilePage() {
   const { user, setUser, open: openAuth, logout } = useAuth();
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [showEdit, setShowEdit] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setPhotoUrl(URL.createObjectURL(file));
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +58,17 @@ export default function ProfilePage() {
           </button>
         </div>
         <p>Бонусы: {user.bonus ?? 0} ₸</p>
+        <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 20 }}>
+          <div style={{ width: 120, height: 120, borderRadius: "50%", overflow: "hidden", background: "var(--border)" }}>
+            {photoUrl && (
+              <img src={photoUrl} alt="Фото профиля" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            )}
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: 8 }}>Загрузить фото</label>
+            <input type="file" accept="image/*" onChange={handlePhoto} />
+          </div>
+        </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ margin: 0 }}>Данные</h2>
           <button
@@ -68,13 +85,30 @@ export default function ProfilePage() {
             Изменить
           </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400 }}>
-          <div><strong>Имя:</strong> {user.name ?? "—"}</div>
-          <div><strong>Телефон:</strong> {user.phone ?? "—"}</div>
-          <div><strong>Почта:</strong> {user.email ?? "—"}</div>
-          <div><strong>Дата рождения:</strong> {user.birthDate ? user.birthDate.slice(0, 10) : "—"}</div>
-          <div><strong>Пароль:</strong> ********</div>
-        </div>
+        <table style={{ borderCollapse: "collapse", maxWidth: 400 }}>
+          <tbody>
+            <tr>
+              <th style={{ textAlign: "left", padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>Имя</th>
+              <td style={{ padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>{user.name ?? "—"}</td>
+            </tr>
+            <tr>
+              <th style={{ textAlign: "left", padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>Телефон</th>
+              <td style={{ padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>{user.phone ?? "—"}</td>
+            </tr>
+            <tr>
+              <th style={{ textAlign: "left", padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>Почта</th>
+              <td style={{ padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>{user.email ?? "—"}</td>
+            </tr>
+            <tr>
+              <th style={{ textAlign: "left", padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>Дата рождения</th>
+              <td style={{ padding: "4px 8px", borderBottom: "1px solid var(--border)" }}>{user.birthDate ? user.birthDate.slice(0, 10) : "—"}</td>
+            </tr>
+            <tr>
+              <th style={{ textAlign: "left", padding: "4px 8px" }}>Пароль</th>
+              <td style={{ padding: "4px 8px" }}>********</td>
+            </tr>
+          </tbody>
+        </table>
         <h2>История заказов</h2>
         {orders.length === 0 ? (
           <p>Заказов пока нет</p>

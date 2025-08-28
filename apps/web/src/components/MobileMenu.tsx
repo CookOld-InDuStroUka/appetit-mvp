@@ -1,16 +1,21 @@
 import React from "react";
 
+export interface MobileMenuItem {
+  title: string;
+  href: string;
+}
+
 interface Props {
-  items: string[];
+  items: MobileMenuItem[];
 }
 
 export default function MobileMenu({ items }: Props) {
   return (
     <nav className="mobile-menu">
       <ul>
-        {items.map((title) => (
-          <li key={title}>
-            <a href={`#${title}`}>{title}</a>
+        {items.map((item) => (
+          <li key={item.href}>
+            <a href={item.href}>{item.title}</a>
           </li>
         ))}
       </ul>

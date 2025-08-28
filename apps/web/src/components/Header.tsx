@@ -18,6 +18,8 @@ export default function Header() {
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isSearchOpen, setSearchOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
   const { lang, setLang, t } = useLang();
@@ -30,6 +32,7 @@ export default function Header() {
 
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
   useEffect(() => {
@@ -118,31 +121,114 @@ export default function Header() {
         )
       : null;
 
+  const menuPortal =
+    typeof document !== "undefined" && isMenuOpen
+      ? createPortal(
+          <div className="drawer-backdrop" onClick={() => setMenuOpen(false)}>
+          <div className="drawer" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="drawer-lang"
+              type="button"
+              onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
+            >
+              {lang === "ru" ? "Русский" : "Қазақша"}
+            </button>
+            {user ? (
+              <Link href="/profile" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>
+                  {user.name || user.phone || user.email}
+                </a>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  openAuth();
+                  setMenuOpen(false);
+                }}
+              >
+                {t("login")}
+              </button>
+            )}
+            <Link href="/" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("menu")}</a>
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setCartOpen(true);
+                setMenuOpen(false);
+              }}
+            >
+              {t("cart")}
+            </button>
+            <Link href="/reviews" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("reviews")}</a>
+            </Link>
+            <Link href="/delivery" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("deliveryPayment")}</a>
+            </Link>
+            <Link href="/bonus" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("bonusProgram")}</a>
+            </Link>
+            <Link href="/vacancies" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("vacancies")}</a>
+            </Link>
+          </div>
+        </div>,
+        document.body
+      )
+      : null;
+
   return (
     <>
       <header className="hdr">
         <div className="row">
-          <Brand />
+          <button
+            className="menu-btn"
+            type="button"
+            aria-label="Меню"
+            onClick={() => setMenuOpen(true)}
+          >
+            <MenuIcon />
+          </button>
 
-          <div ref={searchRef} className="search">
-            <input
-              className="search__input"
-              placeholder={t("search")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
-            />
-            <button
-              className="search__btn"
-              onClick={searchSubmit}
-              aria-label={t("searchBtn")}
-            >
-              <SearchIcon />
-            </button>
+          <div className={`center${isSearchOpen ? " search-open" : ""}`}>
+            <div className="brand-wrap">
+              <Brand />
+            </div>
+
+            <div ref={searchRef} className="search">
+              <input
+                ref={inputRef}
+                className="search__input"
+                placeholder={t("search")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
+                onBlur={() => {
+                  if (!q) setSearchOpen(false);
+                }}
+              />
+              <button
+                className="search__btn"
+                onClick={() => {
+                  if (!isSearchOpen) {
+                    setSearchOpen(true);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  } else {
+                    searchSubmit();
+                  }
+                }}
+                aria-label={t("searchBtn")}
+              >
+                <SearchIcon />
+              </button>
+            </div>
           </div>
 
           <nav className="right">
-            <button className="link" type="button" onClick={openDelivery}>
+            <button className="link link--hide-sm" type="button" onClick={openDelivery}>
               {deliveryLabel}
             </button>
             <button
@@ -165,13 +251,20 @@ export default function Header() {
 
             {user ? (
               <Link href="/profile" legacyBehavior>
-                <a className="link link--auth">
+                <a
+                  className="link link--auth"
+                  aria-label={user.name || user.phone || user.email || ""}
+                >
                   <UserIcon />
                   <span>{user.name || user.phone || user.email}</span>
                 </a>
               </Link>
             ) : (
-              <button onClick={openAuth} className="link link--auth">
+              <button
+                onClick={openAuth}
+                className="link link--auth"
+                aria-label={t("login")}
+              >
                 <UserIcon />
                 <span>{t("login")}</span>
               </button>
@@ -200,9 +293,36 @@ export default function Header() {
             height: 56px;
             padding: 0 16px;
             display: grid;
-            grid-template-columns: 1fr minmax(420px, 560px) 1fr;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 16px;
+          }
+
+          .center {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-self: center;
+            width: 100%;
+          }
+
+          .menu-btn {
+            display: none;
+            background: transparent;
+            border: 0;
+            color: inherit;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+          }
+          .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+          }
+
+          .brand-wrap {
+            display: flex;
+            align-items: center;
           }
 
           /* Поиск */
@@ -214,6 +334,8 @@ export default function Header() {
             border-radius: 8px;
             background: #5a6773;
             border: 1px solid #6a7783;
+            transition: width 0.2s ease;
+            overflow: hidden;
           }
           .search__input {
             flex: 1;
@@ -302,19 +424,79 @@ export default function Header() {
           /* Мобилка */
           @media (max-width: 820px) {
             .row {
-              grid-template-columns: 1fr 1fr;
+              grid-template-columns: auto 1fr auto;
               gap: 10px;
-              height: auto;
+              height: 56px;
               padding: 8px 12px;
             }
-            .search { grid-column: 1 / -1; height: 36px; }
+            .menu-btn { display: inline-flex; }
+            .center { gap: 8px; }
+            .search {
+              width: 36px;
+              padding: 0;
+            }
+            .search__input { display: none; }
+            .center.search-open .brand-wrap { display: none; }
+            .center.search-open .search {
+              width: 100%;
+              padding: 0 2px 0 10px;
+            }
+            .center.search-open .search__input {
+              display: block;
+              flex: 1;
+            }
             .link--hide-sm { display: none; }
-            .right { gap: 10px; }
+            .right {
+              display: flex;
+              gap: 8px;
+            }
+            .link--auth span,
+            .link--cart .price {
+              display: none;
+            }
+          }
+        `}</style>
+        <style jsx global>{`
+          .drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+          }
+          .drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 260px;
+            background: #0f1b2a;
+            color: #fff;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .drawer a,
+          .drawer button {
+            background: none;
+            border: 0;
+            color: inherit;
+            text-align: left;
+            padding: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+          }
+          .drawer a:hover,
+          .drawer button:hover {
+            color: #ffffff;
           }
         `}</style>
       </header>
 
       {suggestionPortal}
+
+      {menuPortal}
 
       {isCartOpen && (
         <CartModal
@@ -422,6 +604,16 @@ function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
       <path d="M6 9l6 6 6-6" stroke="currentColor" />
+    </svg>
+  );
+}
+
+function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" {...props}>
+      <rect width="16" height="2" rx="1" fill="currentColor" />
+      <rect y="5" width="16" height="2" rx="1" fill="currentColor" />
+      <rect y="10" width="16" height="2" rx="1" fill="currentColor" />
     </svg>
   );
 }

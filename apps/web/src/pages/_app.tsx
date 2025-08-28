@@ -1,4 +1,5 @@
 import React from "react";
+import Head from "next/head";
 import type { AppProps } from "next/app";
 import "../styles/globals.css";
 import { CartProvider } from "../components/CartContext";
@@ -70,6 +71,10 @@ export default function App({ Component, pageProps }: AppProps) {
           <AuthProvider>
             <DeliveryProvider>
               <CartProvider>
+                <Head>
+                  <title>APPETIT — вкусная шаурма</title>
+                  <link rel="icon" href="/logo-appetit.svg" />
+                </Head>
                 <Component {...pageProps} />
                 <BackToTop />
               </CartProvider>

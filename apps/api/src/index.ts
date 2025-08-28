@@ -1,14 +1,22 @@
 import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { PrismaClient, OrderStatus, OrderType } from "@prisma/client";
+import cookieParser from "cookie-parser";
+import { OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcryptjs";
+import authRouter from "./routes/auth";
+import { prisma } from "./prisma";
 
 const app = express();
-const prisma = new PrismaClient();
+app.set('trust proxy', 1);
+app.use(cors({ origin: process.env.PUBLIC_ORIGIN, credentials: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+app.use('/api/v1', authRouter);
+app.get('/api/v1/health', (_req: Request, res: Response) => res.json({ ok: true }));
 const DELIVERY_SURCHARGE = 900;
 
 async function expireBonus(userId: string) {
@@ -83,12 +91,91 @@ process.on("uncaughtException", (err: unknown) => {
   logToFile("Uncaught exception", err);
 });
 
+function normalizePhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const normalized = digits.startsWith("8")
+    ? "7" + digits.slice(1)
+    : digits.startsWith("7")
+    ? digits
+    : "7" + digits;
+  return "+" + normalized;
+}
+
 async function sendSms(to: string, code: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const service = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!sid || !token || !service) {
+    console.log(`Auth code for ${to}: ${code}`);
+    return;
+  }
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  try {
+    const res = await fetch(
+      `https://verify.twilio.com/v2/Services/${service}/Verifications`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: normalizePhone(to),
+          Channel: "sms",
+        }).toString(),
+      }
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      logToFile("Failed to request SMS verification", body);
+    }
+  } catch (err) {
+    logToFile("Failed to send SMS", err);
+  }
+}
+
+async function verifySms(to: string, code: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const service = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!sid || !token || !service) {
+    return true;
+  }
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  try {
+    const res = await fetch(
+      `https://verify.twilio.com/v2/Services/${service}/VerificationCheck`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: normalizePhone(to),
+          Code: code,
+        }).toString(),
+      }
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      logToFile("Failed to verify SMS", body);
+      return false;
+    }
+    const data = await res.json();
+    return data.status === "approved";
+  } catch (err) {
+    logToFile("Failed to verify SMS", err);
+    return false;
+  }
+}
+
+async function sendSmsMessage(to: string, message: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
   if (!sid || !token || !from) {
-    console.log(`Auth code for ${to}: ${code}`);
+    console.log(`SMS to ${to}: ${message}`);
     return;
   }
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
@@ -99,7 +186,7 @@ async function sendSms(to: string, code: string) {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: to, From: from, Body: `Ваш код: ${code}` }).toString(),
+      body: new URLSearchParams({ To: normalizePhone(to), From: from, Body: message }).toString(),
     });
   } catch (err) {
     logToFile("Failed to send SMS", err);
@@ -192,8 +279,6 @@ async function ensureDefaultModifiers() {
 ensureDefaultModifiers().catch((e) =>
   console.error("Failed to ensure default modifiers", e)
 );
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
 
 const uploadDir = path.join(__dirname, "../uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -223,33 +308,39 @@ const AuthVerifySchema = z
     phone: z.string().min(5).optional(),
     email: z.string().email().optional(),
     code: z.string().min(4).max(6),
+    password: z.string().min(4).optional(),
   })
   .refine((d) => d.phone || d.email, { message: "phone or email required" });
 // allow shorter passwords so the seeded "admin" credentials work
 const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
+const UserLoginSchema = z.object({ phone: z.string().min(5), password: z.string().min(4) });
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const { phone, email } = parsed.data;
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const email = parsed.data.email;
   const where = phone ? { phone } : { email: email! };
   let existing = await prisma.user.findUnique({ where });
   if (!existing) {
     existing = await prisma.user.create({ data: where });
   }
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  await prisma.authCode.upsert({
-    where: { contact: phone ?? email! },
-    update: { code, expiresAt, createdAt: new Date() },
-    create: { contact: phone ?? email!, code, expiresAt }
-  });
-
-  if (phone) await sendSms(phone, code);
-  if (email) await sendEmail(email, code);
+  if (phone) {
+    await sendSms(phone, "");
+  }
+  if (email) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await prisma.authCode.upsert({
+      where: { contact: email },
+      update: { code, expiresAt, createdAt: new Date() },
+      create: { contact: email, code, expiresAt },
+    });
+    await sendEmail(email, code);
+  }
   res.json({ ok: true });
 });
 
@@ -257,19 +348,65 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   const parsed = AuthVerifySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const { phone, email, code } = parsed.data;
-  const contact = phone ?? email!;
-  const record = await prisma.authCode.findUnique({ where: { contact } });
-  if (!record || record.code !== code || record.expiresAt < new Date()) {
-    return res.status(400).json({ error: "Invalid code" });
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const { email, code, password } = parsed.data;
+  if (phone) {
+    const ok = await verifySms(phone, code);
+    if (!ok) return res.status(400).json({ error: "Invalid code" });
+  } else {
+    const contact = email!;
+    const record = await prisma.authCode.findUnique({ where: { contact } });
+    if (!record || record.code !== code || record.expiresAt < new Date()) {
+      return res.status(400).json({ error: "Invalid code" });
+    }
+    await prisma.authCode.delete({ where: { contact } });
   }
 
-  const user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
-  if (!user) return res.status(400).json({ error: "Account not found" });
+  let user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
+  if (!user) {
+    const data: any = phone ? { phone } : { email: email! };
+    if (password) data.password = await bcrypt.hash(password, 10);
+    user = await prisma.user.create({ data });
+  } else if (password && !user.password) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash(password, 10) },
+    });
+    user = await prisma.user.findUnique({ where: { id: user.id } });
+  }
 
-  await prisma.authCode.delete({ where: { contact } });
+  res.json({
+    user: {
+      id: user!.id,
+      phone: user!.phone,
+      email: user!.email,
+      name: user!.name,
+      birthDate: user!.birthDate,
+      notificationsEnabled: user!.notificationsEnabled,
+      bonus: user!.bonus,
+    },
+  });
+});
 
-  res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
+app.post(`${BASE}/auth/login`, async (req: Request, res: Response) => {
+  const parsed = UserLoginSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const phone = normalizePhone(parsed.data.phone);
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user || !user.password || !(await bcrypt.compare(parsed.data.password, user.password))) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
+  res.json({
+    user: {
+      id: user.id,
+      phone: user.phone,
+      email: user.email,
+      name: user.name,
+      birthDate: user.birthDate,
+      notificationsEnabled: user.notificationsEnabled,
+      bonus: user.bonus,
+    },
+  });
 });
 
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
@@ -438,7 +575,15 @@ app.post(`${BASE}/admin/mailings`, async (req: Request, res: Response) => {
       sendAt: parsed.data.sendAt ? new Date(parsed.data.sendAt) : null,
     },
   });
-  res.json(mail);
+  const users = await prisma.user.findMany({
+    where: { phone: { not: null }, notificationsEnabled: true },
+    select: { phone: true },
+  });
+  for (const u of users) {
+    await sendSmsMessage(u.phone!, parsed.data.message);
+  }
+  await prisma.mailing.update({ where: { id: mail.id }, data: { sent: true } });
+  res.json({ ...mail, sent: true });
 });
 
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
@@ -449,7 +594,8 @@ app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
 
 app.get(`${BASE}/branches`, async (_req: Request, res: Response) => {
   const branches = await prisma.branch.findMany({ include: { zones: true } });
-  res.json(branches);
+  const phone = "+7 777 223 65 29";
+  res.json(branches.map((b: any) => ({ ...b, phone })));
 });
 
 app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {

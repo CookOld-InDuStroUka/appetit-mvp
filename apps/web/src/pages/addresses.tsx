@@ -7,12 +7,14 @@ interface Branch {
   id: string;
   name: string;
   address: string;
+  phone?: string;
 }
 
 export default function AddressesPage() {
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
   const [branches, setBranches] = useState<Branch[]>([]);
+  const PHONE = "+7 777 223 65 29";
 
   useEffect(() => {
     fetch(`${API_BASE}/branches`, { cache: "no-store" })
@@ -30,7 +32,8 @@ export default function AddressesPage() {
         <ul style={{ padding: 0, listStyle: "none" }}>
           {branches.map((b) => (
             <li key={b.id} style={{ marginBottom: 8 }}>
-              <strong>{b.name}</strong>: {b.address}
+              <strong>{b.name}</strong>: {b.address}, {" "}
+              <a href={`tel:${b.phone ?? PHONE}`}>{b.phone ?? PHONE}</a>
             </li>
           ))}
         </ul>

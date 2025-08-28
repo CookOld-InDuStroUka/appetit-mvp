@@ -19,10 +19,12 @@ export default function OrdersByBranch() {
   return (
     <AdminLayout>
       <h1>Заказы по филиалам</h1>
-      <ul>
+      <ul className="admin-home-links">
         {branches.map((b) => (
           <li key={b.id}>
-            <Link href={`/admin/orders/${b.id}`}>{b.name}</Link>
+            <Link className="admin-nav-btn" href={`/admin/orders/${b.id}`}>
+              {b.name}
+            </Link>
           </li>
         ))}
       </ul>
