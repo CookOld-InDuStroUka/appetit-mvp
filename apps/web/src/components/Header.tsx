@@ -18,6 +18,7 @@ export default function Header() {
 
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
   const { lang, setLang, t } = useLang();
@@ -118,11 +119,81 @@ export default function Header() {
         )
       : null;
 
+  const menuPortal =
+    typeof document !== "undefined" && isMenuOpen
+      ? createPortal(
+          <div className="drawer-backdrop" onClick={() => setMenuOpen(false)}>
+            <div className="drawer" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="drawer-lang"
+                type="button"
+                onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
+              >
+                {lang === "ru" ? "Русский" : "Қазақша"}
+              </button>
+              <Link href="/" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>Меню</a>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setCartOpen(true);
+                  setMenuOpen(false);
+                }}
+              >
+                Корзина
+              </button>
+              <Link href="/reviews" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>Отзывы</a>
+              </Link>
+              <Link href="/delivery" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>Доставка и оплата</a>
+              </Link>
+              <Link href="/bonus" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>Бонусная программа</a>
+              </Link>
+              <Link href="/vacancies" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>Вакансии</a>
+              </Link>
+              {user ? (
+                <Link href="/profile" legacyBehavior>
+                  <a onClick={() => setMenuOpen(false)}>
+                    {user.name || user.phone || user.email}
+                  </a>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    openAuth();
+                    setMenuOpen(false);
+                  }}
+                >
+                  Войти
+                </button>
+              )}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <>
       <header className="hdr">
         <div className="row">
-          <Brand />
+          <button
+            className="menu-btn"
+            type="button"
+            aria-label="Меню"
+            onClick={() => setMenuOpen(true)}
+          >
+            <MenuIcon />
+          </button>
+
+          <div className="brand-wrap">
+            <Brand />
+          </div>
 
           <div ref={searchRef} className="search">
             <input
@@ -203,6 +274,25 @@ export default function Header() {
             grid-template-columns: 1fr minmax(420px, 560px) 1fr;
             align-items: center;
             gap: 16px;
+          }
+
+          .menu-btn {
+            display: none;
+            background: transparent;
+            border: 0;
+            color: inherit;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+          }
+          .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+          }
+
+          .brand-wrap {
+            display: flex;
+            align-items: center;
           }
 
           /* Поиск */
@@ -287,6 +377,41 @@ export default function Header() {
             color: currentColor;
           }
 
+          .drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+          }
+          .drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 260px;
+            background: #0f1b2a;
+            color: #fff;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .drawer a,
+          .drawer button {
+            background: none;
+            border: 0;
+            color: inherit;
+            text-align: left;
+            padding: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+          }
+          .drawer a:hover,
+          .drawer button:hover {
+            color: #ffffff;
+          }
+
           /* --- ГЛАВНАЯ «ПРОСЕЧКА» против фиолетовых visited и подчёркиваний --- */
           :global(header.hdr a),
           :global(header.hdr a:visited) {
@@ -302,19 +427,32 @@ export default function Header() {
           /* Мобилка */
           @media (max-width: 820px) {
             .row {
-              grid-template-columns: 1fr 1fr;
+              grid-template-columns: auto 1fr auto;
+              grid-template-rows: auto auto;
               gap: 10px;
               height: auto;
               padding: 8px 12px;
             }
-            .search { grid-column: 1 / -1; height: 36px; }
+            .menu-btn { display: inline-flex; }
+            .brand-wrap { justify-self: center; }
+            .search {
+              grid-column: 1 / -1;
+              grid-row: 2;
+              height: 36px;
+            }
             .link--hide-sm { display: none; }
-            .right { gap: 10px; }
+            .right {
+              grid-column: 3;
+              grid-row: 1;
+              gap: 10px;
+            }
           }
         `}</style>
       </header>
 
       {suggestionPortal}
+
+      {menuPortal}
 
       {isCartOpen && (
         <CartModal
@@ -422,6 +560,16 @@ function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" {...props}>
       <path d="M6 9l6 6 6-6" stroke="currentColor" />
+    </svg>
+  );
+}
+
+function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" {...props}>
+      <rect width="16" height="2" rx="1" fill="currentColor" />
+      <rect y="5" width="16" height="2" rx="1" fill="currentColor" />
+      <rect y="10" width="16" height="2" rx="1" fill="currentColor" />
     </svg>
   );
 }
