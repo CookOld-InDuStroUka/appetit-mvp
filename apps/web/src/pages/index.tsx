@@ -115,10 +115,9 @@ export default function Home() {
         />
 
         <main className="main">
-          <PromoSlider slides={slides.length ? slides : undefined} />
-
-          {/* мобильное меню оставляем как есть */}
           <MobileMenu items={sections.map((sec) => sec.name)} />
+
+          <PromoSlider slides={slides.length ? slides : undefined} />
 
           {sections.map((sec) => (
             <section key={sec.slug} id={sec.slug} className="sec">

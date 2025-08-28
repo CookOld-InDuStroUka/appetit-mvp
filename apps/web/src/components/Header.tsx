@@ -19,6 +19,7 @@ export default function Header() {
   const [q, setQ] = useState("");
   const [isCartOpen, setCartOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isSearchOpen, setSearchOpen] = useState(false);
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
   const { lang, setLang, t } = useLang();
@@ -31,6 +32,7 @@ export default function Header() {
 
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const searchRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [suggestPos, setSuggestPos] = useState({ left: 0, top: 0, width: 0 });
 
   useEffect(() => {
@@ -191,25 +193,38 @@ export default function Header() {
             <MenuIcon />
           </button>
 
-          <div className="brand-wrap">
-            <Brand />
-          </div>
+          <div className={`center${isSearchOpen ? " search-open" : ""}`}>
+            <div className="brand-wrap">
+              <Brand />
+            </div>
 
-          <div ref={searchRef} className="search">
-            <input
-              className="search__input"
-              placeholder={t("search")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
-            />
-            <button
-              className="search__btn"
-              onClick={searchSubmit}
-              aria-label={t("searchBtn")}
-            >
-              <SearchIcon />
-            </button>
+            <div ref={searchRef} className="search">
+              <input
+                ref={inputRef}
+                className="search__input"
+                placeholder={t("search")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchSubmit()}
+                onBlur={() => {
+                  if (!q) setSearchOpen(false);
+                }}
+              />
+              <button
+                className="search__btn"
+                onClick={() => {
+                  if (!isSearchOpen) {
+                    setSearchOpen(true);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  } else {
+                    searchSubmit();
+                  }
+                }}
+                aria-label={t("searchBtn")}
+              >
+                <SearchIcon />
+              </button>
+            </div>
           </div>
 
           <nav className="right">
@@ -271,9 +286,17 @@ export default function Header() {
             height: 56px;
             padding: 0 16px;
             display: grid;
-            grid-template-columns: 1fr minmax(420px, 560px) 1fr;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 16px;
+          }
+
+          .center {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-self: center;
+            width: 100%;
           }
 
           .menu-btn {
@@ -304,6 +327,8 @@ export default function Header() {
             border-radius: 8px;
             background: #5a6773;
             border: 1px solid #6a7783;
+            transition: width 0.2s ease;
+            overflow: hidden;
           }
           .search__input {
             flex: 1;
@@ -393,24 +418,28 @@ export default function Header() {
           @media (max-width: 820px) {
             .row {
               grid-template-columns: auto 1fr auto;
-              grid-template-rows: auto auto;
               gap: 10px;
-              height: auto;
+              height: 56px;
               padding: 8px 12px;
             }
             .menu-btn { display: inline-flex; }
-            .brand-wrap { justify-self: center; }
+            .center { gap: 8px; }
             .search {
-              grid-column: 1 / -1;
-              grid-row: 2;
-              height: 36px;
+              width: 36px;
+              padding: 0;
+            }
+            .search__input { display: none; }
+            .center.search-open .brand-wrap { display: none; }
+            .center.search-open .search {
+              width: 100%;
+              padding: 0 2px 0 10px;
+            }
+            .center.search-open .search__input {
+              display: block;
+              flex: 1;
             }
             .link--hide-sm { display: none; }
-            .right {
-              grid-column: 3;
-              grid-row: 1;
-              gap: 10px;
-            }
+            .right { gap: 10px; }
           }
         `}</style>
         <style jsx global>{`

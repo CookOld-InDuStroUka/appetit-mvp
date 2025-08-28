@@ -308,6 +308,10 @@ button,
   display: none;
   overflow-x: auto;
   border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 56px;
+  z-index: 40;
+  background: var(--bg);
 }
 
 .mobile-menu ul {
