@@ -377,41 +377,6 @@ export default function Header() {
             color: currentColor;
           }
 
-          .drawer-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-          }
-          .drawer {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 260px;
-            background: #0f1b2a;
-            color: #fff;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-          }
-          .drawer a,
-          .drawer button {
-            background: none;
-            border: 0;
-            color: inherit;
-            text-align: left;
-            padding: 10px 0;
-            font-size: 16px;
-            cursor: pointer;
-            text-decoration: none;
-          }
-          .drawer a:hover,
-          .drawer button:hover {
-            color: #ffffff;
-          }
-
           /* --- ГЛАВНАЯ «ПРОСЕЧКА» против фиолетовых visited и подчёркиваний --- */
           :global(header.hdr a),
           :global(header.hdr a:visited) {
@@ -446,6 +411,42 @@ export default function Header() {
               grid-row: 1;
               gap: 10px;
             }
+          }
+        `}</style>
+        <style jsx global>{`
+          .drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+          }
+          .drawer {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 260px;
+            background: #0f1b2a;
+            color: #fff;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .drawer a,
+          .drawer button {
+            background: none;
+            border: 0;
+            color: inherit;
+            text-align: left;
+            padding: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+          }
+          .drawer a:hover,
+          .drawer button:hover {
+            color: #ffffff;
           }
         `}</style>
       </header>
