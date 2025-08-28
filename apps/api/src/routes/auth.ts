@@ -5,7 +5,6 @@ import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
-const COOKIE_DOMAIN = new URL(process.env.PUBLIC_ORIGIN!).hostname;
 
 router.post("/auth/telegram", async (req: Request, res: Response) => {
   const data = req.body as TelegramAuthData;
@@ -26,14 +25,18 @@ router.post("/auth/telegram", async (req: Request, res: Response) => {
 
   const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
 
-  res.cookie("appetit_jwt", token, {
+  const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
+  const host = new URL(origin).hostname;
+  const cookieOptions: express.CookieOptions = {
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    secure: origin.startsWith("https://"),
     path: "/",
-    domain: COOKIE_DOMAIN,
     maxAge: 30 * 24 * 3600 * 1000,
-  });
+  };
+  if (host !== "localhost") cookieOptions.domain = host;
+
+  res.cookie("appetit_jwt", token, cookieOptions);
 
   return res.json({ ok: true, user });
 });
