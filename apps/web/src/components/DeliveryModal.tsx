@@ -40,8 +40,6 @@ export default function DeliveryModal() {
     branches,
     history,
     outOfZone,
-    addHistory,
-    removeHistory,
     close,
   } = useDelivery();
 
@@ -137,7 +135,6 @@ export default function DeliveryModal() {
               setComment={setComment}
               history={history}
               onHistorySelect={setAddress}
-              removeHistory={removeHistory}
               height="100%"
             />
           ) : (
@@ -219,7 +216,6 @@ export default function DeliveryModal() {
                   alert("Адрес вне зоны доставки");
                   return;
                 }
-                addHistory(address);
                 close();
                 return;
               }
@@ -238,8 +234,8 @@ export default function DeliveryModal() {
               padding: "8px 12px",
               borderRadius: 8,
               border: "none",
-              background: "var(--accent)",
-              color: "#fff",
+              background: "var(--header-bg)",
+              color: "var(--header-text)",
               cursor: "pointer",
               opacity: mode === "delivery" && outOfZone ? 0.6 : 1,
             }}
@@ -309,7 +305,6 @@ export default function DeliveryModal() {
               setComment={setComment}
               history={history}
               onHistorySelect={setAddress}
-              removeHistory={removeHistory}
               height={420}
             />
             <button
@@ -319,7 +314,6 @@ export default function DeliveryModal() {
                   alert("Адрес вне зоны доставки");
                   return;
                 }
-                addHistory(address);
                 close();
               }}
               style={{
@@ -328,8 +322,8 @@ export default function DeliveryModal() {
                 padding: "8px 12px",
                 borderRadius: 8,
                 border: "none",
-                background: "var(--accent)",
-                color: "#fff",
+                background: "var(--header-bg)",
+                color: "var(--header-text)",
                 cursor: "pointer",
                 opacity: outOfZone ? 0.6 : 1,
               }}
@@ -422,8 +416,8 @@ export default function DeliveryModal() {
                 padding: "8px 12px",
                 borderRadius: 8,
                 border: "none",
-                background: "var(--accent)",
-                color: "#fff",
+                background: "var(--header-bg)",
+                color: "var(--header-text)",
                 cursor: "pointer",
               }}
             >

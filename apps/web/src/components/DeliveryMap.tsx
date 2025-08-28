@@ -13,9 +13,9 @@ type Props = {
   setFloor: (v: string) => void;
   comment: string;
   setComment: (v: string) => void;
-  history: string[];
-  onHistorySelect: (addr: string) => void;
-  removeHistory: (addr: string) => void;
+  history?: string[];
+  onHistorySelect?: (addr: string) => void;
+  removeHistory?: (addr: string) => void;
   height?: number | string;
   mobile?: boolean;
 };
@@ -31,7 +31,7 @@ export default function DeliveryMap({
   setFloor,
   comment,
   setComment,
-  history,
+  history = [],
   onHistorySelect,
   removeHistory,
   height = 360,
@@ -55,6 +55,12 @@ export default function DeliveryMap({
   const polygonsRef = useRef<any[]>([]);
   const [outOfZone, setOutOfZoneLocal] = useState(false);
   const { setOutOfZone } = useDelivery();
+
+  const cleanAddress = (line: string) =>
+    line.replace(
+      /^Восточно-Казахстанская область,\s*Усть-Каменогорск,\s*/i,
+      ""
+    );
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -239,7 +245,7 @@ export default function DeliveryMap({
             const first = res.geoObjects.get(0);
             if (first) {
               const coords = first.geometry.getCoordinates();
-              setAddress(first.getAddressLine());
+              setAddress(cleanAddress(first.getAddressLine()));
               placeMarker(coords);
               map.setCenter(coords, 16);
             }
@@ -259,7 +265,7 @@ export default function DeliveryMap({
           ymaps.geocode(coords, { boundedBy: BOUNDS }).then((res: any) => {
             const first = res.geoObjects.get(0);
             if (first) {
-              setAddress(first.getAddressLine());
+              setAddress(cleanAddress(first.getAddressLine()));
             }
           });
           placeMarker(coords);
@@ -278,7 +284,7 @@ export default function DeliveryMap({
               ymaps.geocode(coords, { boundedBy: BOUNDS }).then((geo: any) => {
                 const first = geo.geoObjects.get(0);
                 if (first) {
-                  setAddress(first.getAddressLine());
+                  setAddress(cleanAddress(first.getAddressLine()));
                 }
               });
               placeMarker(coords);
@@ -337,44 +343,6 @@ export default function DeliveryMap({
           gap: 4,
         }}
       >
-          {history.length > 0 && (
-            <div className="history-list">
-              {history.map((h) => (
-                <div key={h} style={{ display: "flex", alignItems: "center", marginBottom: 4 }}>
-                  <button
-                    onClick={() => {
-                      geocodeRef.current?.(h);
-                      onHistorySelect(h);
-                    }}
-                    style={{
-                      flex: 1,
-                      textAlign: "left",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      color: "var(--text)",
-                    }}
-                  >
-                    {h}
-                  </button>
-                  <button
-                    onClick={() => removeHistory(h)}
-                    aria-label="Удалить"
-                    style={{
-                      marginLeft: 8,
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--muted-text)",
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
           <input
             ref={inputRef}
             name="address"
@@ -390,7 +358,7 @@ export default function DeliveryMap({
                       const first = res.geoObjects.get(0);
                       if (first) {
                         const coords = first.geometry.getCoordinates();
-                        setAddress(first.getAddressLine());
+                        setAddress(cleanAddress(first.getAddressLine()));
                         if (markerRef.current) {
                           mapInstance.current.geoObjects.remove(markerRef.current);
                         }
@@ -414,7 +382,7 @@ export default function DeliveryMap({
                     const first = res.geoObjects.get(0);
                     if (first) {
                       const coords = first.geometry.getCoordinates();
-                      setAddress(first.getAddressLine());
+                      setAddress(cleanAddress(first.getAddressLine()));
                       if (markerRef.current) {
                         mapInstance.current.geoObjects.remove(markerRef.current);
                       }

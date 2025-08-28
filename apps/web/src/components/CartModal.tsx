@@ -260,8 +260,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 display: "inline-block",
                 padding: "12px 24px",
                 borderRadius: 8,
-                background: "var(--accent)",
-                color: "#fff",
+                background: "var(--header-bg)",
+                color: "var(--header-text)",
                 textDecoration: "none",
               }}
             >
@@ -480,8 +480,8 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
                 padding: "12px 0",
                 borderRadius: 8,
                 border: "none",
-                background: "var(--accent)",
-                color: "#fff",
+                background: "var(--header-bg)",
+                color: "var(--header-text)",
                 cursor: "pointer",
                 fontWeight: 600,
               }}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { useLang } from "./LangContext";
 
-type Message = { from: "user" | "admin"; text: string; ts: number };
+type Message = { from: "user" | "admin"; text: string; ts: number; read?: boolean };
 type Chat = { id: string; messages: Message[] };
 
 function loadChats(): Record<string, Chat> {
@@ -37,19 +37,50 @@ export default function SupportChat({ userId, isAdmin }: { userId?: string; isAd
     const chats = loadChats();
     if (!chats[uid]) chats[uid] = { id: uid, messages: [] };
     setMessages(chats[uid].messages);
+    if (isAdmin) {
+      chats[uid].messages = chats[uid].messages.map((m) =>
+        m.from === "user" ? { ...m, read: true } : m
+      );
+    }
     saveChats(chats);
   }, [userId, user]);
 
   const send = () => {
     if (!id || !text.trim()) return;
     const chats = loadChats();
-    const msg: Message = { from: isAdmin ? "admin" : "user", text: text.trim(), ts: Date.now() };
+    const msg: Message = {
+      from: isAdmin ? "admin" : "user",
+      text: text.trim(),
+      ts: Date.now(),
+      read: isAdmin,
+    };
     if (!chats[id]) chats[id] = { id, messages: [] };
     chats[id].messages.push(msg);
     saveChats(chats);
     setMessages([...chats[id].messages]);
     setText("");
   };
+
+  useEffect(() => {
+    if (isAdmin && id) {
+      const chats = loadChats();
+      const chat = chats[id];
+      if (chat) {
+        let changed = false;
+        chat.messages = chat.messages.map((m) => {
+          if (m.from === "user" && !m.read) {
+            changed = true;
+            return { ...m, read: true };
+          }
+          return m;
+        });
+        if (changed) {
+          saveChats(chats);
+          setMessages([...chat.messages]);
+        }
+      }
+    }
+  }, [id, isAdmin, messages.length]);
 
   if (!id) return null;
 

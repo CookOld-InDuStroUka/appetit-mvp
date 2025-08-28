@@ -3,6 +3,18 @@ import { useState, useEffect } from "react";
 import { useTheme } from "./ThemeContext";
 import { useAdminAuth } from "./AdminAuthContext";
 
+interface Message { from: string; read?: boolean }
+interface Chat { id: string; messages: Message[] }
+
+function loadChats(): Record<string, Chat> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem("supportChats") || "{}");
+  } catch {
+    return {};
+  }
+}
+
 export default function AdminHeader() {
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -10,6 +22,11 @@ export default function AdminHeader() {
   const [links, setLinks] = useState<{ href: string; label: string }[]>([]);
 
   useEffect(() => {
+    const chats = loadChats();
+    const unread = Object.values(chats).reduce(
+      (n, c) => n + c.messages.filter((m) => m.from !== "admin" && !m.read).length,
+      0
+    );
     const base = [
       { href: "/", label: "На сайт" },
       { href: "/admin", label: "Главная" },
@@ -18,7 +35,10 @@ export default function AdminHeader() {
       { href: "/admin/orders", label: "Заказы" },
       { href: "/admin/promos", label: "Маркетинг" },
       { href: "/admin/analytics", label: "Аналитика" },
-      { href: "/admin/support", label: "Поддержка" },
+      {
+        href: "/admin/support",
+        label: unread > 0 ? `Поддержка (+${unread})` : "Поддержка",
+      },
       { href: "/admin/settings", label: "Настройки" },
       { href: "/admin/profile", label: "Профиль" },
     ];
