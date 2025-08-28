@@ -94,6 +94,9 @@ export default function OrdersPage() {
                 )}
                 <div>Промокод: {o.promoCode ?? "—"}</div>
                 <div>Сумма: {o.total} ₸</div>
+                <div style={{ marginTop: 8 }}>
+                  <a href={`/orders/${o.id}`} style={{ color: "var(--accent)" }}>Подробнее</a>
+                </div>
               </li>
             ))}
           </ul>

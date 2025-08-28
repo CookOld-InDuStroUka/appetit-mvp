@@ -89,6 +89,9 @@ export default function ProfilePage() {
                   <span>{new Date(o.createdAt).toLocaleString("ru-RU", { hour12: false })}</span>
                   <span>{o.total} ₸</span>
                 </div>
+                <div style={{ marginTop: 8 }}>
+                  <a href={`/orders/${o.id}`} style={{ color: "var(--accent)" }}>Подробнее</a>
+                </div>
               </li>
             ))}
           </ul>

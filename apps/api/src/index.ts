@@ -235,9 +235,10 @@ app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
 
   const { phone, email } = parsed.data;
   const where = phone ? { phone } : { email: email! };
-  const existing = await prisma.user.findUnique({ where });
-  if (!existing) return res.status(404).json({ error: "User not found" });
-
+  let existing = await prisma.user.findUnique({ where });
+  if (!existing) {
+    existing = await prisma.user.create({ data: where });
+  }
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
@@ -999,8 +1000,8 @@ app.post(`${BASE}/orders`, async (req: Request, res: Response) => {
     const base = Number(d.basePrice);
     const variantDelta = item.variantId
       ? Number(
-          d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0
-        )
+        d.variants.find((v: any) => v.id === item.variantId)?.priceDelta ?? 0
+      )
       : 0;
     const mods = [
       ...(item.addonIds ?? []),
@@ -1323,8 +1324,8 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     dimension === "medium"
       ? "utmMedium"
       : dimension === "campaign"
-      ? "utmCampaign"
-      : "utmSource";
+        ? "utmCampaign"
+        : "utmSource";
   if (utm) {
     baseOrderWhere[dimField] = String(utm);
   }
