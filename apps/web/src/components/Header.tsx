@@ -125,59 +125,59 @@ export default function Header() {
     typeof document !== "undefined" && isMenuOpen
       ? createPortal(
           <div className="drawer-backdrop" onClick={() => setMenuOpen(false)}>
-            <div className="drawer" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="drawer-lang"
-                type="button"
-                onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
-              >
-                {lang === "ru" ? "Русский" : "Қазақша"}
-              </button>
-              <Link href="/" legacyBehavior>
-                <a onClick={() => setMenuOpen(false)}>Меню</a>
+          <div className="drawer" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="drawer-lang"
+              type="button"
+              onClick={() => setLang(lang === "ru" ? "kz" : "ru")}
+            >
+              {lang === "ru" ? "Русский" : "Қазақша"}
+            </button>
+            {user ? (
+              <Link href="/profile" legacyBehavior>
+                <a onClick={() => setMenuOpen(false)}>
+                  {user.name || user.phone || user.email}
+                </a>
               </Link>
+            ) : (
               <button
                 type="button"
                 onClick={() => {
-                  setCartOpen(true);
+                  openAuth();
                   setMenuOpen(false);
                 }}
               >
-                Корзина
+                {t("login")}
               </button>
-              <Link href="/reviews" legacyBehavior>
-                <a onClick={() => setMenuOpen(false)}>Отзывы</a>
-              </Link>
-              <Link href="/delivery" legacyBehavior>
-                <a onClick={() => setMenuOpen(false)}>Доставка и оплата</a>
-              </Link>
-              <Link href="/bonus" legacyBehavior>
-                <a onClick={() => setMenuOpen(false)}>Бонусная программа</a>
-              </Link>
-              <Link href="/vacancies" legacyBehavior>
-                <a onClick={() => setMenuOpen(false)}>Вакансии</a>
-              </Link>
-              {user ? (
-                <Link href="/profile" legacyBehavior>
-                  <a onClick={() => setMenuOpen(false)}>
-                    {user.name || user.phone || user.email}
-                  </a>
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    openAuth();
-                    setMenuOpen(false);
-                  }}
-                >
-                  Войти
-                </button>
-              )}
-            </div>
-          </div>,
-          document.body
-        )
+            )}
+            <Link href="/" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("menu")}</a>
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setCartOpen(true);
+                setMenuOpen(false);
+              }}
+            >
+              {t("cart")}
+            </button>
+            <Link href="/reviews" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("reviews")}</a>
+            </Link>
+            <Link href="/delivery" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("deliveryPayment")}</a>
+            </Link>
+            <Link href="/bonus" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("bonusProgram")}</a>
+            </Link>
+            <Link href="/vacancies" legacyBehavior>
+              <a onClick={() => setMenuOpen(false)}>{t("vacancies")}</a>
+            </Link>
+          </div>
+        </div>,
+        document.body
+      )
       : null;
 
   return (

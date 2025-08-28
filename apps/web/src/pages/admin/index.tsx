@@ -7,7 +7,7 @@ import s from "./AdminHome.module.css";
 /* ===== SVG-иконки ===== */
 type IconName =
   | "menu" | "orders" | "promos" | "settings" | "branches"
-  | "analytics" | "profile" | "home" | "site" | "admins";
+  | "analytics" | "profile" | "home" | "site" | "admins" | "support";
 
 const Icon = memo(function Icon({ name, size = 28 }: { name: IconName; size?: number }) {
   const p = {
@@ -27,6 +27,7 @@ const Icon = memo(function Icon({ name, size = 28 }: { name: IconName; size?: nu
     case "home":      return (<svg {...p}><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>);
     case "site":      return (<svg {...p}><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M3 7v14h14"/></svg>);
     case "admins":    return (<svg {...p}><path d="M12 2l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V5l7-3z"/><path d="M9.5 12.5l2 2 3.5-3.5"/></svg>);
+    case "support":   return (<svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>);
   }
   return null;
 });
@@ -46,6 +47,7 @@ export default function AdminHome() {
     { href: "/admin/orders",    label: "Заказы",      sub: "Онлайн-заказы",       icon: "orders" },
     { href: "/admin/promos",    label: "Маркетинг",   sub: "Акции и промокоды",   icon: "promos" },
     { href: "/admin/analytics", label: "Аналитика",   sub: "Отчёты и графики",    icon: "analytics" },
+    { href: "/admin/support",   label: "Поддержка",   sub: "Чаты пользователей",  icon: "support" },
     { href: "/admin/settings",  label: "Настройки",   sub: "Оплата и доставка",   icon: "settings" },
     { href: "/admin/profile",   label: "Профиль",     sub: "Ваши данные",         icon: "profile" },
   ];

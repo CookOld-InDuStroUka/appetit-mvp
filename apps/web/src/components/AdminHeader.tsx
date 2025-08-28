@@ -18,6 +18,7 @@ export default function AdminHeader() {
       { href: "/admin/orders", label: "Заказы" },
       { href: "/admin/promos", label: "Маркетинг" },
       { href: "/admin/analytics", label: "Аналитика" },
+      { href: "/admin/support", label: "Поддержка" },
       { href: "/admin/settings", label: "Настройки" },
       { href: "/admin/profile", label: "Профиль" },
     ];
