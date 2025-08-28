@@ -324,15 +324,15 @@ button,
 
 .mobile-menu a {
   text-decoration: none;
-  color: var(--text);
+  color: var(--header-text);
   padding: 6px 12px;
   border-radius: 6px;
-  background: var(--hover-bg);
+  background: var(--header-bg);
   white-space: nowrap;
 }
 
 .mobile-menu a:hover {
-  background: var(--accent);
+  background: rgba(255, 255, 255, 0.06);
   color: #fff;
 }
 

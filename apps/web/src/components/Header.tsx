@@ -228,7 +228,7 @@ export default function Header() {
           </div>
 
           <nav className="right">
-            <button className="link" type="button" onClick={openDelivery}>
+            <button className="link link--hide-sm" type="button" onClick={openDelivery}>
               {deliveryLabel}
             </button>
             <button
@@ -251,13 +251,20 @@ export default function Header() {
 
             {user ? (
               <Link href="/profile" legacyBehavior>
-                <a className="link link--auth">
+                <a
+                  className="link link--auth"
+                  aria-label={user.name || user.phone || user.email || ""}
+                >
                   <UserIcon />
                   <span>{user.name || user.phone || user.email}</span>
                 </a>
               </Link>
             ) : (
-              <button onClick={openAuth} className="link link--auth">
+              <button
+                onClick={openAuth}
+                className="link link--auth"
+                aria-label={t("login")}
+              >
                 <UserIcon />
                 <span>{t("login")}</span>
               </button>
@@ -417,7 +424,7 @@ export default function Header() {
           /* Мобилка */
           @media (max-width: 820px) {
             .row {
-              grid-template-columns: auto 1fr;
+              grid-template-columns: auto 1fr auto;
               gap: 10px;
               height: 56px;
               padding: 8px 12px;
@@ -439,7 +446,14 @@ export default function Header() {
               flex: 1;
             }
             .link--hide-sm { display: none; }
-            .right { display: none; }
+            .right {
+              display: flex;
+              gap: 8px;
+            }
+            .link--auth span,
+            .link--cart .price {
+              display: none;
+            }
           }
         `}</style>
         <style jsx global>{`
