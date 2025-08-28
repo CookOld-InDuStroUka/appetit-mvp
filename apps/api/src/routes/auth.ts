@@ -1,29 +1,15 @@
 import express, { Request, Response } from "express";
-import crypto from "node:crypto";
 import { prisma } from "../prisma";
 import { signJwt } from "../jwt";
+import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
 
 const router = express.Router();
-const BOT_TOKEN = process.env.TG_BOT_TOKEN!;
 const JWT_SECRET = process.env.JWT_SECRET!;
 const COOKIE_DOMAIN = new URL(process.env.PUBLIC_ORIGIN!).hostname;
 
-function checkTelegramAuth(data: Record<string, string>): boolean {
-  const { hash, auth_date } = data;
-  const checkString = Object.keys(data)
-    .filter((k) => k !== "hash")
-    .sort()
-    .map((k) => `${k}=${data[k]}`)
-    .join("\n");
-  const secretKey = crypto.createHash("sha256").update(BOT_TOKEN).digest();
-  const hmac = crypto.createHmac("sha256", secretKey).update(checkString).digest("hex");
-  const ttlOk = (Date.now() / 1000 - Number(auth_date)) < 120;
-  return hmac === hash && ttlOk;
-}
-
 router.post("/auth/telegram", async (req: Request, res: Response) => {
-  const data = req.body as Record<string, string>;
-  if (!checkTelegramAuth(data)) return res.status(401).json({ ok: false });
+  const data = req.body as TelegramAuthData;
+  if (!verifyTelegramAuth(data)) return res.status(401).json({ ok: false });
 
   const telegramId = String(data.id);
   const name =
