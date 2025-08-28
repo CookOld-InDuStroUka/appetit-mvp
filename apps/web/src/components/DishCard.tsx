@@ -8,8 +8,7 @@ type Dish = {
   imageUrl?: string;
   minPrice?: number;
   basePrice: number;
-  label?: "новинка" | "хит";
-  stickerUrl?: string;
+  status?: { name: string; color: string };
 };
 
 type Props = { dish: Dish; onClick: () => void; size?: "sm" | "md" | "lg" };
@@ -141,6 +140,11 @@ export default function DishCard({ dish, onClick, size = "md" }: Props) {
 
   return (
     <article className={`card card--${size}`} onClick={onClick} role="button" tabIndex={0}>
+      {dish.status && (
+        <span className="status" style={{ background: dish.status.color }}>
+          {dish.status.name}
+        </span>
+      )}
       <div className="media">
         <img
           src={src}
@@ -181,6 +185,7 @@ export default function DishCard({ dish, onClick, size = "md" }: Props) {
           cursor:pointer;
           display:flex;
           flex-direction:column;
+          position:relative;
         }
         .card:hover{ box-shadow:0 10px 20px rgba(18,24,40,.10); transform:translateY(-1px); }
 
@@ -208,6 +213,18 @@ export default function DishCard({ dish, onClick, size = "md" }: Props) {
           background:#fff;
           border-bottom:1px solid rgba(17,24,39,.07);
           overflow:hidden;
+        }
+
+        .status{
+          position:absolute;
+          top:8px;
+          left:8px;
+          z-index:1;
+          padding:2px 6px;
+          border-radius:4px;
+          font-size:12px;
+          font-weight:700;
+          color:#fff;
         }
 
         .title{

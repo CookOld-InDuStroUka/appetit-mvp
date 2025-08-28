@@ -5,6 +5,7 @@ import CartModal from "./CartModal";
 import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
 import { useLang } from "./LangContext";
+import { useDelivery } from "./DeliveryContext";
 
 const fmtKZT = new Intl.NumberFormat("ru-KZ", {
   style: "currency",
@@ -20,9 +21,12 @@ export default function Header() {
   const { items: cartItems, updateQty, clear, removeItem } = useCart();
   const { user, open: openAuth } = useAuth();
   const { lang, setLang, t } = useLang();
+  const { mode, branch, branches, open: openDelivery } = useDelivery();
 
   const cartAmount = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const cartLabel = fmtKZT.format(cartAmount);
+  const currentBranch = branches.find((b) => b.id === branch)?.name;
+  const deliveryLabel = mode === "delivery" ? "Доставка" : currentBranch || "Самовывоз";
 
   const [suggestions, setSuggestions] = useState<{ id: string; name: string }[]>([]);
   const searchRef = useRef<HTMLDivElement | null>(null);
@@ -138,6 +142,9 @@ export default function Header() {
           </div>
 
           <nav className="right">
+            <button className="link" type="button" onClick={openDelivery}>
+              {deliveryLabel}
+            </button>
             <button
               className="link link--hide-sm"
               type="button"
