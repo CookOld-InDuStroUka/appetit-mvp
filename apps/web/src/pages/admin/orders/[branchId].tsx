@@ -23,10 +23,10 @@ const ORDER_FLOW: OrderStatus[] = [
   "cooking",
   "delivering",
   "done",
-  "canceled",
 ];
 
 const nextStatus = (s: OrderStatus): OrderStatus => {
+  if (s === "done" || s === "canceled") return s;
   const idx = ORDER_FLOW.indexOf(s);
   return ORDER_FLOW[idx + 1] || s;
 };
@@ -114,7 +114,7 @@ export default function OrdersAdmin() {
         </div>
       )}
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <table border={1} cellPadding={4} style={{ borderCollapse: "collapse" }}>
+      <table className="admin-table">
         <thead>
           <tr>
             <th>ID</th>
@@ -168,6 +168,7 @@ export default function OrdersAdmin() {
                 <button
                   style={{ marginLeft: 4 }}
                   onClick={() => update(o.id, nextStatus(o.status))}
+                  disabled={o.status === "done" || o.status === "canceled"}
                 >
                   ▶
                 </button>

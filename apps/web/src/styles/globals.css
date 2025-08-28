@@ -164,16 +164,16 @@ button,
 .add-btn {
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--card-bg);
-  color: var(--accent);
+  border: 1px solid var(--header-bg);
+  background: var(--header-bg);
+  color: var(--header-text);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .add-btn:hover {
-  background: var(--accent);
-  color: #fff;
+  background: color-mix(in oklab, var(--header-bg) 85%, white);
+  color: var(--header-text);
 }
 
 /* Кнопки в шапке — стиль «пилюля» */
@@ -185,8 +185,8 @@ button,
   padding: 0 14px;
   border-radius: 10px;
 
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--header-bg);
+  border: 1px solid var(--header-bg);
 
   color: var(--header-text) !important;
   text-decoration: none !important;
@@ -201,8 +201,8 @@ button,
 
 /* наведение */
 .admin-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
+  background: color-mix(in oklab, var(--header-bg) 85%, white);
+  border-color: color-mix(in oklab, var(--header-bg) 85%, white);
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(0,0,0,0.18);
 }
@@ -220,13 +220,13 @@ button,
   box-shadow:
     0 0 0 3px color-mix(in oklab, var(--accent) 55%, transparent),
     0 6px 14px rgba(0,0,0,0.18);
-  border-color: color-mix(in oklab, var(--accent) 55%, rgba(255,255,255,0.2));
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--header-bg));
 }
 
 /* «текущая» страница (если добавляешь класс .is-active) */
 .admin-nav-btn.is-active {
-  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
-  border-color: rgba(255,255,255,.26);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--header-bg), white 20%), var(--header-bg));
+  border-color: var(--header-bg);
 }
 
 
@@ -236,6 +236,28 @@ button,
   align-items: flex-start;
   gap: 12px;
   margin-top: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+}
+
+.admin-table th {
+  background: var(--header-bg);
+  color: var(--header-text);
+}
+
+.admin-table tbody tr:nth-child(even) {
+  background: color-mix(in oklab, var(--card-bg) 90%, var(--text) 10%);
 }
 
 .admin-home-btn {
