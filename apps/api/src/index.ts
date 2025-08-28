@@ -83,6 +83,55 @@ process.on("uncaughtException", (err: unknown) => {
   logToFile("Uncaught exception", err);
 });
 
+async function sendSms(to: string, code: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  if (!sid || !token || !from) {
+    console.log(`Auth code for ${to}: ${code}`);
+    return;
+  }
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: `Ваш код: ${code}` }).toString(),
+    });
+  } catch (err) {
+    logToFile("Failed to send SMS", err);
+  }
+}
+
+async function sendEmail(to: string, code: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) {
+    console.log(`Auth code for ${to}: ${code}`);
+    return;
+  }
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject: "Код подтверждения",
+        text: `Ваш код: ${code}`,
+      }),
+    });
+  } catch (err) {
+    logToFile("Failed to send email", err);
+  }
+}
+
 const DEFAULT_EXCLUSIONS = [
   "Без кетчупа",
   "Без фри",
@@ -198,7 +247,8 @@ app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
     create: { contact: phone ?? email!, code, expiresAt }
   });
 
-  console.log(`Auth code for ${phone ?? email}: ${code}`);
+  if (phone) await sendSms(phone, code);
+  if (email) await sendEmail(email, code);
   res.json({ ok: true });
 });
 
