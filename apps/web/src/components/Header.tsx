@@ -417,7 +417,7 @@ export default function Header() {
           /* Мобилка */
           @media (max-width: 820px) {
             .row {
-              grid-template-columns: auto 1fr auto;
+              grid-template-columns: auto 1fr;
               gap: 10px;
               height: 56px;
               padding: 8px 12px;
@@ -439,7 +439,7 @@ export default function Header() {
               flex: 1;
             }
             .link--hide-sm { display: none; }
-            .right { gap: 10px; }
+            .right { display: none; }
           }
         `}</style>
         <style jsx global>{`

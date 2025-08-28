@@ -6,7 +6,7 @@ import MainMenu, { MenuItem } from "../components/MainMenu";
 import Footer from "../components/Footer";
 import PromoSlider from "../components/PromoSlider";
 import { PromoSlide } from "../types/promo";
-import MobileMenu from "../components/MobileMenu";
+import MobileMenu, { MobileMenuItem } from "../components/MobileMenu";
 import { useDelivery } from "../components/DeliveryContext";
 import { useLang } from "../components/LangContext";
 
@@ -103,9 +103,15 @@ export default function Home() {
     }
   }, []);
 
+  const mobileItems: MobileMenuItem[] = sections.map((sec) => ({
+    title: sec.name,
+    href: `#${sec.slug}`,
+  }));
+
   return (
     <>
       <Header />
+      <MobileMenu items={mobileItems} />
       <div className="page-layout">
         <MainMenu
           items={sections.map<MenuItem>((sec) => ({
@@ -115,8 +121,6 @@ export default function Home() {
         />
 
         <main className="main">
-          <MobileMenu items={sections.map((sec) => sec.name)} />
-
           <PromoSlider slides={slides.length ? slides : undefined} />
 
           {sections.map((sec) => (
