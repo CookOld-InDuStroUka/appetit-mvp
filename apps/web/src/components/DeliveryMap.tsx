@@ -37,12 +37,12 @@ export default function DeliveryMap({
   height = 360,
   mobile = false,
 }: Props) {
-  const accent =
+  const brand =
     typeof window !== "undefined"
       ? getComputedStyle(document.documentElement)
-          .getPropertyValue("--accent")
-          .trim() || "#61A35B"
-      : "#61A35B";
+          .getPropertyValue("--header-bg")
+          .trim() || "#303030"
+      : "#303030";
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mapInstance = useRef<any>(null);
@@ -93,8 +93,8 @@ export default function DeliveryMap({
           [49.960424, 82.627909],
         ];
         const violetPolygon = new ymaps.Polygon([violetZone], {}, {
-          fillColor: `${accent}26`,
-          strokeColor: accent,
+          fillColor: "rgba(128,0,128,0.15)",
+          strokeColor: "#800080",
           strokeWidth: 2,
           interactivityModel: "default#transparent",
         });
@@ -145,8 +145,8 @@ export default function DeliveryMap({
           [49.938521, 82.628097],
         ];
         const orangePolygon = new ymaps.Polygon([orangeZone], {}, {
-          fillColor: `${accent}26`,
-          strokeColor: accent,
+          fillColor: "rgba(255,165,0,0.15)",
+          strokeColor: "#FFA500",
           strokeWidth: 2,
           interactivityModel: "default#transparent",
         });
@@ -212,8 +212,8 @@ export default function DeliveryMap({
           [49.95632, 82.624224],
         ];
         const bluePolygon = new ymaps.Polygon([blueZone], {}, {
-          fillColor: `${accent}26`,
-          strokeColor: accent,
+          fillColor: "rgba(0,0,255,0.15)",
+          strokeColor: "#0000FF",
           strokeWidth: 2,
           interactivityModel: "default#transparent",
         });
@@ -226,7 +226,7 @@ export default function DeliveryMap({
           }
           markerRef.current = new ymaps.Placemark(coords, {}, {
             preset: "islands#dotIcon",
-            iconColor: accent,
+            iconColor: brand,
           });
           map.geoObjects.add(markerRef.current);
           const inside = polygonsRef.current.some((p) => p.geometry.contains(coords));
@@ -396,7 +396,7 @@ export default function DeliveryMap({
                         }
                         markerRef.current = new ymaps.Placemark(coords, {}, {
                           preset: "islands#dotIcon",
-                          iconColor: accent,
+                          iconColor: brand,
                         });
                         mapInstance.current.geoObjects.add(markerRef.current);
                         mapInstance.current.setCenter(coords, 16);
@@ -420,7 +420,7 @@ export default function DeliveryMap({
                       }
                       markerRef.current = new ymaps.Placemark(coords, {}, {
                         preset: "islands#dotIcon",
-                        iconColor: accent,
+                        iconColor: brand,
                       });
                       mapInstance.current.geoObjects.add(markerRef.current);
                       mapInstance.current.setCenter(coords, 16);

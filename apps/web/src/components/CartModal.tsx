@@ -390,10 +390,19 @@ export default function CartModal({ items, onClose, onClear, updateQty, removeIt
               </span>
             </div>
 
-            {user && availableBonus > 0 && (
-              <label style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+            {user && (
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginBottom: 8,
+                  opacity: availableBonus > 0 ? 1 : 0.5,
+                }}
+              >
                 <input
                   type="checkbox"
+                  disabled={availableBonus === 0}
                   checked={useBonus}
                   onChange={(e) => setUseBonus(e.target.checked)}
                 />
