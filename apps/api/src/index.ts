@@ -106,6 +106,29 @@ async function sendSms(to: string, code: string) {
   }
 }
 
+async function sendSmsMessage(to: string, message: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  if (!sid || !token || !from) {
+    console.log(`SMS to ${to}: ${message}`);
+    return;
+  }
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  try {
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ To: to, From: from, Body: message }).toString(),
+    });
+  } catch (err) {
+    logToFile("Failed to send SMS", err);
+  }
+}
+
 async function sendEmail(to: string, code: string) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
@@ -438,7 +461,15 @@ app.post(`${BASE}/admin/mailings`, async (req: Request, res: Response) => {
       sendAt: parsed.data.sendAt ? new Date(parsed.data.sendAt) : null,
     },
   });
-  res.json(mail);
+  const users = await prisma.user.findMany({
+    where: { phone: { not: null }, notificationsEnabled: true },
+    select: { phone: true },
+  });
+  for (const u of users) {
+    await sendSmsMessage(u.phone!, parsed.data.message);
+  }
+  await prisma.mailing.update({ where: { id: mail.id }, data: { sent: true } });
+  res.json({ ...mail, sent: true });
 });
 
 app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
@@ -449,7 +480,8 @@ app.get(`${BASE}/cms/:slug`, async (req: Request, res: Response) => {
 
 app.get(`${BASE}/branches`, async (_req: Request, res: Response) => {
   const branches = await prisma.branch.findMany({ include: { zones: true } });
-  res.json(branches);
+  const phone = "+7 777 223 65 29";
+  res.json(branches.map((b: any) => ({ ...b, phone })));
 });
 
 app.get(`${BASE}/zones`, async (_req: Request, res: Response) => {
