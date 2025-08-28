@@ -96,23 +96,69 @@ function normalizePhone(phone: string) {
 async function sendSms(to: string, code: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  if (!sid || !token || !from) {
+  const service = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!sid || !token || !service) {
     console.log(`Auth code for ${to}: ${code}`);
     return;
   }
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
   try {
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ To: normalizePhone(to), From: from, Body: `Ваш код: ${code}` }).toString(),
-    });
+    const res = await fetch(
+      `https://verify.twilio.com/v2/Services/${service}/Verifications`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: normalizePhone(to),
+          Channel: "sms",
+        }).toString(),
+      }
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      logToFile("Failed to request SMS verification", body);
+    }
   } catch (err) {
     logToFile("Failed to send SMS", err);
+  }
+}
+
+async function verifySms(to: string, code: string) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const service = process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!sid || !token || !service) {
+    return true;
+  }
+  const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  try {
+    const res = await fetch(
+      `https://verify.twilio.com/v2/Services/${service}/VerificationCheck`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: normalizePhone(to),
+          Code: code,
+        }).toString(),
+      }
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      logToFile("Failed to verify SMS", body);
+      return false;
+    }
+    const data = await res.json();
+    return data.status === "approved";
+  } catch (err) {
+    logToFile("Failed to verify SMS", err);
+    return false;
   }
 }
 
@@ -275,17 +321,20 @@ app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   if (!existing) {
     existing = await prisma.user.create({ data: where });
   }
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-  await prisma.authCode.upsert({
-    where: { contact: phone ?? email! },
-    update: { code, expiresAt, createdAt: new Date() },
-    create: { contact: phone ?? email!, code, expiresAt }
-  });
-
-  if (phone) await sendSms(phone, code);
-  if (email) await sendEmail(email, code);
+  if (phone) {
+    await sendSms(phone, "");
+  }
+  if (email) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await prisma.authCode.upsert({
+      where: { contact: email },
+      update: { code, expiresAt, createdAt: new Date() },
+      create: { contact: email, code, expiresAt },
+    });
+    await sendEmail(email, code);
+  }
   res.json({ ok: true });
 });
 
@@ -295,10 +344,16 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 
   const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
   const { email, code, password } = parsed.data;
-  const contact = phone ?? email!;
-  const record = await prisma.authCode.findUnique({ where: { contact } });
-  if (!record || record.code !== code || record.expiresAt < new Date()) {
-    return res.status(400).json({ error: "Invalid code" });
+  if (phone) {
+    const ok = await verifySms(phone, code);
+    if (!ok) return res.status(400).json({ error: "Invalid code" });
+  } else {
+    const contact = email!;
+    const record = await prisma.authCode.findUnique({ where: { contact } });
+    if (!record || record.code !== code || record.expiresAt < new Date()) {
+      return res.status(400).json({ error: "Invalid code" });
+    }
+    await prisma.authCode.delete({ where: { contact } });
   }
 
   let user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
@@ -313,8 +368,6 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
     });
     user = await prisma.user.findUnique({ where: { id: user.id } });
   }
-
-  await prisma.authCode.delete({ where: { contact } });
 
   res.json({
     user: {
