@@ -83,6 +83,16 @@ process.on("uncaughtException", (err: unknown) => {
   logToFile("Uncaught exception", err);
 });
 
+function normalizePhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const normalized = digits.startsWith("8")
+    ? "7" + digits.slice(1)
+    : digits.startsWith("7")
+    ? digits
+    : "7" + digits;
+  return "+" + normalized;
+}
+
 async function sendSms(to: string, code: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -99,7 +109,7 @@ async function sendSms(to: string, code: string) {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: to, From: from, Body: `Ваш код: ${code}` }).toString(),
+      body: new URLSearchParams({ To: normalizePhone(to), From: from, Body: `Ваш код: ${code}` }).toString(),
     });
   } catch (err) {
     logToFile("Failed to send SMS", err);
@@ -122,7 +132,7 @@ async function sendSmsMessage(to: string, message: string) {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: to, From: from, Body: message }).toString(),
+      body: new URLSearchParams({ To: normalizePhone(to), From: from, Body: message }).toString(),
     });
   } catch (err) {
     logToFile("Failed to send SMS", err);
@@ -246,17 +256,20 @@ const AuthVerifySchema = z
     phone: z.string().min(5).optional(),
     email: z.string().email().optional(),
     code: z.string().min(4).max(6),
+    password: z.string().min(4).optional(),
   })
   .refine((d) => d.phone || d.email, { message: "phone or email required" });
 // allow shorter passwords so the seeded "admin" credentials work
 const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
+const UserLoginSchema = z.object({ phone: z.string().min(5), password: z.string().min(4) });
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const { phone, email } = parsed.data;
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const email = parsed.data.email;
   const where = phone ? { phone } : { email: email! };
   let existing = await prisma.user.findUnique({ where });
   if (!existing) {
@@ -280,7 +293,8 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   const parsed = AuthVerifySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const { phone, email, code } = parsed.data;
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const { email, code, password } = parsed.data;
   const contact = phone ?? email!;
   const record = await prisma.authCode.findUnique({ where: { contact } });
   if (!record || record.code !== code || record.expiresAt < new Date()) {
@@ -289,12 +303,51 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 
   let user = await prisma.user.findUnique({ where: phone ? { phone } : { email: email! } });
   if (!user) {
-    user = await prisma.user.create({ data: phone ? { phone } : { email: email! } });
+    const data: any = phone ? { phone } : { email: email! };
+    if (password) data.password = await bcrypt.hash(password, 10);
+    user = await prisma.user.create({ data });
+  } else if (password && !user.password) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash(password, 10) },
+    });
+    user = await prisma.user.findUnique({ where: { id: user.id } });
   }
 
   await prisma.authCode.delete({ where: { contact } });
 
-  res.json({ user: { id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus } });
+  res.json({
+    user: {
+      id: user!.id,
+      phone: user!.phone,
+      email: user!.email,
+      name: user!.name,
+      birthDate: user!.birthDate,
+      notificationsEnabled: user!.notificationsEnabled,
+      bonus: user!.bonus,
+    },
+  });
+});
+
+app.post(`${BASE}/auth/login`, async (req: Request, res: Response) => {
+  const parsed = UserLoginSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  const phone = normalizePhone(parsed.data.phone);
+  const user = await prisma.user.findUnique({ where: { phone } });
+  if (!user || !user.password || !(await bcrypt.compare(parsed.data.password, user.password))) {
+    return res.status(400).json({ error: "Invalid credentials" });
+  }
+  res.json({
+    user: {
+      id: user.id,
+      phone: user.phone,
+      email: user.email,
+      name: user.name,
+      birthDate: user.birthDate,
+      notificationsEnabled: user.notificationsEnabled,
+      bonus: user.bonus,
+    },
+  });
 });
 
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {

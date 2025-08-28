@@ -53,7 +53,7 @@ export default function Home() {
   >([]);
   const [selectedDish, setSelectedDish] = useState<DishDTO | null>(null);
   const [slides, setSlides] = useState<PromoSlide[]>([]);
-  const { branch, mode, setMode } = useDelivery();
+  const { branch, mode, setMode, open } = useDelivery();
   const { lang } = useLang();
 
   // грузим категории и блюда
@@ -123,7 +123,7 @@ export default function Home() {
 
         <main className="main">
           <div className="mobile-toggle">
-            <DeliveryToggle value={mode} onChange={setMode} />
+            <DeliveryToggle value={mode} onChange={(v) => { setMode(v); open(); }} />
           </div>
           <PromoSlider slides={slides.length ? slides : undefined} />
 
@@ -185,7 +185,6 @@ export default function Home() {
 
         .mobile-toggle {
           display: none;
-          justify-content: center;
           margin-bottom: 12px;
         }
 

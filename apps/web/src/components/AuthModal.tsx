@@ -8,6 +8,7 @@ export default function AuthModal() {
   const [phone, setPhone] = useState("+7");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
 
   const start = async () => {
     const contact = mode === "phone" ? phone : email;
@@ -17,7 +18,7 @@ export default function AuthModal() {
 
   const confirm = async () => {
     const contact = mode === "phone" ? phone : email;
-    await verifyCode(contact, code);
+    await verifyCode(contact, code, password);
   };
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
@@ -125,12 +126,20 @@ export default function AuthModal() {
               )
             : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <p>Введите код из SMS</p>
+                  <p>Введите код из SMS и придумайте пароль</p>
                   <input
                     name="code"
                     value={code}
                     onChange={e => setCode(e.target.value)}
                     style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+                  />
+                  <input
+                    type="password"
+                    name="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)" }}
+                    placeholder="Пароль"
                   />
                   <button
                     onClick={confirm}

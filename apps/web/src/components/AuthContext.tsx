@@ -13,7 +13,7 @@ type AuthCtx = {
   open: () => void;
   close: () => void;
   requestCode: (contact: string) => Promise<void>;
-  verifyCode: (contact: string, code: string) => Promise<void>;
+  verifyCode: (contact: string, code: string, password?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -50,8 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const verifyCode = async (contact: string, code: string) => {
-    const payload = contact.includes("@") ? { email: contact, code } : { phone: contact, code };
+  const verifyCode = async (contact: string, code: string, password?: string) => {
+    const payload = contact.includes("@")
+      ? { email: contact, code, password }
+      : { phone: contact, code, password };
     const res = await fetch(`${API_BASE}/auth/verify-code`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

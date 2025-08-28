@@ -15,6 +15,7 @@ export default function DeliveryToggle({ value, onChange, style }: Props) {
         border: "1px solid var(--header-bg)",
         borderRadius: 8,
         overflow: "hidden",
+        width: "100%",
         ...style,
       }}
     >
