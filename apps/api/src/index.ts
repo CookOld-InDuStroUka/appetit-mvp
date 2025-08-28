@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { OrderStatus, OrderType } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
@@ -10,6 +11,12 @@ import authRouter from "./routes/auth";
 import { prisma } from "./prisma";
 
 const app = express();
+app.set('trust proxy', 1);
+app.use(cors({ origin: process.env.PUBLIC_ORIGIN, credentials: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+app.use('/api/v1', authRouter);
+app.get('/api/v1/health', (_req: Request, res: Response) => res.json({ ok: true }));
 const DELIVERY_SURCHARGE = 900;
 
 async function expireBonus(userId: string) {
@@ -272,9 +279,6 @@ async function ensureDefaultModifiers() {
 ensureDefaultModifiers().catch((e) =>
   console.error("Failed to ensure default modifiers", e)
 );
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-app.use(authRouter);
 
 const uploadDir = path.join(__dirname, "../uploads");
 fs.mkdirSync(uploadDir, { recursive: true });

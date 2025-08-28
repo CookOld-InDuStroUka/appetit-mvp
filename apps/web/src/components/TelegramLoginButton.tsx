@@ -9,19 +9,13 @@ declare global {
 export default function TelegramLoginButton() {
   useEffect(() => {
     window.onTelegramAuth = async (user) => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/telegram`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/telegram`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(user),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-        location.reload();
-      }
+      location.reload();
     };
   }, []);
 
