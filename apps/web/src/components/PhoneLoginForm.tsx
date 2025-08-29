@@ -42,6 +42,8 @@ export default function PhoneLoginForm() {
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
         required
+        minLength={10}
+        maxLength={20}
       />
       <input
         type="password"

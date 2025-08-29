@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { prisma } from "../prisma";
-import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
 import bcrypt from "bcryptjs";
 
@@ -9,12 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 
 function normalizePhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
-  const normalized = digits.startsWith("8")
-    ? "7" + digits.slice(1)
-    : digits.startsWith("7")
-    ? digits
-    : "7" + digits;
-  return "+" + normalized;
+  return digits ? "+" + digits : "";
 }
 
 router.post("/auth/telegram", async (req: Request, res: Response) => {
@@ -34,7 +29,7 @@ router.post("/auth/telegram", async (req: Request, res: Response) => {
     select: { id: true, name: true, telegramId: true, phone: true } as any,
   });
 
-  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = signJwt({ uid: user.id });
 
   const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
   const host = new URL(origin).hostname;
@@ -83,7 +78,7 @@ router.post("/auth/phone", async (req: Request, res: Response) => {
     }
   }
 
-  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = signJwt({ uid: user.id });
 
   const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
   const host = new URL(origin).hostname;
@@ -101,5 +96,18 @@ router.post("/auth/phone", async (req: Request, res: Response) => {
   const { id, name: userName, telegramId, phone: userPhone } = user;
   return res.json({ ok: true, user: { id, name: userName, telegramId, phone: userPhone } });
 });
+
+function signJwt(payload: object, days = 30) {
+  const header = { alg: "HS256", typ: "JWT" };
+  const exp = Math.floor(Date.now() / 1000) + days * 24 * 60 * 60;
+  const body = { ...payload, exp };
+  const base64 = (obj: any) => Buffer.from(JSON.stringify(obj)).toString("base64url");
+  const unsigned = `${base64(header)}.${base64(body)}`;
+  const signature = crypto
+    .createHmac("sha256", JWT_SECRET)
+    .update(unsigned)
+    .digest("base64url");
+  return `${unsigned}.${signature}`;
+}
 
 export default router;
