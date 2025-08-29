@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { prisma } from "../prisma";
-import { signJwt } from "../jwt";
+import jwt from "jsonwebtoken";
 import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
 import bcrypt from "bcryptjs";
 
@@ -34,7 +34,7 @@ router.post("/auth/telegram", async (req: Request, res: Response) => {
     select: { id: true, name: true, telegramId: true, phone: true } as any,
   });
 
-  const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
 
   const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
   const host = new URL(origin).hostname;
@@ -83,7 +83,7 @@ router.post("/auth/phone", async (req: Request, res: Response) => {
     }
   }
 
-  const token = signJwt({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
+  const token = jwt.sign({ uid: user.id }, JWT_SECRET, { expiresIn: "30d" });
 
   const origin = req.headers.origin || process.env.PUBLIC_ORIGIN!;
   const host = new URL(origin).hostname;
