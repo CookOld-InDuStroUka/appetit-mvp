@@ -73,6 +73,8 @@ router.post("/auth/phone", async (req: Request, res: Response) => {
       });
     } else if (!(await bcrypt.compare(password, user.password))) {
       return res.status(400).json({ ok: false, error: "wrong password" });
+    } else if (name && user.name && user.name !== name) {
+      return res.status(400).json({ ok: false, error: "wrong name" });
     } else if (name && !user.name) {
       user = await prisma.user.update({ where: { id: user.id }, data: { name } });
     }
