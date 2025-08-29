@@ -5,7 +5,7 @@ import { useAuth } from "../components/AuthContext";
 import type { OrderDTO } from "@appetit/shared";
 import { formatAstanaTime } from "../utils/time";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   created: "Создан",

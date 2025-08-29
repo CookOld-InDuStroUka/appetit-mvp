@@ -13,7 +13,7 @@ import { useLang } from "../components/LangContext";
 
 // use local API if the env variable is missing so the menu still loads
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 type DishDTO = {
   id: string;

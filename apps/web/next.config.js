@@ -7,7 +7,7 @@ const nextConfig = {
     // НУЖНО только если у тебя бывают внешние картинки:
     remotePatterns: [
       { protocol: 'https', hostname: 'placehold.co' },
-      { protocol: 'http', hostname: 'localhost', port: '3001' },
+      { protocol: 'https', hostname: 'appetit.duckdns.org' },
       // добавляй свои домены/CDN по мере необходимости
     ],
   },

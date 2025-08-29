@@ -13,7 +13,7 @@ import { prisma } from "./prisma";
 const app = express();
 app.set('trust proxy', 1);
 const allowedOrigins = process.env.PUBLIC_ORIGIN
-  ? [process.env.PUBLIC_ORIGIN, "http://localhost:3000"]
+  ? [process.env.PUBLIC_ORIGIN, "https://appetit.duckdns.org"]
   : undefined;
 app.use(
   cors({
@@ -1833,4 +1833,5 @@ app.put(`${BASE}/admin/orders/:id/status`, async (req: Request, res: Response) =
 });
 
 const port = Number(process.env.API_PORT || 3001);
-app.listen(port, () => console.log(`API on http://localhost:${port}${BASE}`));
+const origin = process.env.PUBLIC_ORIGIN || "https://appetit.duckdns.org";
+app.listen(port, () => console.log(`API on ${origin}${BASE}`));

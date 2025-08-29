@@ -6,7 +6,7 @@ import { formatAstanaTime } from "../../../utils/time";
 import OrderDetailsModal, { Order, OrderStatus } from "../../../components/OrderDetailsModal";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   created: "Новый",

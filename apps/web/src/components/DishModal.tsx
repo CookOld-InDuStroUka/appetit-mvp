@@ -18,7 +18,7 @@ type DishDetails = DishLight & {
 
 type Props = { dish: DishLight | null; onClose: () => void };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 const NAME_TO_ID: Record<string, string> = {
   // ==== уже были ====

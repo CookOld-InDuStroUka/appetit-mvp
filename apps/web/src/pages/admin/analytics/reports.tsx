@@ -4,7 +4,7 @@ import AdminLayout from "../../../components/AdminLayout";
 import { useLang } from "../../../components/LangContext";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 export default function SavedReportsPage() {
   const { t } = useLang();

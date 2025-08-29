@@ -3,7 +3,7 @@ import DeliveryModal from "./DeliveryModal";
 import { Branch } from "./PickupMap";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
 
 // Fallback филиалы с координатами на случай, если API недоступно
 const DEFAULT_BRANCHES: Branch[] = [

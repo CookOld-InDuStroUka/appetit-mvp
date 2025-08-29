@@ -12,7 +12,7 @@ import { AdminAuthProvider } from "../components/AdminAuthContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+    process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
   React.useEffect(() => {
     const url = new URL(window.location.href);
     [

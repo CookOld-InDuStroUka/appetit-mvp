@@ -12,7 +12,7 @@ interface Branch {
 
 export default function AddressesPage() {
   const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
+    process.env.NEXT_PUBLIC_API_BASE || "https://appetit.duckdns.org/api/v1";
   const [branches, setBranches] = useState<Branch[]>([]);
   const PHONE = "+7 777 223 65 29";
 
