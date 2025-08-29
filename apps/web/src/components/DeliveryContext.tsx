@@ -121,7 +121,7 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
             };
           });
           setBranches(mapped);
-          setBranch(mapped[0].id);
+          setBranch((prev) => prev || mapped[0].id);
         }
       })
       .catch(() => {

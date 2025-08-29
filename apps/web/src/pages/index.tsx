@@ -65,8 +65,9 @@ export default function Home() {
         );
 
         const items = await Promise.all(
-          categories.map((c: any) =>
-            fetch(`${API_BASE}/dishes?categoryId=${c.id}&branchId=${branch}`)
+          categories.map((c: any) => {
+            const branchParam = branch ? `&branchId=${branch}` : "";
+            return fetch(`${API_BASE}/dishes?categoryId=${c.id}${branchParam}`)
               .then((r) => r.json())
               .then((dishes: DishDTO[]) => ({
                 name: lang === "kz" && c.nameKz ? c.nameKz : c.name,
@@ -78,8 +79,8 @@ export default function Home() {
                     category: c.slug,
                     name: toPiala(d.name), // Липтон → Пиала (ID не меняем)
                   })),
-              }))
-          )
+              }));
+          })
         );
 
         setSections(items.filter((sec) => sec.dishes.length > 0));
@@ -131,17 +132,15 @@ export default function Home() {
             <section key={sec.slug} id={sec.slug} className="sec">
               <h2 className="sec-title">{sec.name}</h2>
 
-              {!!sec.dishes.length && (
-                <div className="grid-cards">
-                  {sec.dishes.map((item) => (
-                    <DishCard
-                      key={item.id}
-                      dish={item}
-                      onClick={() => setSelectedDish(item)}
-                    />
-                  ))}
-                </div>
-              )}
+              <div className="grid-cards">
+                {sec.dishes.map((item) => (
+                  <DishCard
+                    key={item.id}
+                    dish={item}
+                    onClick={() => setSelectedDish(item)}
+                  />
+                ))}
+              </div>
             </section>
           ))}
 
@@ -201,8 +200,8 @@ export default function Home() {
         /* Плотная сетка карточек */
         .grid-cards {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
           gap: 14px;
+          grid-template-columns: repeat(1, 1fr);
         }
 
         .about {
@@ -210,17 +209,20 @@ export default function Home() {
           color: #475569;
         }
 
+        @media (min-width: 640px) {
+          .grid-cards {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        @media (min-width: 768px) {
+          .grid-cards {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
         @media (max-width: 900px) {
           .page-layout {
             gap: 8px;
             padding: 8px 10px 24px;
-          }
-          .grid-cards {
-            grid-template-columns: repeat(
-              auto-fill,
-              minmax(200px, 1fr)
-            );
-            gap: 12px;
           }
           .sec-title {
             font-size: 22px;
@@ -229,12 +231,6 @@ export default function Home() {
         @media (max-width: 560px) {
           .mobile-toggle {
             display: flex;
-          }
-          .grid-cards {
-            grid-template-columns: repeat(
-              auto-fill,
-              minmax(170px, 1fr)
-            );
           }
         }
       `}</style>
