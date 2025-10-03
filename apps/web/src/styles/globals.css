@@ -532,6 +532,34 @@ button,
   transform: translateY(-1px);
 }
 
+.footer-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  gap: 2px;
+}
+
+.footer-badge-text small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(229, 231, 235, 0.72);
+}
+
+.footer-badge--disabled {
+  pointer-events: none;
+  cursor: default;
+  border-style: dashed;
+  opacity: 0.82;
+}
+
+.footer-badge--disabled:hover {
+  background: var(--footer-badge-bg);
+  border-color: var(--footer-badge-border);
+  transform: none;
+}
+
 .footer-bottom {
   margin-top: 32px;
   display: flex;

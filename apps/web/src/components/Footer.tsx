@@ -22,8 +22,28 @@ export default function Footer() {
           <div className="footer-apps">
             <p className="footer-promo">{t("promoAppLine")}</p>
             <div className="footer-badges">
-              <a className="footer-badge" href="#"><span aria-hidden></span><span>{t("appStore")}</span></a>
-              <a className="footer-badge" href="#"><span aria-hidden>▶</span><span>{t("googlePlay")}</span></a>
+              <span
+                className="footer-badge footer-badge--disabled"
+                aria-disabled
+                title={t("comingSoon")}
+              >
+                <span aria-hidden></span>
+                <span className="footer-badge-text">
+                  {t("appStore")}
+                  <small>{t("comingSoon")}</small>
+                </span>
+              </span>
+              <span
+                className="footer-badge footer-badge--disabled"
+                aria-disabled
+                title={t("comingSoon")}
+              >
+                <span aria-hidden>▶</span>
+                <span className="footer-badge-text">
+                  {t("googlePlay")}
+                  <small>{t("comingSoon")}</small>
+                </span>
+              </span>
             </div>
           </div>
         </div>

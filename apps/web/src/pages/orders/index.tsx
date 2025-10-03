@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import { useAuth } from "../components/AuthContext";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import { useAuth } from "../../components/AuthContext";
 import type { OrderDTO } from "@appetit/shared";
-import { formatAstanaTime } from "../utils/time";
+import { formatAstanaTime } from "../../utils/time";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
