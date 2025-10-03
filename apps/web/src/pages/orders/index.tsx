@@ -23,12 +23,27 @@ export default function OrdersPage() {
   const load = () => {
     if (!user) return;
     fetch(`${API_BASE}/users/${user.id}`)
-      .then((r) => r.json())
-      .then((data) => setOrders(data.orders))
-      .catch(() => {});
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load orders");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const nextOrders = Array.isArray(data?.orders) ? data.orders : [];
+        setOrders(nextOrders);
+      })
+      .catch(() => {
+        setOrders([]);
+      });
   };
 
   useEffect(() => {
+    if (!user) {
+      setOrders([]);
+      return;
+    }
+
     load();
     const t = setInterval(load, 5000);
     return () => clearInterval(t);
