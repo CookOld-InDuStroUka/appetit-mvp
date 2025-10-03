@@ -1,6 +1,37 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
 
+function formatKazakhPhone(input: string) {
+  const digits = input.replace(/\D/g, "");
+  if (!digits) return "";
+
+  let normalized = digits;
+  if (normalized.startsWith("8")) normalized = "7" + normalized.slice(1);
+  if (!normalized.startsWith("7")) normalized = "7" + normalized;
+  normalized = normalized.slice(0, 11);
+
+  const rest = normalized.slice(1);
+  let formatted = "+7";
+  if (rest.length > 0) formatted += " " + rest.slice(0, 3);
+  if (rest.length > 3) formatted += " " + rest.slice(3, 6);
+  if (rest.length > 6) formatted += " " + rest.slice(6, 8);
+  if (rest.length > 8) formatted += " " + rest.slice(8, 10);
+
+  return formatted.trim();
+}
+
+function normalizeKazakhPhone(input: string) {
+  let digits = input.replace(/\D/g, "");
+  if (!digits) return null;
+
+  if (digits.startsWith("8")) digits = "7" + digits.slice(1);
+  if (!digits.startsWith("7")) digits = "7" + digits;
+  digits = digits.slice(0, 11);
+
+  if (digits.length !== 11) return null;
+  return "+" + digits;
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function PhoneLoginForm() {
@@ -23,7 +54,13 @@ export default function PhoneLoginForm() {
       return;
     }
 
-    const payload: Record<string, string> = { phone, password };
+    const normalizedPhone = normalizeKazakhPhone(phone);
+    if (!normalizedPhone) {
+      setError("Введите номер телефона в формате +7 XXX XXX XX XX");
+      return;
+    }
+
+    const payload: Record<string, string> = { phone: normalizedPhone, password };
     if (mode === "register") {
       payload.name = name;
     }
@@ -130,10 +167,11 @@ export default function PhoneLoginForm() {
         type="tel"
         placeholder="Телефон"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(e) => setPhone(formatKazakhPhone(e.target.value))}
         required
-        minLength={10}
-        maxLength={20}
+        inputMode="tel"
+        minLength={4}
+        maxLength={19}
       />
       <input
         type="password"

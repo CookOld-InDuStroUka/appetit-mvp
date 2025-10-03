@@ -106,6 +106,10 @@ function normalizePhone(phone: string) {
   return "+" + normalized;
 }
 
+function isValidKazakhPhone(phone: string) {
+  return /^\+7\d{10}$/.test(phone);
+}
+
 async function sendSms(to: string, code: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -446,6 +450,14 @@ app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
   }
 
   const phone = normalizePhone(parsed.data.phone);
+  if (!isValidKazakhPhone(phone)) {
+    const message = "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)";
+    return res.status(400).json({
+      error: "validation_error",
+      message,
+      details: [{ field: "phone", message }],
+    });
+  }
   const name = parsed.data.name.trim();
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing && existing.password) {
