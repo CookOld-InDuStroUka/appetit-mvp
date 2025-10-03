@@ -39,12 +39,22 @@ export default function PhoneLoginForm() {
 
       if (!response.ok) {
         const err = await response.json().catch(() => null);
+        const detailsMessage = Array.isArray(err?.details)
+          ? err.details.find((item: any) => typeof item?.message === "string")?.message
+          : undefined;
+
         if (err?.error === "phone_taken") {
-          setError("Этот номер уже зарегистрирован");
+          setError(err?.message || "Этот номер уже зарегистрирован");
         } else if (err?.error === "Invalid credentials") {
           setError("Неверный телефон или пароль");
+        } else if (typeof err?.message === "string" && err.message.trim()) {
+          setError(err.message.trim());
+        } else if (typeof detailsMessage === "string" && detailsMessage.trim()) {
+          setError(detailsMessage.trim());
+        } else if (typeof err?.error === "string") {
+          setError(err.error);
         } else {
-          setError(err?.error || "Не удалось выполнить действие");
+          setError("Не удалось выполнить действие");
         }
         return;
       }

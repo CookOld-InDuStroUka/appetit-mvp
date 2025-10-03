@@ -407,13 +407,24 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 
 app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
   const parsed = UserRegisterSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "validation_error",
+      details: parsed.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
+    });
+  }
 
   const phone = normalizePhone(parsed.data.phone);
   const name = parsed.data.name.trim();
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing && existing.password) {
-    return res.status(409).json({ error: "phone_taken" });
+    return res.status(409).json({
+      error: "phone_taken",
+      message: "Этот номер уже зарегистрирован",
+    });
   }
 
   const hashed = await bcrypt.hash(parsed.data.password, 10);
