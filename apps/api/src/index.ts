@@ -324,31 +324,40 @@ const AuthVerifySchema = z
 const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
 const UserLoginSchema = z.object({ phone: z.string().min(5), password: z.string().min(4) });
-const UserRegisterSchema = z.object({
-  name: z.string().min(2).max(100),
-  phone: z.string().min(5).max(32),
-  password: z.string().min(6).max(100),
-});
-const REGISTER_ERROR_MESSAGES: Record<
-  string,
-  (issue: z.ZodIssueOptionalMessage) => string | undefined
-> = {
-  name: (issue) => {
-    if (issue.code === "too_small") return "Имя должно содержать минимум 2 символа";
-    if (issue.code === "too_big") return "Имя не может быть длиннее 100 символов";
-    return undefined;
-  },
-  phone: (issue) => {
-    if (issue.code === "too_small") return "Номер телефона слишком короткий";
-    if (issue.code === "too_big") return "Номер телефона слишком длинный";
-    return undefined;
-  },
-  password: (issue) => {
-    if (issue.code === "too_small") return "Пароль должен содержать минимум 6 символов";
-    if (issue.code === "too_big") return "Пароль не может быть длиннее 100 символов";
-    return undefined;
-  },
-};
+const UserRegisterSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, { message: "Имя должно содержать минимум 2 символа" })
+      .max(100, { message: "Имя не может быть длиннее 100 символов" }),
+    phone: z
+      .string()
+      .trim()
+      .min(5, { message: "Номер телефона слишком короткий" })
+      .max(32, { message: "Номер телефона слишком длинный" }),
+    password: z
+      .string()
+      .min(6, { message: "Пароль должен содержать минимум 6 символов" })
+      .max(100, { message: "Пароль не может быть длиннее 100 символов" }),
+  })
+  .superRefine((data, ctx) => {
+    if (!/^[A-Za-zА-Яа-яЁё\-\s']+$/.test(data.name)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["name"],
+        message: "Имя может содержать только буквы и дефис",
+      });
+    }
+
+    if (!/^(?=.*[A-Za-zА-Яа-яЁё])(?=.*\d).+$/.test(data.password)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["password"],
+        message: "Пароль должен содержать хотя бы одну букву и одну цифру",
+      });
+    }
+  });
 const UserUpdateSchema = z.object({
   name: z.string().max(100).optional(),
   phone: z.union([z.string().min(5).max(32), z.null(), z.literal("")]).optional(),
@@ -434,9 +443,7 @@ app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
   if (!parsed.success) {
     const details = parsed.error.issues.map((issue) => {
       const field = issue.path.join(".");
-      const key = typeof issue.path[0] === "string" ? (issue.path[0] as string) : undefined;
-      const formatter = key ? REGISTER_ERROR_MESSAGES[key] : undefined;
-      const message = formatter?.(issue) || issue.message || "Некорректное значение";
+      const message = issue.message || "Некорректное значение";
       return { field, message };
     });
     return res.status(400).json({
@@ -458,12 +465,13 @@ app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
       details: [{ field: "phone", message }],
     });
   }
-  const name = parsed.data.name.trim();
+  const name = parsed.data.name;
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing && existing.password) {
     return res.status(409).json({
       error: "phone_taken",
       message: "Этот номер уже зарегистрирован",
+      details: [{ field: "phone", message: "Аккаунт с этим номером уже существует" }],
     });
   }
 

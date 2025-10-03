@@ -86,13 +86,14 @@ export default function PhoneLoginForm() {
               .filter((msg: any): msg is string => typeof msg === "string" && msg.trim().length > 0)
               .map((msg: string) => msg.trim())
           : [];
+        const detailsText = detailMessages.join("\n");
 
         if (err?.error === "phone_taken") {
-          setError(err?.message || "Этот номер уже зарегистрирован");
+          setError(detailsText || err?.message || "Этот номер уже зарегистрирован");
         } else if (err?.error === "Invalid credentials") {
           setError("Неверный телефон или пароль");
-        } else if (detailMessages.length > 0) {
-          setError(detailMessages.join("\n"));
+        } else if (detailsText) {
+          setError(detailsText);
         } else if (typeof err?.message === "string" && err.message.trim()) {
           setError(err.message.trim());
         } else if (typeof err?.error === "string") {
