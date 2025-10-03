@@ -325,6 +325,26 @@ const UserRegisterSchema = z.object({
   phone: z.string().min(5).max(32),
   password: z.string().min(6).max(100),
 });
+const REGISTER_ERROR_MESSAGES: Record<
+  string,
+  (issue: z.ZodIssueOptionalMessage) => string | undefined
+> = {
+  name: (issue) => {
+    if (issue.code === "too_small") return "Имя должно содержать минимум 2 символа";
+    if (issue.code === "too_big") return "Имя не может быть длиннее 100 символов";
+    return undefined;
+  },
+  phone: (issue) => {
+    if (issue.code === "too_small") return "Номер телефона слишком короткий";
+    if (issue.code === "too_big") return "Номер телефона слишком длинный";
+    return undefined;
+  },
+  password: (issue) => {
+    if (issue.code === "too_small") return "Пароль должен содержать минимум 6 символов";
+    if (issue.code === "too_big") return "Пароль не может быть длиннее 100 символов";
+    return undefined;
+  },
+};
 const UserUpdateSchema = z.object({
   name: z.string().max(100).optional(),
   phone: z.union([z.string().min(5).max(32), z.null(), z.literal("")]).optional(),
@@ -408,12 +428,20 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
 app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
   const parsed = UserRegisterSchema.safeParse(req.body);
   if (!parsed.success) {
+    const details = parsed.error.issues.map((issue) => {
+      const field = issue.path.join(".");
+      const key = typeof issue.path[0] === "string" ? (issue.path[0] as string) : undefined;
+      const formatter = key ? REGISTER_ERROR_MESSAGES[key] : undefined;
+      const message = formatter?.(issue) || issue.message || "Некорректное значение";
+      return { field, message };
+    });
     return res.status(400).json({
       error: "validation_error",
-      details: parsed.error.issues.map((issue) => ({
-        field: issue.path.join("."),
-        message: issue.message,
-      })),
+      message:
+        details.length > 0
+          ? details[0]!.message
+          : "Проверьте введённые данные и попробуйте снова",
+      details,
     });
   }
 

@@ -39,18 +39,25 @@ export default function PhoneLoginForm() {
 
       if (!response.ok) {
         const err = await response.json().catch(() => null);
-        const detailsMessage = Array.isArray(err?.details)
-          ? err.details.find((item: any) => typeof item?.message === "string")?.message
-          : undefined;
+        const detailMessages = Array.isArray(err?.details)
+          ? err.details
+              .map((item: any) => {
+                if (typeof item === "string") return item;
+                if (item && typeof item.message === "string") return item.message;
+                return null;
+              })
+              .filter((msg: any): msg is string => typeof msg === "string" && msg.trim().length > 0)
+              .map((msg: string) => msg.trim())
+          : [];
 
         if (err?.error === "phone_taken") {
           setError(err?.message || "Этот номер уже зарегистрирован");
         } else if (err?.error === "Invalid credentials") {
           setError("Неверный телефон или пароль");
+        } else if (detailMessages.length > 0) {
+          setError(detailMessages.join("\n"));
         } else if (typeof err?.message === "string" && err.message.trim()) {
           setError(err.message.trim());
-        } else if (typeof detailsMessage === "string" && detailsMessage.trim()) {
-          setError(detailsMessage.trim());
         } else if (typeof err?.error === "string") {
           setError(err.error);
         } else {
@@ -146,7 +153,7 @@ export default function PhoneLoginForm() {
           minLength={6}
         />
       )}
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {error && <div style={{ color: "red", whiteSpace: "pre-line" }}>{error}</div>}
       <button type="submit" disabled={loading}>
         {loading ? "Подождите..." : mode === "register" ? "Зарегистрироваться" : "Войти"}
       </button>
