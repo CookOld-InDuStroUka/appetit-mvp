@@ -3,6 +3,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { OrderStatus, OrderType, PaymentStatus } from "@prisma/client";
+import type { Order as PrismaOrder, OrderItem as PrismaOrderItem, User as PrismaUser } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
 import path from "path";
@@ -319,6 +320,18 @@ const AuthVerifySchema = z
 const AuthLoginSchema = z.object({ login: z.string().min(3), password: z.string().min(4) });
 const AdminAuthSchema = AuthLoginSchema.extend({ role: z.string().optional() });
 const UserLoginSchema = z.object({ phone: z.string().min(5), password: z.string().min(4) });
+const UserRegisterSchema = z.object({
+  name: z.string().min(2).max(100),
+  phone: z.string().min(5).max(32),
+  password: z.string().min(6).max(100),
+});
+const UserUpdateSchema = z.object({
+  name: z.string().max(100).optional(),
+  phone: z.union([z.string().min(5).max(32), z.null(), z.literal("")]).optional(),
+  email: z.union([z.string().email(), z.null(), z.literal("")]).optional(),
+  birthDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()]).optional(),
+  notificationsEnabled: z.boolean().optional(),
+});
 
 app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
@@ -392,6 +405,30 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   });
 });
 
+app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
+  const parsed = UserRegisterSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const phone = normalizePhone(parsed.data.phone);
+  const name = parsed.data.name.trim();
+  const existing = await prisma.user.findUnique({ where: { phone } });
+  if (existing && existing.password) {
+    return res.status(409).json({ error: "phone_taken" });
+  }
+
+  const hashed = await bcrypt.hash(parsed.data.password, 10);
+  const userRecord = existing
+    ? await prisma.user.update({
+        where: { id: existing.id },
+        data: { name, password: hashed },
+      })
+    : await prisma.user.create({
+        data: { name, phone, password: hashed },
+      });
+
+  return res.status(201).json({ user: serializeUser(userRecord) });
+});
+
 app.post(`${BASE}/auth/login`, async (req: Request, res: Response) => {
   const parsed = UserLoginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
@@ -400,17 +437,74 @@ app.post(`${BASE}/auth/login`, async (req: Request, res: Response) => {
   if (!user || !user.password || !(await bcrypt.compare(parsed.data.password, user.password))) {
     return res.status(400).json({ error: "Invalid credentials" });
   }
-  res.json({
-    user: {
-      id: user.id,
-      phone: user.phone,
-      email: user.email,
-      name: user.name,
-      birthDate: user.birthDate,
-      notificationsEnabled: user.notificationsEnabled,
-      bonus: user.bonus,
+  res.json({ user: serializeUser(user) });
+});
+
+app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  await expireBonus(id);
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      orders: {
+        where: { userId: id },
+        orderBy: { createdAt: "desc" },
+        include: { items: { include: { dish: true } }, promoCode: true },
+      },
     },
   });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  const orders = user.orders.map(serializeOrder);
+  res.json({ ...serializeUser(user), orders });
+});
+
+app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
+  const parsed = UserUpdateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
+
+  const { id } = req.params;
+  const existing = await prisma.user.findUnique({ where: { id } });
+  if (!existing) return res.status(404).json({ error: "User not found" });
+
+  const updates: any = {};
+  if (parsed.data.name !== undefined) {
+    updates.name = parsed.data.name?.trim() ? parsed.data.name.trim() : null;
+  }
+  if (parsed.data.phone !== undefined) {
+    const raw = parsed.data.phone;
+    const trimmed = typeof raw === "string" ? raw.trim() : "";
+    const normalized = trimmed ? normalizePhone(trimmed) : null;
+    if (normalized) {
+      const duplicate = await prisma.user.findFirst({
+        where: { phone: normalized, id: { not: id } },
+      });
+      if (duplicate) return res.status(409).json({ error: "phone_taken" });
+    }
+    updates.phone = normalized;
+  }
+  if (parsed.data.email !== undefined) {
+    const raw = parsed.data.email;
+    const trimmed = typeof raw === "string" ? raw.trim() : "";
+    const email = trimmed ? trimmed : null;
+    if (email) {
+      const duplicateEmail = await prisma.user.findFirst({
+        where: { email, id: { not: id } },
+      });
+      if (duplicateEmail) return res.status(409).json({ error: "email_taken" });
+    }
+    updates.email = email;
+  }
+  if (parsed.data.birthDate !== undefined) {
+    const value = parsed.data.birthDate;
+    updates.birthDate = value && value !== "" ? new Date(`${value}T00:00:00.000Z`) : null;
+  }
+  if (parsed.data.notificationsEnabled !== undefined) {
+    updates.notificationsEnabled = parsed.data.notificationsEnabled;
+  }
+
+  const updated = await prisma.user.update({ where: { id }, data: updates });
+  res.json({ user: serializeUser(updated) });
 });
 
 app.post(`${BASE}/admin/login`, async (req: Request, res: Response) => {
@@ -1620,80 +1714,6 @@ app.post(`${BASE}/admin/settings/tracking`, async (req: Request, res: Response) 
   res.json({ ok: true });
 });
 
-app.get(`${BASE}/users/:id`, async (req: Request, res: Response) => {
-  await expireBonus(req.params.id);
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.id },
-    include: {
-      orders: {
-        include: { items: { include: { dish: true } }, promoCode: true },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
-  if (!user) return res.status(404).json({ error: "Not found" });
-
-  res.json({
-    id: user.id,
-    phone: user.phone,
-    email: user.email,
-    name: user.name,
-    birthDate: user.birthDate,
-    notificationsEnabled: user.notificationsEnabled,
-    bonus: user.bonus,
-    orders: user.orders.map((o: any) => ({
-      id: o.id,
-      type: o.type,
-      status: o.status,
-      customerName: o.customerName,
-      customerPhone: o.customerPhone,
-      address: o.address,
-      zoneId: o.zoneId,
-      branchId: o.branchId,
-      pickupTime: o.pickupTime,
-      pickupCode: o.pickupCode,
-      promoCode: o.promoCode?.code,
-      subtotal: Number(o.subtotal),
-      deliveryFee: Number(o.deliveryFee),
-      discount: Number(o.discount),
-      total: Number(o.total),
-      bonusEarned: o.bonusEarned,
-      bonusUsed: o.bonusUsed,
-      createdAt: o.createdAt,
-      items: o.items.map((i: any) => ({
-        id: i.id,
-        dishId: i.dishId,
-        variantId: i.variantId,
-        qty: i.qty,
-        unitPrice: Number(i.unitPrice),
-        total: Number(i.total),
-        dishName: i.dish?.name,
-        dishImageUrl: i.dish?.imageUrl ?? null,
-        addons: i.addons,
-        exclusions: i.exclusions,
-      })),
-    })),
-  });
-});
-
-const UserUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
-  phone: z.string().min(5).optional(),
-  email: z.string().email().optional(),
-  password: z.string().min(6).optional(),
-  birthDate: z.string().optional().nullable(),
-  notificationsEnabled: z.boolean().optional(),
-});
-
-app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
-  const parsed = UserUpdateSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const data: any = { ...parsed.data };
-  if (data.birthDate) data.birthDate = new Date(data.birthDate);
-  const user = await prisma.user.update({ where: { id: req.params.id }, data });
-  res.json({ id: user.id, phone: user.phone, email: user.email, name: user.name, birthDate: user.birthDate, notificationsEnabled: user.notificationsEnabled, bonus: user.bonus });
-});
-
 app.get(`${BASE}/admin/reviews`, async (_req: Request, res: Response) => {
   const reviews = await prisma.review.findMany({ orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] });
   res.json(reviews);
@@ -1827,6 +1847,78 @@ app.put(`${BASE}/admin/orders/:id/status`, async (req: Request, res: Response) =
     res.status(404).json({ error: "Not found" });
   }
 });
+
+type OrderItemWithDish = PrismaOrderItem & {
+  dish: { name: string; imageUrl: string | null } | null;
+};
+
+type OrderWithItems = PrismaOrder & {
+  items: OrderItemWithDish[];
+  promoCode: { code: string } | null;
+};
+
+type UserLike = Pick<PrismaUser, "id" | "name" | "phone" | "email" | "birthDate" | "notificationsEnabled" | "bonus">;
+
+function serializeUser(user: UserLike) {
+  return {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    birthDate: user.birthDate ? user.birthDate.toISOString() : null,
+    notificationsEnabled: user.notificationsEnabled,
+    bonus: user.bonus,
+  };
+}
+
+function serializeOrder(order: OrderWithItems) {
+  return {
+    id: order.id,
+    type: order.type,
+    status: order.status,
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    address: order.address,
+    zoneId: order.zoneId,
+    branchId: order.branchId,
+    pickupTime: order.pickupTime ? order.pickupTime.toISOString() : null,
+    pickupCode: order.pickupCode,
+    promoCode: order.promoCode ? order.promoCode.code : null,
+    utmSource: order.utmSource,
+    utmMedium: order.utmMedium,
+    utmCampaign: order.utmCampaign,
+    utmContent: order.utmContent,
+    utmTerm: order.utmTerm,
+    referrer: order.referrer,
+    visitorId: order.visitorId,
+    subtotal: Number(order.subtotal),
+    deliveryFee: Number(order.deliveryFee),
+    discount: Number(order.discount),
+    total: Number(order.total),
+    bonusEarned: order.bonusEarned,
+    bonusUsed: order.bonusUsed,
+    createdAt: order.createdAt.toISOString(),
+    paidAt: order.paidAt ? order.paidAt.toISOString() : null,
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    items: order.items.map(serializeOrderItem),
+  };
+}
+
+function serializeOrderItem(item: OrderItemWithDish) {
+  return {
+    id: item.id,
+    dishId: item.dishId,
+    variantId: item.variantId,
+    qty: item.qty,
+    unitPrice: Number(item.unitPrice),
+    total: Number(item.total),
+    dishName: item.dish?.name,
+    dishImageUrl: item.dish?.imageUrl ?? null,
+    addons: item.addons ?? [],
+    exclusions: item.exclusions ?? [],
+  };
+}
 
 const port = Number(process.env.API_PORT || 3001);
 app.listen(port, () => console.log(`API on http://localhost:${port}${BASE}`));

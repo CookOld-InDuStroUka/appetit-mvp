@@ -5,6 +5,8 @@ export type UserDTO = {
   phone?: string | null;
   email?: string | null;
   name?: string | null;
+  birthDate?: string | null;
+  notificationsEnabled?: boolean;
   bonus: number;
 };
 

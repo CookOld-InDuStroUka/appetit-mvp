@@ -22,29 +22,36 @@ export default function UserInfoModal({ user, onClose, onSaved }: Props) {
   const [birthDate, setBirthDate] = useState(user.birthDate ? user.birthDate.slice(0, 10) : "");
   const [notify, setNotify] = useState(user.notificationsEnabled ?? true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const save = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch(`${API_BASE}/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          phone,
-          email,
+          name: name.trim(),
+          phone: phone.trim() || null,
+          email: email.trim() || null,
           birthDate: birthDate || null,
           notificationsEnabled: notify,
         }),
       });
       if (res.ok) {
         const data = await res.json();
-        onSaved(data);
+        if (data?.user) {
+          onSaved(data.user);
+        }
       } else {
-        alert("Не удалось сохранить");
+        const err = await res.json().catch(() => null);
+        if (err?.error === "phone_taken") setError("Телефон уже используется");
+        else if (err?.error === "email_taken") setError("Почта уже используется");
+        else setError("Не удалось сохранить");
       }
     } catch {
-      alert("Не удалось сохранить");
+      setError("Не удалось сохранить");
     } finally {
       setLoading(false);
     }
@@ -106,6 +113,7 @@ export default function UserInfoModal({ user, onClose, onSaved }: Props) {
             Получать уведомления и акции
           </label>
         </div>
+        {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
         <button
           onClick={save}
           disabled={loading || !name || (!phone && !email)}

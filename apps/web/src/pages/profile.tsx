@@ -19,12 +19,37 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     fetch(`${API_BASE}/users/${user.id}`)
       .then((r) => r.json())
-      .then((data) => setOrders(Array.isArray(data.orders) ? data.orders : []))
+      .then((data) => {
+        if (Array.isArray(data.orders)) setOrders(data.orders);
+        if (data && typeof data === "object" && "id" in data) {
+          const { orders: _orders, ...rest } = data as any;
+          const nextUser = {
+            id: rest.id,
+            name: rest.name ?? null,
+            phone: rest.phone ?? null,
+            email: rest.email ?? null,
+            birthDate: rest.birthDate ?? null,
+            notificationsEnabled: rest.notificationsEnabled ?? true,
+            bonus: rest.bonus ?? 0,
+          };
+          if (
+            !user ||
+            user.name !== nextUser.name ||
+            user.phone !== nextUser.phone ||
+            user.email !== nextUser.email ||
+            user.birthDate !== nextUser.birthDate ||
+            user.notificationsEnabled !== nextUser.notificationsEnabled ||
+            user.bonus !== nextUser.bonus
+          ) {
+            setUser(nextUser);
+          }
+        }
+      })
       .catch(() => {});
-  }, [user]);
+  }, [user?.id]);
 
   if (!user) {
     return (
