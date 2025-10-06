@@ -33,6 +33,7 @@ export default function AdminHeader() {
       { href: "/admin/branches", label: "Филиалы" },
       { href: "/admin/menu", label: "Меню" },
       { href: "/admin/orders", label: "Заказы" },
+      { href: "/admin/users", label: "Пользователи" },
       { href: "/admin/promos", label: "Маркетинг" },
       { href: "/admin/analytics", label: "Аналитика" },
       {

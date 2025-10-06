@@ -358,6 +358,46 @@ const UserRegisterSchema = z
       });
     }
   });
+
+const AdminUserUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, { message: "Имя должно содержать минимум 2 символа" })
+    .max(100, { message: "Имя не может быть длиннее 100 символов" })
+    .optional(),
+  phone: z
+    .string()
+    .trim()
+    .max(32, { message: "Номер телефона слишком длинный" })
+    .optional(),
+  email: z
+    .string()
+    .trim()
+    .email({ message: "Укажите корректный e-mail" })
+    .or(z.literal(""))
+    .optional(),
+  bonus: z
+    .number()
+    .int({ message: "Бонусы должны быть целым числом" })
+    .min(0, { message: "Бонусы не могут быть отрицательными" })
+    .max(1_000_000, { message: "Слишком большое количество бонусов" })
+    .optional(),
+  password: z
+    .string()
+    .min(6, { message: "Пароль должен содержать минимум 6 символов" })
+    .max(128, { message: "Пароль слишком длинный" })
+    .optional(),
+  notificationsEnabled: z.boolean().optional(),
+  birthDate: z
+    .string()
+    .trim()
+    .regex(/^(\d{4})-(\d{2})-(\d{2})$/, {
+      message: "Дата рождения должна быть в формате ГГГГ-ММ-ДД",
+    })
+    .or(z.literal(""))
+    .optional(),
+});
 const UserUpdateSchema = z.object({
   name: z.string().max(100).optional(),
   phone: z.union([z.string().min(5).max(32), z.null(), z.literal("")]).optional(),
@@ -634,6 +674,28 @@ async function getAdminByHeader(req: Request) {
   return prisma.admin.findUnique({ where: { id } });
 }
 
+type AdminUserWithStats = PrismaUser & {
+  _count: { orders: number };
+  orders: { createdAt: Date }[];
+};
+
+function mapAdminUser(user: AdminUserWithStats) {
+  return {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    bonus: user.bonus,
+    createdAt: user.createdAt.toISOString(),
+    lastOrderAt: user.orders[0]?.createdAt
+      ? user.orders[0].createdAt.toISOString()
+      : null,
+    ordersCount: user._count.orders,
+    birthDate: user.birthDate ? user.birthDate.toISOString().slice(0, 10) : null,
+    notificationsEnabled: user.notificationsEnabled,
+  };
+}
+
 app.get(`${BASE}/admin/accounts`, async (req: Request, res: Response) => {
   const admin = await getAdminByHeader(req);
   if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
@@ -664,6 +726,190 @@ app.delete(`${BASE}/admin/accounts/:id`, async (req: Request, res: Response) => 
   if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
   await prisma.admin.delete({ where: { id: req.params.id } });
   res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/users`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const search = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  const takeParam = Number(req.query.take);
+  const take = Number.isFinite(takeParam)
+    ? Math.min(Math.max(Math.floor(takeParam), 1), 100)
+    : 50;
+
+  const where: Prisma.UserWhereInput = {};
+  if (search) {
+    const normalized = normalizeKazakhPhone(search);
+    const digits = search.replace(/\D/g, "");
+    const conditions: Prisma.UserWhereInput[] = [
+      { name: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
+    if (digits) {
+      conditions.push({ phone: { contains: digits } });
+      if (digits.length >= 10) {
+        conditions.push({ phone: { contains: `+7${digits.slice(-10)}` } });
+      }
+    }
+    if (normalized) conditions.push({ phone: normalized });
+    where.OR = conditions;
+  }
+
+  const users = await prisma.user.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take,
+    include: {
+      _count: { select: { orders: true } },
+      orders: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+    },
+  });
+
+  res.json({ users: users.map((user) => mapAdminUser(user)) });
+});
+
+app.get(`${BASE}/admin/users/:id`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    include: {
+      _count: { select: { orders: true } },
+      orders: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          createdAt: true,
+          total: true,
+          status: true,
+          type: true,
+        },
+      },
+    },
+  });
+
+  if (!user) return res.status(404).json({ error: "Not found" });
+
+  res.json({
+    user: mapAdminUser(user),
+    recentOrders: user.orders.map((o) => ({
+      id: o.id,
+      status: o.status,
+      type: o.type,
+      total: Number(o.total),
+      createdAt: o.createdAt.toISOString(),
+    })),
+  });
+});
+
+app.patch(`${BASE}/admin/users/:id`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const parsed = AdminUserUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return res.status(400).json({
+      error: "invalid_payload",
+      message: issue?.message || "Проверьте введённые данные",
+    });
+  }
+
+  const id = req.params.id;
+  const current = await prisma.user.findUnique({ where: { id } });
+  if (!current) return res.status(404).json({ error: "Not found" });
+
+  const updates: Prisma.UserUpdateInput = {};
+
+  if (parsed.data.name !== undefined) {
+    updates.name = parsed.data.name.trim();
+  }
+  if (parsed.data.notificationsEnabled !== undefined) {
+    updates.notificationsEnabled = parsed.data.notificationsEnabled;
+  }
+  if (parsed.data.bonus !== undefined) {
+    updates.bonus = parsed.data.bonus;
+  }
+  if (parsed.data.birthDate !== undefined) {
+    const value = parsed.data.birthDate.trim();
+    updates.birthDate = value ? new Date(`${value}T00:00:00.000Z`) : null;
+  }
+  if (parsed.data.email !== undefined) {
+    const trimmed = parsed.data.email.trim();
+    if (!trimmed) {
+      updates.email = null;
+    } else {
+      const duplicate = await prisma.user.findFirst({
+        where: { email: trimmed, id: { not: id } },
+      });
+      if (duplicate) {
+        return res.status(409).json({
+          error: "email_taken",
+          message: "Этот e-mail уже используется другим пользователем",
+        });
+      }
+      updates.email = trimmed;
+    }
+  }
+  if (parsed.data.phone !== undefined) {
+    const trimmed = parsed.data.phone.trim();
+    if (!trimmed) {
+      updates.phone = null;
+    } else {
+      const normalized = normalizeKazakhPhone(trimmed);
+      if (!normalized) {
+        return res
+          .status(400)
+          .json({ error: "invalid_phone", message: INVALID_PHONE_MESSAGE });
+      }
+      const duplicate = await prisma.user.findFirst({
+        where: { phone: normalized, id: { not: id } },
+      });
+      if (duplicate) {
+        return res.status(409).json({
+          error: "phone_taken",
+          message: "Этот номер уже закреплён за другим пользователем",
+        });
+      }
+      updates.phone = normalized;
+    }
+  }
+  if (parsed.data.password !== undefined) {
+    updates.password = await bcrypt.hash(parsed.data.password, 10);
+  }
+
+  const hasUpdates = Object.keys(updates).length > 0;
+  const updated = hasUpdates
+    ? await prisma.user.update({
+        where: { id },
+        data: updates,
+        include: {
+          _count: { select: { orders: true } },
+          orders: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { createdAt: true },
+          },
+        },
+      })
+    : await prisma.user.findUnique({
+        where: { id },
+        include: {
+          _count: { select: { orders: true } },
+          orders: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { createdAt: true },
+          },
+        },
+      });
+
+  if (!updated) return res.status(404).json({ error: "Not found" });
+
+  res.json({ user: mapAdminUser(updated) });
 });
 
 app.get(BASE, (_: Request, res: Response) => {
@@ -1586,9 +1832,9 @@ app.get(`${BASE}/orders/:id`, async (req: Request, res: Response) => {
 });
 
 app.get(`${BASE}/admin/orders`, async (req: Request, res: Response) => {
-  const where = req.query.branchId
-    ? { branchId: String(req.query.branchId) }
-    : undefined;
+  const where: Prisma.OrderWhereInput = {};
+  if (req.query.branchId) where.branchId = String(req.query.branchId);
+  if (req.query.userId) where.userId = String(req.query.userId);
   const orders = await prisma.order.findMany({
     where,
     include: { items: { include: { dish: true } }, promoCode: true },
