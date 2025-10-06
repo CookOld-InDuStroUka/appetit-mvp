@@ -32,6 +32,33 @@ function normalizeKazakhPhone(input: string) {
   return "+" + digits;
 }
 
+function validateRegistrationFields(name: string, password: string) {
+  const errors: string[] = [];
+  const trimmedName = name.trim();
+
+  if (trimmedName.length < 2) {
+    errors.push("Имя должно содержать минимум 2 символа");
+  }
+  if (trimmedName.length > 100) {
+    errors.push("Имя не может быть длиннее 100 символов");
+  }
+  if (trimmedName && !/^[A-Za-zА-Яа-яЁё\-\s']+$/.test(trimmedName)) {
+    errors.push("Имя может содержать только буквы, пробел и дефис");
+  }
+
+  if (password.length < 6) {
+    errors.push("Пароль должен содержать минимум 6 символов");
+  }
+  if (password.length > 100) {
+    errors.push("Пароль не может быть длиннее 100 символов");
+  }
+  if (!/[A-Za-zА-Яа-яЁё]/.test(password) || !/\d/.test(password)) {
+    errors.push("Пароль должен содержать хотя бы одну букву и одну цифру");
+  }
+
+  return { errors, trimmedName };
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3001/api/v1";
 
 export default function PhoneLoginForm() {
@@ -62,7 +89,12 @@ export default function PhoneLoginForm() {
 
     const payload: Record<string, string> = { phone: normalizedPhone, password };
     if (mode === "register") {
-      payload.name = name;
+      const { errors: validationErrors, trimmedName } = validateRegistrationFields(name, password);
+      if (validationErrors.length > 0) {
+        setError(validationErrors.join("\n"));
+        return;
+      }
+      payload.name = trimmedName;
     }
 
     try {
@@ -72,6 +104,7 @@ export default function PhoneLoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -92,6 +125,8 @@ export default function PhoneLoginForm() {
           setError(detailsText || err?.message || "Этот номер уже зарегистрирован");
         } else if (err?.error === "Invalid credentials") {
           setError("Неверный телефон или пароль");
+        } else if (err?.error === "invalid_phone") {
+          setError(err?.message || "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)");
         } else if (detailsText) {
           setError(detailsText);
         } else if (typeof err?.message === "string" && err.message.trim()) {

@@ -46,8 +46,20 @@ export default function UserInfoModal({ user, onClose, onSaved }: Props) {
         }
       } else {
         const err = await res.json().catch(() => null);
+        const detailMessages = Array.isArray(err?.details)
+          ? err.details
+              .map((item: any) => {
+                if (typeof item === "string") return item;
+                if (item && typeof item.message === "string") return item.message;
+                return null;
+              })
+              .filter((msg: any): msg is string => typeof msg === "string" && msg.trim().length > 0)
+              .map((msg: string) => msg.trim())
+          : [];
         if (err?.error === "phone_taken") setError("Телефон уже используется");
         else if (err?.error === "email_taken") setError("Почта уже используется");
+        else if (detailMessages.length > 0) setError(detailMessages.join("\n"));
+        else if (typeof err?.message === "string" && err.message.trim()) setError(err.message.trim());
         else setError("Не удалось сохранить");
       }
     } catch {

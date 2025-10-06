@@ -3,14 +3,10 @@ import { prisma } from "../prisma";
 import crypto from "crypto";
 import { TelegramAuthData, verifyTelegramAuth } from "../telegram";
 import bcrypt from "bcryptjs";
+import { normalizeKazakhPhone } from "../phone";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
-
-function normalizePhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return digits ? "+" + digits : "";
-}
 
 router.post("/auth/telegram", async (req: Request, res: Response) => {
   const data = req.body as TelegramAuthData;
@@ -56,7 +52,14 @@ router.post("/auth/phone", async (req: Request, res: Response) => {
   if (!phone || !password)
     return res.status(400).json({ ok: false, error: "phone and password required" });
 
-  const normalized = normalizePhone(phone);
+  const normalized = normalizeKazakhPhone(phone);
+  if (!normalized) {
+    return res.status(400).json({
+      ok: false,
+      error: "invalid_phone",
+      message: "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)",
+    });
+  }
   let user = await prisma.user.findUnique({ where: { phone: normalized } });
 
   if (!user) {

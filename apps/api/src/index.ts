@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { OrderStatus, OrderType, PaymentStatus } from "@prisma/client";
+import { OrderStatus, OrderType, PaymentStatus, Prisma } from "@prisma/client";
 import type { Order as PrismaOrder, OrderItem as PrismaOrderItem, User as PrismaUser } from "@prisma/client";
 import { z } from "zod";
 import fs from "fs";
@@ -10,6 +10,7 @@ import path from "path";
 import bcrypt from "bcryptjs";
 import authRouter from "./routes/auth";
 import { prisma } from "./prisma";
+import { normalizeKazakhPhone } from "./phone";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/api/v1', authRouter);
 app.get('/api/v1/health', (_req: Request, res: Response) => res.json({ ok: true }));
 const DELIVERY_SURCHARGE = 900;
+const INVALID_PHONE_MESSAGE = "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)";
 
 async function expireBonus(userId: string) {
   const now = new Date();
@@ -96,20 +98,6 @@ process.on("uncaughtException", (err: unknown) => {
   logToFile("Uncaught exception", err);
 });
 
-function normalizePhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  const normalized = digits.startsWith("8")
-    ? "7" + digits.slice(1)
-    : digits.startsWith("7")
-    ? digits
-    : "7" + digits;
-  return "+" + normalized;
-}
-
-function isValidKazakhPhone(phone: string) {
-  return /^\+7\d{10}$/.test(phone);
-}
-
 async function sendSms(to: string, code: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -119,6 +107,11 @@ async function sendSms(to: string, code: string) {
     return;
   }
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  const normalized = normalizeKazakhPhone(to);
+  if (!normalized) {
+    logToFile("Cannot send SMS to invalid phone", to);
+    return;
+  }
   try {
     const res = await fetch(
       `https://verify.twilio.com/v2/Services/${service}/Verifications`,
@@ -129,7 +122,7 @@ async function sendSms(to: string, code: string) {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          To: normalizePhone(to),
+          To: normalized,
           Channel: "sms",
         }).toString(),
       }
@@ -151,6 +144,8 @@ async function verifySms(to: string, code: string) {
     return true;
   }
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  const normalized = normalizeKazakhPhone(to);
+  if (!normalized) return false;
   try {
     const res = await fetch(
       `https://verify.twilio.com/v2/Services/${service}/VerificationCheck`,
@@ -161,7 +156,7 @@ async function verifySms(to: string, code: string) {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          To: normalizePhone(to),
+          To: normalized,
           Code: code,
         }).toString(),
       }
@@ -188,6 +183,11 @@ async function sendSmsMessage(to: string, message: string) {
     return;
   }
   const auth = Buffer.from(`${sid}:${token}`).toString("base64");
+  const normalized = normalizeKazakhPhone(to);
+  if (!normalized) {
+    logToFile("Cannot send transactional SMS to invalid phone", to);
+    return;
+  }
   try {
     await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
       method: "POST",
@@ -195,7 +195,7 @@ async function sendSmsMessage(to: string, message: string) {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ To: normalizePhone(to), From: from, Body: message }).toString(),
+      body: new URLSearchParams({ To: normalized, From: from, Body: message }).toString(),
     });
   } catch (err) {
     logToFile("Failed to send SMS", err);
@@ -370,7 +370,15 @@ app.post(`${BASE}/auth/request-code`, async (req: Request, res: Response) => {
   const parsed = AuthRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const rawPhone = parsed.data.phone;
+  const phone = rawPhone ? normalizeKazakhPhone(rawPhone) : undefined;
+  if (rawPhone && !phone) {
+    return res.status(400).json({
+      error: "validation_error",
+      message: INVALID_PHONE_MESSAGE,
+      details: [{ field: "phone", message: INVALID_PHONE_MESSAGE }],
+    });
+  }
   const email = parsed.data.email;
   const where = phone ? { phone } : { email: email! };
   let existing = await prisma.user.findUnique({ where });
@@ -398,7 +406,15 @@ app.post(`${BASE}/auth/verify-code`, async (req: Request, res: Response) => {
   const parsed = AuthVerifySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
 
-  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : undefined;
+  const rawPhone = parsed.data.phone;
+  const phone = rawPhone ? normalizeKazakhPhone(rawPhone) : undefined;
+  if (rawPhone && !phone) {
+    return res.status(400).json({
+      error: "validation_error",
+      message: INVALID_PHONE_MESSAGE,
+      details: [{ field: "phone", message: INVALID_PHONE_MESSAGE }],
+    });
+  }
   const { email, code, password } = parsed.data;
   if (phone) {
     const ok = await verifySms(phone, code);
@@ -456,13 +472,12 @@ app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
     });
   }
 
-  const phone = normalizePhone(parsed.data.phone);
-  if (!isValidKazakhPhone(phone)) {
-    const message = "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)";
+  const phone = normalizeKazakhPhone(parsed.data.phone);
+  if (!phone) {
     return res.status(400).json({
       error: "validation_error",
-      message,
-      details: [{ field: "phone", message }],
+      message: INVALID_PHONE_MESSAGE,
+      details: [{ field: "phone", message: INVALID_PHONE_MESSAGE }],
     });
   }
   const name = parsed.data.name;
@@ -475,23 +490,45 @@ app.post(`${BASE}/auth/register`, async (req: Request, res: Response) => {
     });
   }
 
-  const hashed = await bcrypt.hash(parsed.data.password, 10);
-  const userRecord = existing
-    ? await prisma.user.update({
-        where: { id: existing.id },
-        data: { name, password: hashed },
-      })
-    : await prisma.user.create({
-        data: { name, phone, password: hashed },
-      });
+  try {
+    const hashed = await bcrypt.hash(parsed.data.password, 10);
+    const userRecord = existing
+      ? await prisma.user.update({
+          where: { id: existing.id },
+          data: { name, password: hashed },
+        })
+      : await prisma.user.create({
+          data: { name, phone, password: hashed },
+        });
 
-  return res.status(201).json({ user: serializeUser(userRecord) });
+    return res.status(201).json({ user: serializeUser(userRecord) });
+  } catch (err: any) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return res.status(409).json({
+        error: "phone_taken",
+        message: "Этот номер уже зарегистрирован",
+        details: [{ field: "phone", message: "Аккаунт с этим номером уже существует" }],
+      });
+    }
+    logToFile("Failed to register user", err);
+    return res.status(500).json({
+      error: "registration_failed",
+      message: "Не удалось создать аккаунт. Попробуйте позже",
+    });
+  }
 });
 
 app.post(`${BASE}/auth/login`, async (req: Request, res: Response) => {
   const parsed = UserLoginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid payload" });
-  const phone = normalizePhone(parsed.data.phone);
+  const phone = normalizeKazakhPhone(parsed.data.phone);
+  if (!phone) {
+    return res.status(400).json({
+      error: "validation_error",
+      message: INVALID_PHONE_MESSAGE,
+      details: [{ field: "phone", message: INVALID_PHONE_MESSAGE }],
+    });
+  }
   const user = await prisma.user.findUnique({ where: { phone } });
   if (!user || !user.password || !(await bcrypt.compare(parsed.data.password, user.password))) {
     return res.status(400).json({ error: "Invalid credentials" });
@@ -532,15 +569,28 @@ app.put(`${BASE}/users/:id`, async (req: Request, res: Response) => {
   }
   if (parsed.data.phone !== undefined) {
     const raw = parsed.data.phone;
-    const trimmed = typeof raw === "string" ? raw.trim() : "";
-    const normalized = trimmed ? normalizePhone(trimmed) : null;
-    if (normalized) {
-      const duplicate = await prisma.user.findFirst({
-        where: { phone: normalized, id: { not: id } },
-      });
-      if (duplicate) return res.status(409).json({ error: "phone_taken" });
+    if (raw === null || raw === "") {
+      updates.phone = null;
+    } else if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        updates.phone = null;
+      } else {
+        const normalized = normalizeKazakhPhone(trimmed);
+        if (!normalized) {
+          return res.status(400).json({
+            error: "validation_error",
+            message: INVALID_PHONE_MESSAGE,
+            details: [{ field: "phone", message: INVALID_PHONE_MESSAGE }],
+          });
+        }
+        const duplicate = await prisma.user.findFirst({
+          where: { phone: normalized, id: { not: id } },
+        });
+        if (duplicate) return res.status(409).json({ error: "phone_taken" });
+        updates.phone = normalized;
+      }
     }
-    updates.phone = normalized;
   }
   if (parsed.data.email !== undefined) {
     const raw = parsed.data.email;
