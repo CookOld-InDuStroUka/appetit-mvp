@@ -1946,9 +1946,21 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
       createdAt: { gte: start, lt: end },
     };
 
-    const [allOrders, expenses] = await Promise.all([
-      prisma.order.findMany({ where: orderWhere }),
+    const [allOrders, expenses, totalUsers, newUsers] = await Promise.all([
+      prisma.order.findMany({
+        where: orderWhere,
+        include: {
+          items: {
+            include: {
+              dish: true,
+            },
+          },
+          user: true,
+        },
+      }),
       prisma.expense.findMany({ where: expenseWhere }),
+      prisma.user.count(),
+      prisma.user.count({ where: { createdAt: { gte: start, lt: end } } }),
     ]);
 
     const paidOrders = allOrders.filter((o: any) => o.status === "done");
@@ -1961,6 +1973,22 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     const averageCheck = ordersPaid ? revenue / ordersPaid : 0;
     const sources: Record<string, { orders: number; revenue: number }> = {};
     const userCounts: Record<string, number> = {};
+    const heatmapMatrix: number[][] = Array.from({ length: 7 }, () =>
+      Array.from({ length: 24 }, () => 0)
+    );
+    const hourlyBuckets: number[] = Array.from({ length: 24 }, () => 0);
+    const dishMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        orders: Set<string>;
+        quantity: number;
+        revenue: number;
+      }
+    >();
+    let guestOrders = 0;
+    let registeredOrders = 0;
     for (const o of paidOrders) {
       const key = (o as any)[dimField] ?? "direct";
       if (!sources[key]) sources[key] = { orders: 0, revenue: 0 };
@@ -1969,6 +1997,30 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
       const userKey = o.userId ?? o.customerPhone;
       if (userKey) {
         userCounts[userKey] = (userCounts[userKey] || 0) + 1;
+      }
+      if (o.userId) registeredOrders++;
+      else guestOrders++;
+
+      const createdAt = new Date(o.createdAt);
+      const hour = createdAt.getHours();
+      const weekday = (createdAt.getDay() + 6) % 7; // Monday first
+      hourlyBuckets[hour] += 1;
+      heatmapMatrix[weekday][hour] += 1;
+
+      for (const item of o.items ?? []) {
+        if (!dishMap.has(item.dishId)) {
+          dishMap.set(item.dishId, {
+            id: item.dishId,
+            name: item.dish?.name ?? "Неизвестно",
+            orders: new Set<string>(),
+            quantity: 0,
+            revenue: 0,
+          });
+        }
+        const stat = dishMap.get(item.dishId)!;
+        stat.orders.add(o.id);
+        stat.quantity += item.qty;
+        stat.revenue += Number(item.total);
       }
     }
     let repeatCount = 0;
@@ -1987,6 +2039,34 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
       0
     );
     const profit = revenue - expensesTotal;
+
+    const activeCustomers = Object.keys(userCounts).length;
+    const returningCustomers = Object.values(userCounts).filter(
+      (count) => count > 1
+    ).length;
+    const dishStats = Array.from(dishMap.values())
+      .map((dish) => ({
+        id: dish.id,
+        name: dish.name,
+        orders: dish.orders.size,
+        quantity: dish.quantity,
+        revenue: dish.revenue,
+      }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 20);
+
+    const hours = Array.from({ length: 24 }, (_, i) =>
+      `${String(i).padStart(2, "0")}:00`
+    );
+    const heatmapDays = [
+      "Пн",
+      "Вт",
+      "Ср",
+      "Чт",
+      "Пт",
+      "Сб",
+      "Вс",
+    ];
 
     const days: string[] = [];
     const ordersDaily: number[] = [];
@@ -2022,6 +2102,17 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
       expensesTotal,
       profit,
       daily: { days, orders: ordersDaily, expenses: expensesDaily },
+      dishStats,
+      hourlyOrders: { hours, counts: hourlyBuckets },
+      heatmap: { days: heatmapDays, hours, values: heatmapMatrix },
+      userStats: {
+        totalUsers,
+        newUsers,
+        activeCustomers,
+        returningCustomers,
+        registeredOrders,
+        guestOrders,
+      },
     };
   }
 
@@ -2031,7 +2122,18 @@ app.get(`${BASE}/admin/analytics`, async (req: Request, res: Response) => {
     const diff = endDate.getTime() - startDate.getTime();
     const prevStart = new Date(startDate.getTime() - diff);
     const prevEnd = new Date(startDate.getTime());
-    previous = await collectMetrics(prevStart, prevEnd);
+    const prev = await collectMetrics(prevStart, prevEnd);
+    const prevConversion = (prev as any).conversion;
+    previous = {
+      revenue: prev.revenue,
+      ordersPaid: prev.ordersPaid,
+      ordersAll: prev.ordersAll,
+      averageCheck: prev.averageCheck,
+      repeatRate: prev.repeatRate,
+      repeatCount: prev.repeatCount,
+      repeatRevenueShare: prev.repeatRevenueShare,
+      ...(prevConversion !== undefined ? { conversion: prevConversion } : {}),
+    };
   }
 
   res.json({ ...current, previous });

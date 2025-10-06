@@ -17,11 +17,43 @@ type KPIData = {
   conversion?: number;
 };
 
+type DishStat = {
+  id: string;
+  name: string;
+  orders: number;
+  quantity: number;
+  revenue: number;
+};
+
+type HourlyOrders = {
+  hours: string[];
+  counts: number[];
+};
+
+type Heatmap = {
+  days: string[];
+  hours: string[];
+  values: number[][];
+};
+
+type UserStats = {
+  totalUsers: number;
+  newUsers: number;
+  activeCustomers: number;
+  returningCustomers: number;
+  registeredOrders: number;
+  guestOrders: number;
+};
+
 type Analytics = KPIData & {
   sources: Record<string, { orders: number; revenue: number }>;
   expensesTotal: number;
   profit: number;
   daily: { days: string[]; orders: number[]; expenses: number[] };
+  dishStats: DishStat[];
+  hourlyOrders: HourlyOrders;
+  heatmap: Heatmap;
+  userStats: UserStats;
   previous?: KPIData;
 };
 
@@ -268,6 +300,73 @@ export default function AnalyticsPage() {
             </>
           )}
 
+          <h3>{t("userStatsTitle")}</h3>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 20,
+            }}
+          >
+            <StatCard
+              label={t("totalUsersStat")}
+              value={data.userStats.totalUsers.toLocaleString("ru-RU")}
+            />
+            <StatCard
+              label={t("newUsersStat")}
+              value={data.userStats.newUsers.toLocaleString("ru-RU")}
+            />
+            <StatCard
+              label={t("activeCustomersStat")}
+              value={data.userStats.activeCustomers.toLocaleString("ru-RU")}
+            />
+            <StatCard
+              label={t("returningCustomersStat")}
+              value={data.userStats.returningCustomers.toLocaleString("ru-RU")}
+            />
+            <StatCard
+              label={t("registeredOrdersStat")}
+              value={data.userStats.registeredOrders.toLocaleString("ru-RU")}
+            />
+            <StatCard
+              label={t("guestOrdersStat")}
+              value={data.userStats.guestOrders.toLocaleString("ru-RU")}
+            />
+          </div>
+
+          <h3>{t("topDishesTitle")}</h3>
+          {data.dishStats.length === 0 ? (
+            <p style={{ color: "#94a3b8" }}>{t("noAnalyticsData")}</p>
+          ) : (
+            <table style={{ width: "100%", maxWidth: 720, marginBottom: 20 }}>
+              <thead>
+                <tr>
+                  <th>{t("dishName")}</th>
+                  <th>{t("orders")}</th>
+                  <th>{t("dishQuantity")}</th>
+                  <th>{t("dishRevenue")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.dishStats.map((dish) => (
+                  <tr key={dish.id}>
+                    <td>{dish.name}</td>
+                    <td>{dish.orders}</td>
+                    <td>{dish.quantity}</td>
+                    <td>{Math.round(dish.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          <h3>{t("ordersByHour")}</h3>
+          <HourlyChart data={data.hourlyOrders} emptyLabel={t("noAnalyticsData")} />
+
+          <h3>{t("orderHeatmapTitle")}</h3>
+          <HeatmapGrid heatmap={data.heatmap} emptyLabel={t("noAnalyticsData")} />
+
         </>
       )}
     </AdminLayout>
@@ -328,6 +427,125 @@ function KPI({
           points={points}
         />
       </svg>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        flex: "1 1 160px",
+        border: "1px solid #e2e8f0",
+        borderRadius: 8,
+        padding: 12,
+        background: "#fff",
+      }}
+    >
+      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 600 }}>{value}</div>
+    </div>
+  );
+}
+
+function HourlyChart({
+  data,
+  emptyLabel,
+}: {
+  data: HourlyOrders;
+  emptyLabel: string;
+}) {
+  const hasData = data.counts.some((v) => v > 0);
+  if (!hasData) return <p style={{ color: "#94a3b8" }}>{emptyLabel}</p>;
+  const max = Math.max(...data.counts, 1);
+  return (
+    <div style={{ overflowX: "auto", width: "100%", maxWidth: 720, marginBottom: 20 }}>
+      <svg width={data.hours.length * 28} height={200}>
+        {data.counts.map((count, i) => {
+          const height = (count / max) * 180;
+          const x = i * 28;
+          return (
+            <g key={data.hours[i]}>
+              <rect
+                x={x + 6}
+                y={190 - height}
+                width={16}
+                height={height}
+                fill="#36a2eb"
+              />
+              <text x={x + 14} y={195} fontSize={8} textAnchor="middle">
+                {data.hours[i]}
+              </text>
+              <text
+                x={x + 14}
+                y={190 - height - 4}
+                fontSize={8}
+                textAnchor="middle"
+                fill="#0f172a"
+              >
+                {count}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function HeatmapGrid({
+  heatmap,
+  emptyLabel,
+}: {
+  heatmap: Heatmap;
+  emptyLabel: string;
+}) {
+  const hasData = heatmap.values.some((row) => row.some((v) => v > 0));
+  if (!hasData) return <p style={{ color: "#94a3b8" }}>{emptyLabel}</p>;
+  const flat = heatmap.values.flat();
+  const max = Math.max(...flat, 1);
+  return (
+    <div style={{ overflowX: "auto", width: "100%", maxWidth: 720, marginBottom: 20 }}>
+      <table style={{ borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ textAlign: "left", padding: "4px 8px" }}>#</th>
+            {heatmap.hours.map((hour) => (
+              <th key={hour} style={{ padding: "4px 6px", fontSize: 10 }}>
+                {hour}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {heatmap.days.map((day, di) => (
+            <tr key={day}>
+              <th style={{ textAlign: "left", padding: "4px 8px", fontSize: 12 }}>{day}</th>
+              {heatmap.hours.map((hour, hi) => {
+                const value = heatmap.values[di]?.[hi] ?? 0;
+                const intensity = value / max;
+                const background = `rgba(34, 197, 94, ${0.15 + intensity * 0.7})`;
+                return (
+                  <td
+                    key={`${day}-${hour}`}
+                    style={{
+                      width: 28,
+                      height: 24,
+                      textAlign: "center",
+                      fontSize: 10,
+                      background,
+                      color: intensity > 0.5 ? "#fff" : "#0f172a",
+                    }}
+                    title={`${day} ${hour}: ${value}`}
+                  >
+                    {value || ""}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
