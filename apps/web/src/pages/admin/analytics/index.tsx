@@ -300,7 +300,18 @@ export default function AnalyticsPage() {
             </>
           )}
 
-          <h3>{t("userStatsTitle")}</h3>
+      <h3>{t("userStatsTitle")}</h3>
+      {(() => {
+        const fallback: UserStats = {
+          totalUsers: 0,
+          newUsers: 0,
+          activeCustomers: 0,
+          returningCustomers: 0,
+          registeredOrders: 0,
+          guestOrders: 0,
+        };
+        const userStats = data.userStats ?? fallback;
+        return (
           <div
             style={{
               display: "flex",
@@ -311,29 +322,31 @@ export default function AnalyticsPage() {
           >
             <StatCard
               label={t("totalUsersStat")}
-              value={data.userStats.totalUsers.toLocaleString("ru-RU")}
+              value={userStats.totalUsers.toLocaleString("ru-RU")}
             />
             <StatCard
               label={t("newUsersStat")}
-              value={data.userStats.newUsers.toLocaleString("ru-RU")}
+              value={userStats.newUsers.toLocaleString("ru-RU")}
             />
             <StatCard
               label={t("activeCustomersStat")}
-              value={data.userStats.activeCustomers.toLocaleString("ru-RU")}
+              value={userStats.activeCustomers.toLocaleString("ru-RU")}
             />
             <StatCard
               label={t("returningCustomersStat")}
-              value={data.userStats.returningCustomers.toLocaleString("ru-RU")}
+              value={userStats.returningCustomers.toLocaleString("ru-RU")}
             />
             <StatCard
               label={t("registeredOrdersStat")}
-              value={data.userStats.registeredOrders.toLocaleString("ru-RU")}
+              value={userStats.registeredOrders.toLocaleString("ru-RU")}
             />
             <StatCard
               label={t("guestOrdersStat")}
-              value={data.userStats.guestOrders.toLocaleString("ru-RU")}
+              value={userStats.guestOrders.toLocaleString("ru-RU")}
             />
           </div>
+        );
+      })()}
 
           <h3>{t("topDishesTitle")}</h3>
           {data.dishStats.length === 0 ? (

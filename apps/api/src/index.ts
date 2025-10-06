@@ -25,6 +25,7 @@ app.use('/api/v1', authRouter);
 app.get('/api/v1/health', (_req: Request, res: Response) => res.json({ ok: true }));
 const DELIVERY_SURCHARGE = 900;
 const INVALID_PHONE_MESSAGE = "Введите номер телефона в формате Казахстана (+7 XXX XXX XX XX)";
+const SHIFT_CREATE_ERROR = "Укажите сотрудника, дату и длительность смены";
 
 async function expireBonus(userId: string) {
   const now = new Date();
@@ -674,6 +675,36 @@ async function getAdminByHeader(req: Request) {
   return prisma.admin.findUnique({ where: { id } });
 }
 
+const ShiftCreateSchema = z.object({
+  adminId: z.string().min(1, "Выберите сотрудника"),
+  date: z.coerce.date({ invalid_type_error: "Укажите дату смены" }),
+  hours: z.coerce
+    .number({ invalid_type_error: "Укажите длительность смены" })
+    .min(1, "Минимум 1 час")
+    .max(24, "Не более 24 часов"),
+});
+
+function normalizeRange(value: unknown, fallback: Date, endOfDay = false) {
+  if (typeof value === "string" && value) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      if (endOfDay) {
+        parsed.setHours(23, 59, 59, 999);
+      } else {
+        parsed.setHours(0, 0, 0, 0);
+      }
+      return parsed;
+    }
+  }
+  const clone = new Date(fallback);
+  if (endOfDay) {
+    clone.setHours(23, 59, 59, 999);
+  } else {
+    clone.setHours(0, 0, 0, 0);
+  }
+  return clone;
+}
+
 type AdminUserWithStats = PrismaUser & {
   _count: { orders: number };
   orders: { createdAt: Date }[];
@@ -725,6 +756,186 @@ app.delete(`${BASE}/admin/accounts/:id`, async (req: Request, res: Response) => 
   const admin = await getAdminByHeader(req);
   if (!admin || admin.role !== "super") return res.status(403).json({ error: "Forbidden" });
   await prisma.admin.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+app.get(`${BASE}/admin/shifts`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const now = new Date();
+  const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  defaultEnd.setHours(23, 59, 59, 999);
+
+  const start = normalizeRange(req.query.from, defaultStart);
+  const end = normalizeRange(req.query.to, defaultEnd, true);
+  const requestedAdminId = typeof req.query.adminId === "string" ? req.query.adminId : undefined;
+
+  const where: Prisma.ShiftWhereInput = {
+    date: { gte: start, lte: end },
+  };
+
+  if (admin.role !== "super") {
+    where.adminId = admin.id;
+  } else if (requestedAdminId && requestedAdminId !== "all") {
+    where.adminId = requestedAdminId;
+  }
+
+  const [shifts, staff] = await Promise.all([
+    prisma.shift.findMany({
+      where,
+      orderBy: { date: "desc" },
+      include: { admin: { select: { id: true, login: true, role: true } } },
+    }),
+    prisma.admin.findMany({ select: { id: true, login: true, role: true } }),
+  ]);
+
+  const summaryMap = new Map<
+    string,
+    {
+      adminId: string;
+      login: string;
+      role: string;
+      totalHours: number;
+      shiftCount: number;
+      lastShift: Date | null;
+    }
+  >();
+
+  let totalHours = 0;
+  const shiftItems = shifts.map((shift) => {
+    totalHours += shift.hours;
+    const current = summaryMap.get(shift.adminId) ?? {
+      adminId: shift.adminId,
+      login: shift.admin.login,
+      role: shift.admin.role,
+      totalHours: 0,
+      shiftCount: 0,
+      lastShift: null,
+    };
+    current.totalHours += shift.hours;
+    current.shiftCount += 1;
+    if (!current.lastShift || current.lastShift < shift.date) current.lastShift = shift.date;
+    summaryMap.set(shift.adminId, current);
+    return {
+      id: shift.id,
+      adminId: shift.adminId,
+      adminLogin: shift.admin.login,
+      role: shift.admin.role,
+      date: shift.date.toISOString(),
+      hours: shift.hours,
+      createdAt: shift.createdAt.toISOString(),
+    };
+  });
+
+  const summary = Array.from(summaryMap.values())
+    .map((item) => ({
+      adminId: item.adminId,
+      login: item.login,
+      role: item.role,
+      totalHours: item.totalHours,
+      shiftCount: item.shiftCount,
+      averageHours: item.shiftCount ? item.totalHours / item.shiftCount : 0,
+      lastShift: item.lastShift ? item.lastShift.toISOString() : null,
+    }))
+    .sort((a, b) => b.totalHours - a.totalHours);
+
+  const roleStatsMap = new Map<
+    string,
+    { role: string; staffCount: number; totalHours: number; shiftCount: number }
+  >();
+
+  for (const member of staff) {
+    const existing = roleStatsMap.get(member.role) ?? {
+      role: member.role,
+      staffCount: 0,
+      totalHours: 0,
+      shiftCount: 0,
+    };
+    existing.staffCount += 1;
+    roleStatsMap.set(member.role, existing);
+  }
+
+  for (const entry of summary) {
+    const current = roleStatsMap.get(entry.role) ?? {
+      role: entry.role,
+      staffCount: 0,
+      totalHours: 0,
+      shiftCount: 0,
+    };
+    current.totalHours += entry.totalHours;
+    current.shiftCount += entry.shiftCount;
+    roleStatsMap.set(entry.role, current);
+  }
+
+  const roleStats = Array.from(roleStatsMap.values()).sort((a, b) => b.totalHours - a.totalHours);
+
+  res.json({
+    range: { from: start.toISOString(), to: end.toISOString() },
+    totals: { totalHours, totalShifts: shifts.length },
+    summary,
+    roleStats,
+    shifts: shiftItems,
+    admins:
+      admin.role === "super"
+        ? staff
+        : staff.filter((member) => member.id === admin.id),
+  });
+});
+
+app.post(`${BASE}/admin/shifts`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const parsed = ShiftCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return res.status(400).json({
+      error: "invalid_payload",
+      message: issue?.message || SHIFT_CREATE_ERROR,
+    });
+  }
+
+  const { adminId, date, hours } = parsed.data;
+
+  if (admin.role !== "super" && admin.id !== adminId) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  const target = await prisma.admin.findUnique({ where: { id: adminId } });
+  if (!target) return res.status(404).json({ error: "Администратор не найден" });
+
+  const normalizedDate = new Date(date);
+  normalizedDate.setHours(0, 0, 0, 0);
+
+  const shift = await prisma.shift.create({
+    data: { adminId, date: normalizedDate, hours },
+  });
+
+  res.json({
+    shift: {
+      id: shift.id,
+      adminId: shift.adminId,
+      date: shift.date.toISOString(),
+      hours: shift.hours,
+      createdAt: shift.createdAt.toISOString(),
+    },
+  });
+});
+
+app.delete(`${BASE}/admin/shifts/:id`, async (req: Request, res: Response) => {
+  const admin = await getAdminByHeader(req);
+  if (!admin) return res.status(403).json({ error: "Forbidden" });
+
+  const shift = await prisma.shift.findUnique({ where: { id: req.params.id } });
+  if (!shift) return res.status(404).json({ error: "Not found" });
+
+  if (admin.role !== "super" && shift.adminId !== admin.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  await prisma.shift.delete({ where: { id: shift.id } });
   res.json({ ok: true });
 });
 
