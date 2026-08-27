@@ -67,8 +67,12 @@ async function applyBonusUsage(userId: string, amount: number) {
   }
 }
 
-// log errors to file under project root /logs
-const logDir = path.join(__dirname, "../../logs");
+// Keep mutable data on a persistent disk in production (for example, Render).
+// Locally it continues to live under the project root.
+const dataDir = process.env.DATA_DIR;
+const logDir = dataDir
+  ? path.join(dataDir, "logs")
+  : path.join(__dirname, "../../logs");
 fs.mkdirSync(logDir, { recursive: true });
 const logFile = path.join(logDir, "api.log");
 const ordersLogFile = path.join(logDir, "orders.jsonl");
@@ -284,7 +288,9 @@ ensureDefaultModifiers().catch((e) =>
   console.error("Failed to ensure default modifiers", e)
 );
 
-const uploadDir = path.join(__dirname, "../uploads");
+const uploadDir = dataDir
+  ? path.join(dataDir, "uploads")
+  : path.join(__dirname, "../uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 app.use("/uploads", express.static(uploadDir));
 
@@ -1828,5 +1834,6 @@ app.put(`${BASE}/admin/orders/:id/status`, async (req: Request, res: Response) =
   }
 });
 
-const port = Number(process.env.API_PORT || 3001);
+// Render and most PaaS providers inject PORT at runtime.
+const port = Number(process.env.PORT || process.env.API_PORT || 3001);
 app.listen(port, () => console.log(`API on http://localhost:${port}${BASE}`));
